@@ -4,10 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
 
 const links = [
-  { href: '#services',   label: 'Services'    },
-  { href: '#tarifs',     label: 'Tarifs'      },
-  { href: '#diagnostic', label: 'Diagnostic'  },
-  { href: '#occasion',   label: 'Marketplace' },
+  { href: '#services',    label: 'Services'    },
+  { href: '#tarifs',      label: 'Tarifs'      },
+  { href: '#diagnostic',  label: 'Diagnostic'  },
+  { href: '/marketplace', label: 'Marketplace' },
 ]
 
 export default function Navbar() {
@@ -41,6 +41,12 @@ export default function Navbar() {
    * avec scrollIntoView — API fiable sur tous les moteurs mobiles.
    */
   function handleMobileNav(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    // Lien de page (ex: /marketplace) → navigation normale, juste fermer le menu
+    if (!href.startsWith('#')) {
+      setOpen(false)
+      return
+    }
+    // Ancre → scroll programmatique (robuste Android Chrome)
     e.preventDefault()
     setOpen(false)
     const id = href.replace('#', '')

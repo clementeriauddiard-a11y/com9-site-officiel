@@ -69,11 +69,12 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-// ─── IMAGE UPLOAD ─────────────────────────────────────────────────────────────
+// ─── SINGLE IMAGE UPLOAD (diagnostic) ────────────────────────────────────────
 
-function ImageUpload({ value, onChange }: {
+function SingleImageUpload({ value, onChange, label = 'Importer une image' }: {
   value:    string
   onChange: (url: string) => void
+  label?:   string
 }) {
   const fileRef    = useRef<HTMLInputElement>(null)
   const [preview,   setPreview]   = useState<string>(value)
@@ -81,58 +82,30 @@ function ImageUpload({ value, onChange }: {
   const [error,     setError]     = useState('')
 
   async function handleFile(file: File) {
-    // Aperçu immédiat (avant même l'upload)
     const objectUrl = URL.createObjectURL(file)
     setPreview(objectUrl)
     setError('')
     setUploading(true)
-
     try {
       const fd = new FormData()
       fd.append('file', file)
       const res  = await fetch('/api/upload', { method: 'POST', body: fd })
       const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.error ?? 'Erreur lors de l\'upload')
-        setPreview(value)  // restaure l'ancienne image
-        return
-      }
-
-      onChange(data.url)
-      setPreview(data.url)
+      if (!res.ok) { setError(data.error ?? 'Erreur upload'); setPreview(value); return }
+      onChange(data.url); setPreview(data.url)
     } catch {
-      setError('Erreur réseau — réessaie.')
-      setPreview(value)
+      setError('Erreur réseau — réessaie.'); setPreview(value)
     } finally {
       setUploading(false)
     }
   }
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (file) handleFile(file)
-  }
-
-  function handleRemove() {
-    setPreview('')
-    onChange('')
-    if (fileRef.current) fileRef.current.value = ''
-  }
-
   return (
     <div>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/jpeg,image/jpg,image/png,image/webp"
-        className="hidden"
-        onChange={handleChange}
-      />
-
+      <input ref={fileRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp"
+        className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
       {preview ? (
         <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,209,255,0.18)', background: 'rgba(0,0,0,0.28)' }}>
-          {/* Aperçu */}
           <div className="relative h-36 flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={preview} alt="Aperçu" className="w-full h-full object-contain p-3" />
@@ -140,71 +113,128 @@ function ImageUpload({ value, onChange }: {
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2"
                 style={{ background: 'rgba(5,8,22,0.8)', backdropFilter: 'blur(4px)' }}>
                 <div className="w-5 h-5 rounded-full border-2 border-neon-blue border-t-transparent animate-spin" />
-                <span className="font-mono text-[8.5px] tracking-[0.18em] uppercase" style={{ color: 'rgba(0,209,255,0.6)' }}>
-                  Upload en cours…
-                </span>
+                <span className="font-mono text-[8.5px] tracking-[0.18em] uppercase" style={{ color: 'rgba(0,209,255,0.6)' }}>Upload…</span>
               </div>
             )}
           </div>
-          {/* Boutons */}
           <div className="flex gap-2 p-2.5" style={{ borderTop: '1px solid rgba(0,209,255,0.07)' }}>
-            <button
-              type="button"
-              disabled={uploading}
-              onClick={() => fileRef.current?.click()}
+            <button type="button" disabled={uploading} onClick={() => fileRef.current?.click()}
               className="flex-1 py-2 rounded-lg font-mono text-[9px] tracking-[0.14em] uppercase transition-all duration-200 disabled:opacity-40"
               style={{ border: '1px solid rgba(0,209,255,0.2)', background: 'rgba(0,209,255,0.05)', color: 'rgba(0,209,255,0.7)' }}
               onMouseEnter={e => !uploading && (e.currentTarget.style.background = 'rgba(0,209,255,0.1)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,209,255,0.05)')}
-            >
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,209,255,0.05)')}>
               Changer
             </button>
-            <button
-              type="button"
-              disabled={uploading}
-              onClick={handleRemove}
+            <button type="button" disabled={uploading} onClick={() => { setPreview(''); onChange(''); if (fileRef.current) fileRef.current.value = '' }}
               className="flex-1 py-2 rounded-lg font-mono text-[9px] tracking-[0.14em] uppercase transition-all duration-200 disabled:opacity-40"
               style={{ border: '1px solid rgba(248,113,113,0.2)', background: 'rgba(248,113,113,0.04)', color: 'rgba(248,113,113,0.6)' }}
               onMouseEnter={e => !uploading && (e.currentTarget.style.background = 'rgba(248,113,113,0.1)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.04)')}
-            >
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.04)')}>
               Supprimer
             </button>
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
+        <button type="button" onClick={() => fileRef.current?.click()}
           className="w-full rounded-xl py-7 flex flex-col items-center justify-center gap-2.5 transition-all duration-200"
           style={{ border: '1px dashed rgba(0,209,255,0.22)', background: 'rgba(0,0,0,0.15)' }}
-          onMouseEnter={e => {
-            e.currentTarget.style.borderColor = 'rgba(0,209,255,0.42)'
-            e.currentTarget.style.background  = 'rgba(0,209,255,0.03)'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'rgba(0,209,255,0.22)'
-            e.currentTarget.style.background  = 'rgba(0,0,0,0.15)'
-          }}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4"
-            className="w-6 h-6" style={{ color: 'rgba(0,209,255,0.4)' }}>
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,209,255,0.42)'; e.currentTarget.style.background = 'rgba(0,209,255,0.03)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,209,255,0.22)'; e.currentTarget.style.background = 'rgba(0,0,0,0.15)' }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className="w-6 h-6" style={{ color: 'rgba(0,209,255,0.4)' }}>
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
-          <span className="font-mono text-[9.5px] tracking-[0.2em] uppercase" style={{ color: 'rgba(0,209,255,0.55)' }}>
-            Importer une image
-          </span>
-          <span className="font-mono text-[8px]" style={{ color: 'rgba(234,251,255,0.2)' }}>
-            JPG · PNG · WebP &nbsp;—&nbsp; max 5 Mo
-          </span>
+          <span className="font-mono text-[9.5px] tracking-[0.2em] uppercase" style={{ color: 'rgba(0,209,255,0.55)' }}>{label}</span>
+          <span className="font-mono text-[8px]" style={{ color: 'rgba(234,251,255,0.2)' }}>JPG · PNG · WebP — max 5 Mo</span>
         </button>
       )}
+      {error && <p className="font-mono text-[8.5px] mt-1.5" style={{ color: '#f87171' }}>{error}</p>}
+    </div>
+  )
+}
 
-      {error && (
-        <p className="font-mono text-[8.5px] mt-1.5" style={{ color: '#f87171' }}>{error}</p>
+// ─── MULTI IMAGE UPLOAD ───────────────────────────────────────────────────────
+
+function MultiImageUpload({ images, onChange }: {
+  images:   string[]
+  onChange: (urls: string[]) => void
+}) {
+  const fileRef    = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [error,     setError]     = useState('')
+
+  async function handleFile(file: File) {
+    setError('')
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res  = await fetch('/api/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? 'Erreur upload'); return }
+      onChange([...images, data.url])
+    } catch {
+      setError('Erreur réseau — réessaie.')
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  function remove(i: number) { onChange(images.filter((_, j) => j !== i)) }
+
+  return (
+    <div>
+      <input ref={fileRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp"
+        className="hidden"
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
+
+      <div className="flex flex-wrap gap-2">
+        {images.map((url, i) => (
+          <div key={`${url}-${i}`} className="relative rounded-xl overflow-hidden shrink-0"
+            style={{ width: '72px', height: '72px', border: '1px solid rgba(0,209,255,0.18)', background: 'rgba(0,0,0,0.28)' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={url} alt={`Photo ${i+1}`} className="w-full h-full object-cover" />
+            {i === 0 && (
+              <div className="absolute top-0.5 left-0.5 px-1 py-0.5 rounded text-[6.5px] font-mono uppercase leading-none"
+                style={{ background: 'rgba(0,209,255,0.88)', color: '#050816' }}>
+                Principal
+              </div>
+            )}
+            <button type="button" onClick={() => remove(i)}
+              className="absolute top-0.5 right-0.5 w-4.5 h-4.5 rounded-full flex items-center justify-center"
+              style={{ background: 'rgba(248,113,113,0.85)', color: 'white', width: '18px', height: '18px', fontSize: '10px', lineHeight: 1 }}>
+              ×
+            </button>
+          </div>
+        ))}
+
+        {/* Bouton Ajouter */}
+        <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
+          className="rounded-xl flex flex-col items-center justify-center gap-1 shrink-0 transition-all duration-200 disabled:opacity-50"
+          style={{ width: '72px', height: '72px', border: '1px dashed rgba(0,209,255,0.22)', background: 'rgba(0,0,0,0.15)' }}
+          onMouseEnter={e => { if (!uploading) { e.currentTarget.style.borderColor = 'rgba(0,209,255,0.42)'; e.currentTarget.style.background = 'rgba(0,209,255,0.04)' }}}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,209,255,0.22)'; e.currentTarget.style.background = 'rgba(0,0,0,0.15)' }}>
+          {uploading ? (
+            <div className="w-4 h-4 rounded-full border-2 border-neon-blue border-t-transparent animate-spin" />
+          ) : (
+            <>
+              <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5" style={{ color: 'rgba(0,209,255,0.55)' }}>
+                <path d="M7 2v10M2 7h10"/>
+              </svg>
+              <span className="font-mono text-[7px] tracking-[0.12em] uppercase" style={{ color: 'rgba(0,209,255,0.45)' }}>
+                Ajouter
+              </span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {images.length > 0 && (
+        <p className="font-mono text-[7.5px] mt-1.5 tracking-[0.14em]" style={{ color: 'rgba(234,251,255,0.22)' }}>
+          La 1re photo est l&apos;image principale · {images.length} photo{images.length > 1 ? 's' : ''}
+        </p>
       )}
+      {error && <p className="font-mono text-[8.5px] mt-1.5" style={{ color: '#f87171' }}>{error}</p>}
     </div>
   )
 }
@@ -287,9 +317,9 @@ type FormData = Omit<Phone, 'id'>
 const EMPTY_FORM: FormData = {
   brand: 'Apple', model: '', storage: '128 Go', color: '',
   battery: 90, condition: 'Très bon', com9Score: 90, price: 0,
-  status: 'Disponible', image: '', description: '',
-  labels: [...DEFAULT_LABELS],
-  whatsappMessage: '',
+  status: 'Disponible', image: '', images: [], description: '',
+  labels: [...DEFAULT_LABELS], whatsappMessage: '',
+  diagnosticImage: '', repairs: '', accessories: '', guarantee: '',
 }
 
 function PhoneFormModal({
@@ -300,7 +330,16 @@ function PhoneFormModal({
   onClose: () => void
 }) {
   const [form,   setForm]   = useState<FormData>(
-    initial ? (({ id: _id, ...rest }) => rest)(initial) : { ...EMPTY_FORM, labels: [...DEFAULT_LABELS] }
+    initial
+      ? (({ id: _id, ...rest }) => ({
+          ...rest,
+          images:         rest.images         ?? [],
+          diagnosticImage: rest.diagnosticImage ?? '',
+          repairs:        rest.repairs         ?? '',
+          accessories:    rest.accessories     ?? '',
+          guarantee:      rest.guarantee       ?? '',
+        }))(initial)
+      : { ...EMPTY_FORM, labels: [...DEFAULT_LABELS] }
   )
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState('')
@@ -459,24 +498,59 @@ function PhoneFormModal({
           {/* Groupe 3 : Vente */}
           <div>
             <p className="font-mono text-[8px] tracking-[0.3em] uppercase mb-4" style={{ color: 'rgba(0,209,255,0.3)' }}>— Disponibilité & visuel</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <FieldLabel>Statut</FieldLabel>
                 <StatusPills value={form.status} onChange={v => set('status', v)} />
               </div>
               <div>
-                <FieldLabel>Image <span style={{ color: 'rgba(234,251,255,0.25)' }}>(optionnel)</span></FieldLabel>
-                <ImageUpload
-                  value={form.image ?? ''}
-                  onChange={url => set('image', url)}
+                <FieldLabel>Photos du téléphone <span style={{ color: 'rgba(234,251,255,0.25)' }}>(optionnel)</span></FieldLabel>
+                <MultiImageUpload
+                  images={form.images ?? []}
+                  onChange={urls => set('images', urls)}
                 />
               </div>
-              <div className="sm:col-span-2">
-                <FieldLabel>Description courte <span style={{ color: 'rgba(234,251,255,0.25)' }}>(optionnel)</span></FieldLabel>
+              <div>
+                <FieldLabel>Description complète <span style={{ color: 'rgba(234,251,255,0.25)' }}>(optionnel)</span></FieldLabel>
                 <textarea value={form.description ?? ''} onChange={e => set('description', e.target.value)}
-                  placeholder="Face ID parfait. Légères micro-rayures sur châssis." rows={2}
+                  placeholder="Face ID parfait. Légères micro-rayures sur châssis. Toutes les fonctions testées et validées." rows={3}
                   className={`${inputCls} resize-none`} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
               </div>
+            </div>
+          </div>
+
+          {/* Groupe 3b : Détails produit */}
+          <div>
+            <p className="font-mono text-[8px] tracking-[0.3em] uppercase mb-4" style={{ color: 'rgba(0,209,255,0.3)' }}>— Détails produit</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <FieldLabel>Réparations effectuées <span style={{ color: 'rgba(234,251,255,0.25)' }}>(optionnel)</span></FieldLabel>
+                <input value={form.repairs ?? ''} onChange={e => set('repairs', e.target.value)}
+                  placeholder="Écran remplacé (OLED Premium), batterie neuve…" className={inputCls} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
+              </div>
+              <div className="sm:col-span-2">
+                <FieldLabel>Accessoires inclus <span style={{ color: 'rgba(234,251,255,0.25)' }}>(optionnel)</span></FieldLabel>
+                <input value={form.accessories ?? ''} onChange={e => set('accessories', e.target.value)}
+                  placeholder="Câble USB-C, adaptateur secteur 20W…" className={inputCls} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
+              </div>
+              <div className="sm:col-span-2">
+                <FieldLabel>Garantie <span style={{ color: 'rgba(234,251,255,0.25)' }}>(optionnel)</span></FieldLabel>
+                <input value={form.guarantee ?? ''} onChange={e => set('guarantee', e.target.value)}
+                  placeholder="3 mois pièces & main d'œuvre Com'9" className={inputCls} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
+              </div>
+            </div>
+          </div>
+
+          {/* Groupe 3c : Diagnostic Premium */}
+          <div>
+            <p className="font-mono text-[8px] tracking-[0.3em] uppercase mb-4" style={{ color: 'rgba(0,209,255,0.3)' }}>— Diagnostic Premium</p>
+            <div>
+              <FieldLabel>Photo / capture du résultat Diagnostic <span style={{ color: 'rgba(234,251,255,0.25)' }}>(optionnel)</span></FieldLabel>
+              <SingleImageUpload
+                value={form.diagnosticImage ?? ''}
+                onChange={url => set('diagnosticImage', url)}
+                label="Importer la capture Diagnostic"
+              />
             </div>
           </div>
 
@@ -858,7 +932,7 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
               )}
             </AnimatePresence>
 
-            <a href="/#occasion" target="_blank"
+            <a href="/marketplace" target="_blank"
               className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl font-mono text-[10px] tracking-[0.18em] uppercase transition-all duration-200"
               style={{ border: '1px solid rgba(0,209,255,0.15)', background: 'rgba(0,209,255,0.04)', color: 'rgba(0,209,255,0.55)' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,209,255,0.09)'; e.currentTarget.style.borderColor = 'rgba(0,209,255,0.3)'; e.currentTarget.style.color = '#00d1ff' }}

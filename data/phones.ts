@@ -51,10 +51,13 @@ export type Phone = {
   /** Statut de disponibilité */
   status:          PhoneStatus
 
-  /** Chemin de l'image depuis /public, ex: "/phones/iphone-13-blue.jpg" */
+  /** Image principale legacy (conservé pour rétrocompatibilité) */
   image?:          string
 
-  /** Description courte optionnelle affichée sur la carte */
+  /** Galerie multi-photos — la 1re est l'image principale */
+  images?:         string[]
+
+  /** Description complète affichée sur la page détail */
   description?:    string
 
   /**
@@ -69,6 +72,18 @@ export type Phone = {
    * Ex: "Bonjour Com'9, je suis intéressé(e) par l'iPhone 13 128 Go à 299 €."
    */
   whatsappMessage: string
+
+  /** Capture / photo du résultat Diagnostic Premium Com'9 */
+  diagnosticImage?: string
+
+  /** Réparations effectuées avant mise en vente, ex: "Écran remplacé, batterie neuve" */
+  repairs?:         string
+
+  /** Accessoires inclus dans la vente, ex: "Câble USB-C, adaptateur secteur" */
+  accessories?:     string
+
+  /** Garantie proposée, ex: "3 mois pièces & main d'œuvre" */
+  guarantee?:       string
 }
 
 // ─── Couleurs par état ────────────────────────────────────────────────────────

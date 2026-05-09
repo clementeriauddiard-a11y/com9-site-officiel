@@ -19,6 +19,20 @@ function isDbAvailable(): boolean {
   return !!process.env.POSTGRES_URL
 }
 
+// ─── Parse JSON array safe ────────────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseJsonArray(val: any): string[] {
+  if (Array.isArray(val)) return val
+  if (!val) return []
+  try {
+    const parsed = JSON.parse(String(val))
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
 // ─── Mapping DB row → Phone ───────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,17 +49,24 @@ function rowToPhone(row: any): Phone {
     price:           Number(row.price),
     status:          String(row.status) as PhoneStatus,
     image:           String(row.image   ?? ''),
+    images:          parseJsonArray(row.images),
     description:     String(row.description ?? ''),
-    labels:          Array.isArray(row.labels) ? row.labels : JSON.parse(String(row.labels ?? '[]')),
+    labels:          parseJsonArray(row.labels),
     whatsappMessage: String(row.whatsapp_message ?? ''),
+    diagnosticImage: String(row.diagnostic_image ?? ''),
+    repairs:         String(row.repairs     ?? ''),
+    accessories:     String(row.accessories ?? ''),
+    guarantee:       String(row.guarantee   ?? ''),
   }
 }
 
-// ─── Auto-création table (une seule fois par démarrage serveur) ───────────────
+// ─── Auto-création table + migration colonnes ─────────────────────────────────
 
 async function ensureTable() {
   if (_tableReady) return
   const { sql } = await import('@vercel/postgres')
+
+  // Création initiale (idempotente)
   await sql`
     CREATE TABLE IF NOT EXISTS phones (
       id               TEXT        PRIMARY KEY,
@@ -62,9 +83,22 @@ async function ensureTable() {
       description      TEXT                 DEFAULT '',
       labels           JSONB       NOT NULL DEFAULT '[]',
       whatsapp_message TEXT        NOT NULL DEFAULT '',
+      images           JSONB                DEFAULT '[]',
+      diagnostic_image TEXT                 DEFAULT '',
+      repairs          TEXT                 DEFAULT '',
+      accessories      TEXT                 DEFAULT '',
+      guarantee        TEXT                 DEFAULT '',
       created_at       TIMESTAMPTZ          DEFAULT NOW()
     )
   `
+
+  // Migration : ajoute les nouvelles colonnes si la table existait déjà
+  await sql`ALTER TABLE phones ADD COLUMN IF NOT EXISTS images           JSONB DEFAULT '[]'`
+  await sql`ALTER TABLE phones ADD COLUMN IF NOT EXISTS diagnostic_image TEXT  DEFAULT ''`
+  await sql`ALTER TABLE phones ADD COLUMN IF NOT EXISTS repairs          TEXT  DEFAULT ''`
+  await sql`ALTER TABLE phones ADD COLUMN IF NOT EXISTS accessories      TEXT  DEFAULT ''`
+  await sql`ALTER TABLE phones ADD COLUMN IF NOT EXISTS guarantee        TEXT  DEFAULT ''`
+
   _tableReady = true
 }
 
@@ -91,13 +125,19 @@ export async function addPhone(phone: Phone): Promise<Phone[]> {
   await sql`
     INSERT INTO phones
       (id, brand, model, storage, color, battery, condition, com9score,
-       price, status, image, description, labels, whatsapp_message)
+       price, status, image, description, labels, whatsapp_message,
+       images, diagnostic_image, repairs, accessories, guarantee)
     VALUES
       (${phone.id}, ${phone.brand}, ${phone.model}, ${phone.storage},
        ${phone.color}, ${phone.battery}, ${phone.condition}, ${phone.com9Score},
        ${phone.price}, ${phone.status}, ${phone.image ?? ''},
        ${phone.description ?? ''}, ${JSON.stringify(phone.labels)},
-       ${phone.whatsappMessage})
+       ${phone.whatsappMessage},
+       ${JSON.stringify(phone.images ?? [])},
+       ${phone.diagnosticImage ?? ''},
+       ${phone.repairs      ?? ''},
+       ${phone.accessories  ?? ''},
+       ${phone.guarantee    ?? ''})
   `
   return getPhones()
 }
@@ -131,7 +171,12 @@ export async function updatePhone(id: string, data: Partial<Phone>): Promise<Pho
       image            = ${merged.image ?? ''},
       description      = ${merged.description ?? ''},
       labels           = ${JSON.stringify(merged.labels)},
-      whatsapp_message = ${merged.whatsappMessage}
+      whatsapp_message = ${merged.whatsappMessage},
+      images           = ${JSON.stringify(merged.images ?? [])},
+      diagnostic_image = ${merged.diagnosticImage ?? ''},
+      repairs          = ${merged.repairs      ?? ''},
+      accessories      = ${merged.accessories  ?? ''},
+      guarantee        = ${merged.guarantee    ?? ''}
     WHERE id = ${id}
   `
   return getPhones()
