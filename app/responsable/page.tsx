@@ -2,8 +2,7 @@
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COM'9 — Espace Responsable
-// Accès : /responsable  (non listé dans la navigation)
-// Mot de passe : lib/config.ts → ACCESS_PASSWORD
+// Accès : /responsable  (protégé par le middleware — proxy.ts)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { usePhones } from '@/context/PhonesContext'
@@ -14,7 +13,7 @@ import {
 } from '@/data/phones'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -67,6 +66,146 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
       style={{ color: 'rgba(0,209,255,0.5)' }}>
       {children}
     </p>
+  )
+}
+
+// ─── IMAGE UPLOAD ─────────────────────────────────────────────────────────────
+
+function ImageUpload({ value, onChange }: {
+  value:    string
+  onChange: (url: string) => void
+}) {
+  const fileRef    = useRef<HTMLInputElement>(null)
+  const [preview,   setPreview]   = useState<string>(value)
+  const [uploading, setUploading] = useState(false)
+  const [error,     setError]     = useState('')
+
+  async function handleFile(file: File) {
+    // Aperçu immédiat (avant même l'upload)
+    const objectUrl = URL.createObjectURL(file)
+    setPreview(objectUrl)
+    setError('')
+    setUploading(true)
+
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res  = await fetch('/api/upload', { method: 'POST', body: fd })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error ?? 'Erreur lors de l\'upload')
+        setPreview(value)  // restaure l'ancienne image
+        return
+      }
+
+      onChange(data.url)
+      setPreview(data.url)
+    } catch {
+      setError('Erreur réseau — réessaie.')
+      setPreview(value)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) handleFile(file)
+  }
+
+  function handleRemove() {
+    setPreview('')
+    onChange('')
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  return (
+    <div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/jpeg,image/jpg,image/png,image/webp"
+        className="hidden"
+        onChange={handleChange}
+      />
+
+      {preview ? (
+        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,209,255,0.18)', background: 'rgba(0,0,0,0.28)' }}>
+          {/* Aperçu */}
+          <div className="relative h-36 flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={preview} alt="Aperçu" className="w-full h-full object-contain p-3" />
+            {uploading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+                style={{ background: 'rgba(5,8,22,0.8)', backdropFilter: 'blur(4px)' }}>
+                <div className="w-5 h-5 rounded-full border-2 border-neon-blue border-t-transparent animate-spin" />
+                <span className="font-mono text-[8.5px] tracking-[0.18em] uppercase" style={{ color: 'rgba(0,209,255,0.6)' }}>
+                  Upload en cours…
+                </span>
+              </div>
+            )}
+          </div>
+          {/* Boutons */}
+          <div className="flex gap-2 p-2.5" style={{ borderTop: '1px solid rgba(0,209,255,0.07)' }}>
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={() => fileRef.current?.click()}
+              className="flex-1 py-2 rounded-lg font-mono text-[9px] tracking-[0.14em] uppercase transition-all duration-200 disabled:opacity-40"
+              style={{ border: '1px solid rgba(0,209,255,0.2)', background: 'rgba(0,209,255,0.05)', color: 'rgba(0,209,255,0.7)' }}
+              onMouseEnter={e => !uploading && (e.currentTarget.style.background = 'rgba(0,209,255,0.1)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,209,255,0.05)')}
+            >
+              Changer
+            </button>
+            <button
+              type="button"
+              disabled={uploading}
+              onClick={handleRemove}
+              className="flex-1 py-2 rounded-lg font-mono text-[9px] tracking-[0.14em] uppercase transition-all duration-200 disabled:opacity-40"
+              style={{ border: '1px solid rgba(248,113,113,0.2)', background: 'rgba(248,113,113,0.04)', color: 'rgba(248,113,113,0.6)' }}
+              onMouseEnter={e => !uploading && (e.currentTarget.style.background = 'rgba(248,113,113,0.1)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.04)')}
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          className="w-full rounded-xl py-7 flex flex-col items-center justify-center gap-2.5 transition-all duration-200"
+          style={{ border: '1px dashed rgba(0,209,255,0.22)', background: 'rgba(0,0,0,0.15)' }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = 'rgba(0,209,255,0.42)'
+            e.currentTarget.style.background  = 'rgba(0,209,255,0.03)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = 'rgba(0,209,255,0.22)'
+            e.currentTarget.style.background  = 'rgba(0,0,0,0.15)'
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4"
+            className="w-6 h-6" style={{ color: 'rgba(0,209,255,0.4)' }}>
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <span className="font-mono text-[9.5px] tracking-[0.2em] uppercase" style={{ color: 'rgba(0,209,255,0.55)' }}>
+            Importer une image
+          </span>
+          <span className="font-mono text-[8px]" style={{ color: 'rgba(234,251,255,0.2)' }}>
+            JPG · PNG · WebP &nbsp;—&nbsp; max 5 Mo
+          </span>
+        </button>
+      )}
+
+      {error && (
+        <p className="font-mono text-[8.5px] mt-1.5" style={{ color: '#f87171' }}>{error}</p>
+      )}
+    </div>
   )
 }
 
@@ -157,12 +296,14 @@ function PhoneFormModal({
   initial, onSave, onClose,
 }: {
   initial?: Phone
-  onSave:  (data: FormData, id?: string) => void
+  onSave:  (data: FormData, id?: string) => Promise<void>
   onClose: () => void
 }) {
-  const [form, setForm] = useState<FormData>(
+  const [form,   setForm]   = useState<FormData>(
     initial ? (({ id: _id, ...rest }) => rest)(initial) : { ...EMPTY_FORM, labels: [...DEFAULT_LABELS] }
   )
+  const [saving, setSaving] = useState(false)
+  const [error,  setError]  = useState('')
 
   const set = useCallback(<K extends keyof FormData>(k: K, v: FormData[K]) => {
     setForm(f => ({ ...f, [k]: v }))
@@ -172,10 +313,17 @@ function PhoneFormModal({
     set('whatsappMessage', autoWaMessage(form.brand, form.model, form.storage, form.color, form.price))
   }
 
-  function save() {
+  async function save() {
     const wam = form.whatsappMessage.trim() ||
       autoWaMessage(form.brand, form.model, form.storage, form.color, form.price)
-    onSave({ ...form, whatsappMessage: wam }, initial?.id)
+    setSaving(true)
+    setError('')
+    try {
+      await onSave({ ...form, whatsappMessage: wam }, initial?.id)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur lors de l\'enregistrement')
+      setSaving(false)
+    }
   }
 
   const isEdit = !!initial
@@ -186,7 +334,7 @@ function PhoneFormModal({
       transition={{ duration: 0.25 }}
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-6 px-4"
       style={{ background: 'rgba(5,8,22,0.9)', backdropFilter: 'blur(12px)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onClick={e => { if (e.target === e.currentTarget && !saving) onClose() }}
     >
       <motion.div
         initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
@@ -209,7 +357,7 @@ function PhoneFormModal({
               {isEdit ? `${initial.brand} ${initial.model}` : 'Ajouter un téléphone'}
             </h2>
           </div>
-          <button onClick={onClose} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200"
+          <button onClick={onClose} disabled={saving} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 disabled:opacity-40"
             style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: 'rgba(234,251,255,0.4)' }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(248,113,113,0.1)'; e.currentTarget.style.borderColor = 'rgba(248,113,113,0.3)'; e.currentTarget.style.color = '#f87171' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(234,251,255,0.4)' }}>
@@ -318,11 +466,10 @@ function PhoneFormModal({
               </div>
               <div>
                 <FieldLabel>Image <span style={{ color: 'rgba(234,251,255,0.25)' }}>(optionnel)</span></FieldLabel>
-                <input value={form.image ?? ''} onChange={e => set('image', e.target.value)}
-                  placeholder="/phones/iphone-15-noir.jpg" className={inputCls} style={inputStyle} onFocus={inputFocus} onBlur={inputBlur} />
-                <p className="font-mono text-[8px] mt-1.5" style={{ color: 'rgba(234,251,255,0.2)' }}>
-                  Placer le fichier dans /public/phones/
-                </p>
+                <ImageUpload
+                  value={form.image ?? ''}
+                  onChange={url => set('image', url)}
+                />
               </div>
               <div className="sm:col-span-2">
                 <FieldLabel>Description courte <span style={{ color: 'rgba(234,251,255,0.25)' }}>(optionnel)</span></FieldLabel>
@@ -359,26 +506,46 @@ function PhoneFormModal({
               Laisse vide pour générer automatiquement depuis les infos du téléphone.
             </p>
           </div>
+
+          {/* Erreur save */}
+          {error && (
+            <div className="flex items-center gap-2 px-4 py-3 rounded-xl"
+              style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}>
+              <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 shrink-0" style={{ color: '#f87171' }}>
+                <circle cx="7" cy="7" r="6"/><path d="M7 4v3M7 10v.1"/>
+              </svg>
+              <p className="font-mono text-[9px] tracking-[0.1em]" style={{ color: '#f87171' }}>{error}</p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <div className="px-6 py-4 flex items-center justify-end gap-3" style={{ borderTop: '1px solid rgba(0,209,255,0.08)' }}>
-          <button onClick={onClose} type="button"
-            className="px-5 py-2.5 rounded-xl font-mono text-[11px] tracking-[0.18em] uppercase transition-all duration-200"
+          <button onClick={onClose} type="button" disabled={saving}
+            className="px-5 py-2.5 rounded-xl font-mono text-[11px] tracking-[0.18em] uppercase transition-all duration-200 disabled:opacity-40"
             style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(234,251,255,0.35)' }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}>
             Annuler
           </button>
-          <motion.button onClick={save} type="button" whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.97 }}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-mono text-[11px] tracking-[0.18em] uppercase transition-all duration-200"
+          <motion.button onClick={save} type="button" disabled={saving} whileHover={saving ? {} : { scale: 1.02, y: -1 }} whileTap={saving ? {} : { scale: 0.97 }}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-mono text-[11px] tracking-[0.18em] uppercase transition-all duration-200 disabled:opacity-60"
             style={{ border: '1px solid rgba(0,209,255,0.4)', background: 'rgba(0,209,255,0.1)', color: '#00d1ff', boxShadow: '0 0 20px rgba(0,102,255,0.1)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,209,255,0.18)'; e.currentTarget.style.borderColor = 'rgba(0,209,255,0.6)'; e.currentTarget.style.boxShadow = '0 0 28px rgba(0,209,255,0.15)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,209,255,0.1)'; e.currentTarget.style.borderColor = 'rgba(0,209,255,0.4)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(0,102,255,0.1)' }}>
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
-              <path d="M2.5 8.5l3.5 3.5 7.5-7.5"/>
-            </svg>
-            {isEdit ? 'Enregistrer' : 'Ajouter'}
+            onMouseEnter={e => !saving && (e.currentTarget.style.background = 'rgba(0,209,255,0.18)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,209,255,0.1)')}>
+            {saving ? (
+              <>
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-neon-blue border-t-transparent animate-spin" />
+                Enregistrement…
+              </>
+            ) : (
+              <>
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
+                  <path d="M2.5 8.5l3.5 3.5 7.5-7.5"/>
+                </svg>
+                {isEdit ? 'Enregistrer' : 'Ajouter'}
+              </>
+            )}
           </motion.button>
         </div>
       </motion.div>
@@ -388,18 +555,23 @@ function PhoneFormModal({
 
 // ─── DELETE CONFIRM ───────────────────────────────────────────────────────────
 
-function DeleteModal({ phone, onConfirm, onClose }: { phone: Phone; onConfirm: () => void; onClose: () => void }) {
+function DeleteModal({ phone, onConfirm, onClose, deleting }: {
+  phone:     Phone
+  onConfirm: () => void
+  onClose:   () => void
+  deleting:  boolean
+}) {
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center px-4"
       style={{ background: 'rgba(5,8,22,0.88)', backdropFilter: 'blur(12px)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      onClick={e => { if (e.target === e.currentTarget && !deleting) onClose() }}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.92, y: 16 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.25, ease: [0.23,1,0.32,1] }}
-        className="w-full max-w-sm rounded-2xl overflow-hidden"
+        className="w-full max-w-sm rounded-2xl overflow-hidden relative"
         style={{ background: 'linear-gradient(160deg,rgba(0,12,30,0.99) 0%,rgba(5,8,22,1) 100%)', border: '1px solid rgba(248,113,113,0.25)', boxShadow: '0 0 60px rgba(248,113,113,0.08)' }}
       >
         <div className="absolute top-0 inset-x-0 h-px"
@@ -419,19 +591,21 @@ function DeleteModal({ phone, onConfirm, onClose }: { phone: Phone; onConfirm: (
             Cette action est irréversible.
           </p>
           <div className="flex gap-3">
-            <button onClick={onClose}
-              className="flex-1 py-3 rounded-xl font-mono text-[11px] tracking-[0.18em] uppercase transition-all duration-200"
+            <button onClick={onClose} disabled={deleting}
+              className="flex-1 py-3 rounded-xl font-mono text-[11px] tracking-[0.18em] uppercase transition-all duration-200 disabled:opacity-40"
               style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: 'rgba(234,251,255,0.35)' }}
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
               Annuler
             </button>
-            <button onClick={onConfirm}
-              className="flex-1 py-3 rounded-xl font-mono text-[11px] tracking-[0.18em] uppercase transition-all duration-200"
+            <button onClick={onConfirm} disabled={deleting}
+              className="flex-1 py-3 rounded-xl font-mono text-[11px] tracking-[0.18em] uppercase transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60"
               style={{ border: '1px solid rgba(248,113,113,0.35)', background: 'rgba(248,113,113,0.08)', color: '#f87171' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(248,113,113,0.16)'; e.currentTarget.style.borderColor = 'rgba(248,113,113,0.5)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(248,113,113,0.08)'; e.currentTarget.style.borderColor = 'rgba(248,113,113,0.35)' }}>
-              Supprimer
+              onMouseEnter={e => !deleting && (e.currentTarget.style.background = 'rgba(248,113,113,0.16)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.08)')}>
+              {deleting ? (
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-red-400 border-t-transparent animate-spin" />
+              ) : 'Supprimer'}
             </button>
           </div>
         </div>
@@ -446,8 +620,8 @@ function PhoneDashCard({
   phone, onEdit, onDelete, onStatusChange,
 }: {
   phone: Phone
-  onEdit:        () => void
-  onDelete:      () => void
+  onEdit:         () => void
+  onDelete:       () => void
   onStatusChange: (s: PhoneStatus) => void
 }) {
   const condCol = conditionColor[phone.condition]
@@ -460,14 +634,12 @@ function PhoneDashCard({
       className="relative rounded-2xl overflow-hidden"
       style={{ background: 'linear-gradient(160deg,rgba(0,12,30,0.97) 0%,rgba(5,8,22,0.99) 100%)', border: '1px solid rgba(0,209,255,0.1)', boxShadow: '0 0 30px rgba(0,0,0,0.4),inset 0 1px 0 rgba(0,209,255,0.06)' }}
     >
-      {/* Top line */}
       <div className="absolute top-0 inset-x-0 h-px"
         style={{ background: 'linear-gradient(to right,transparent,rgba(0,209,255,0.3),transparent)' }} />
 
       <div className="p-4">
         {/* Row 1: photo + info + actions */}
         <div className="flex items-start gap-3 mb-4">
-
           {/* Thumbnail */}
           <div className="w-14 h-14 rounded-xl shrink-0 flex items-center justify-center overflow-hidden"
             style={{ background: 'rgba(0,209,255,0.04)', border: '1px solid rgba(0,209,255,0.1)' }}>
@@ -569,16 +741,16 @@ function PhoneDashCard({
 // ─── STATS BAR ────────────────────────────────────────────────────────────────
 
 function StatsBar({ phones }: { phones: Phone[] }) {
-  const total      = phones.length
-  const available  = phones.filter(p => p.status === 'Disponible').length
-  const reserved   = phones.filter(p => p.status === 'Réservé').length
-  const sold       = phones.filter(p => p.status === 'Vendu').length
+  const total     = phones.length
+  const available = phones.filter(p => p.status === 'Disponible').length
+  const reserved  = phones.filter(p => p.status === 'Réservé').length
+  const sold      = phones.filter(p => p.status === 'Vendu').length
 
   const stats = [
-    { label: 'Total',      value: total,     color: 'rgba(0,209,255,0.7)',    icon: 'grid' },
-    { label: 'Disponible', value: available,  color: '#00d1ff',                icon: 'check' },
-    { label: 'Réservé',    value: reserved,   color: '#facc15',                icon: 'clock' },
-    { label: 'Vendu',      value: sold,       color: 'rgba(234,251,255,0.35)', icon: 'x' },
+    { label: 'Total',      value: total,     color: 'rgba(0,209,255,0.7)'    },
+    { label: 'Disponible', value: available,  color: '#00d1ff'                },
+    { label: 'Réservé',    value: reserved,   color: '#facc15'                },
+    { label: 'Vendu',      value: sold,       color: 'rgba(234,251,255,0.35)' },
   ]
 
   return (
@@ -600,23 +772,27 @@ function StatsBar({ phones }: { phones: Phone[] }) {
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 
 function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
-  const { phones, addPhone, updatePhone, deletePhone } = usePhones()
+  const { phones, updatePhone, deletePhone } = usePhones()
 
-  const [formOpen,    setFormOpen]    = useState(false)
-  const [editPhone,   setEditPhone]   = useState<Phone | undefined>()
+  const [formOpen,     setFormOpen]    = useState(false)
+  const [editPhone,    setEditPhone]   = useState<Phone | undefined>()
   const [deletePhone_, setDeletePhone] = useState<Phone | undefined>()
-  const [saved,       setSaved]       = useState(false)
+  const [deleting,     setDeleting]    = useState(false)
+  const [saved,        setSaved]       = useState(false)
 
-  function handleSave(data: FormData, id?: string) {
+  // addPhone provenant du contexte, réexposé pour handleSave
+  const { addPhone } = usePhones()
+
+  async function handleSave(data: FormData, id?: string) {
     if (id) {
-      updatePhone(id, data)
+      await updatePhone(id, data)
     } else {
-      addPhone({ id: generateId(data.brand, data.model, data.storage), ...data })
+      await addPhone({ id: generateId(data.brand, data.model, data.storage), ...data })
     }
     setFormOpen(false)
     setEditPhone(undefined)
-    // Confirmation flash
-    setSaved(true); setTimeout(() => setSaved(false), 2500)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
   }
 
   function handleEdit(phone: Phone) {
@@ -624,12 +800,15 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
     setFormOpen(true)
   }
 
-  function handleDelete(phone: Phone) {
-    setDeletePhone(phone)
-  }
-
-  function confirmDelete() {
-    if (deletePhone_) { deletePhone(deletePhone_.id); setDeletePhone(undefined) }
+  async function confirmDelete() {
+    if (!deletePhone_) return
+    setDeleting(true)
+    try {
+      await deletePhone(deletePhone_.id)
+      setDeletePhone(undefined)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   function openAdd() {
@@ -666,7 +845,6 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Confirmation saved */}
             <AnimatePresence>
               {saved && (
                 <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
@@ -680,7 +858,6 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
               )}
             </AnimatePresence>
 
-            {/* View site */}
             <a href="/#occasion" target="_blank"
               className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl font-mono text-[10px] tracking-[0.18em] uppercase transition-all duration-200"
               style={{ border: '1px solid rgba(0,209,255,0.15)', background: 'rgba(0,209,255,0.04)', color: 'rgba(0,209,255,0.55)' }}
@@ -692,7 +869,6 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
               Voir le site
             </a>
 
-            {/* Logout */}
             <button onClick={onLogout}
               className="flex items-center gap-2 px-3 py-2 rounded-xl font-mono text-[10px] tracking-[0.18em] uppercase transition-all duration-200"
               style={{ border: '1px solid rgba(248,113,113,0.18)', background: 'rgba(248,113,113,0.04)', color: 'rgba(248,113,113,0.55)' }}
@@ -710,10 +886,8 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
       {/* Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-5 md:px-8 py-8">
 
-        {/* Stats */}
         <StatsBar phones={phones} />
 
-        {/* Toolbar */}
         <div className="flex items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="font-black font-space text-cold-white text-xl mb-0.5">Catalogue téléphones</h1>
@@ -733,7 +907,6 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
           </motion.button>
         </div>
 
-        {/* Grid */}
         {phones.length === 0 ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="text-center py-24 rounded-2xl"
@@ -763,7 +936,7 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
                 <PhoneDashCard
                   key={phone.id} phone={phone}
                   onEdit={() => handleEdit(phone)}
-                  onDelete={() => handleDelete(phone)}
+                  onDelete={() => setDeletePhone(phone)}
                   onStatusChange={s => updatePhone(phone.id, { status: s })}
                 />
               ))}
@@ -789,8 +962,9 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
           <DeleteModal
             key="delete"
             phone={deletePhone_}
+            deleting={deleting}
             onConfirm={confirmDelete}
-            onClose={() => setDeletePhone(undefined)}
+            onClose={() => !deleting && setDeletePhone(undefined)}
           />
         )}
       </AnimatePresence>
@@ -799,8 +973,6 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
 }
 
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
-// Le middleware Next.js garantit que l'utilisateur est authentifié avant
-// d'arriver ici. Pas besoin de gate client-side.
 
 export default function ResponsablePage() {
   const router = useRouter()
