@@ -28,6 +28,28 @@ export default function Navbar() {
     return () => window.removeEventListener('resize', fn)
   }, [])
 
+  /**
+   * Navigation mobile fiable Android + iOS.
+   *
+   * Problème : sur Android Chrome, setOpen(false) déclenche l'animation
+   * Framer Motion (height: 0 en 280ms). Pendant cette mutation DOM, le
+   * navigateur abandonne la navigation d'ancre native (href="#section").
+   * Sur iOS/WebKit le comportement est plus tolérant — d'où la différence.
+   *
+   * Correction : preventDefault() stoppe la navigation native, on ferme
+   * le menu, puis après l'animation (320ms) on scroll programmatiquement
+   * avec scrollIntoView — API fiable sur tous les moteurs mobiles.
+   */
+  function handleMobileNav(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    e.preventDefault()
+    setOpen(false)
+    const id = href.replace('#', '')
+    setTimeout(() => {
+      const el = document.getElementById(id)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 320) // légèrement supérieur à la durée d'animation (0.28s)
+  }
+
   return (
     <motion.header
       initial={{ y: -72, opacity: 0 }}
@@ -154,7 +176,7 @@ export default function Navbar() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.2, delay: i * 0.04 }}
-                  onClick={() => setOpen(false)}
+                  onClick={(e) => handleMobileNav(e, l.href)}
                   className="flex items-center gap-3 py-4 font-mono text-[11px] tracking-[0.24em] uppercase transition-colors duration-200"
                   style={{
                     color: 'rgba(234,251,255,0.78)',
