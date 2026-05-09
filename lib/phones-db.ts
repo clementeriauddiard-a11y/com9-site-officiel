@@ -1,78 +1,127 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// COM'9 — Base de données téléphones (Vercel Blob)
+// COM'9 — Base de données téléphones (Supabase PostgreSQL)
 //
-// Les téléphones sont stockés dans Vercel Blob sous la forme d'un fichier JSON.
-// En local (sans BLOB_READ_WRITE_TOKEN), utilise un stockage en mémoire.
+// Table : phones
+// Sans SUPABASE_URL/SERVICE_KEY → fallback mémoire pour dev local
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { Phone } from '@/data/phones'
+import { getSupabase } from './supabase'
+import type { Phone, PhoneCondition, PhoneStatus } from '@/data/phones'
 
-// Pathname fixe dans le store Blob
-const DATA_PATHNAME = 'com9-phones-data.json'
+const TABLE = 'phones'
 
-// Fallback mémoire pour dev local (réinitialisé à chaque redémarrage serveur)
-let _memPhones: Phone[] | null = null
+// ─── Fallback mémoire (dev local sans Supabase) ───────────────────────────────
+let _mem: Phone[] | null = null
 
-// ─── Lecture ──────────────────────────────────────────────────────────────────
+// ─── Mapping DB ↔ Phone ───────────────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToPhone(row: any): Phone {
+  return {
+    id:              String(row.id),
+    brand:           String(row.brand),
+    model:           String(row.model),
+    storage:         String(row.storage),
+    color:           String(row.color),
+    battery:         Number(row.battery),
+    condition:       String(row.condition) as PhoneCondition,
+    com9Score:       Number(row.com9score),
+    price:           Number(row.price),
+    status:          String(row.status) as PhoneStatus,
+    image:           String(row.image   ?? ''),
+    description:     String(row.description ?? ''),
+    labels:          (row.labels as string[]) ?? [],
+    whatsappMessage: String(row.whatsapp_message ?? ''),
+  }
+}
+
+function phoneToInsertRow(phone: Phone): Record<string, unknown> {
+  return {
+    id:               phone.id,
+    brand:            phone.brand,
+    model:            phone.model,
+    storage:          phone.storage,
+    color:            phone.color,
+    battery:          phone.battery,
+    condition:        phone.condition,
+    com9score:        phone.com9Score,
+    price:            phone.price,
+    status:           phone.status,
+    image:            phone.image           ?? '',
+    description:      phone.description     ?? '',
+    labels:           phone.labels,
+    whatsapp_message: phone.whatsappMessage,
+  }
+}
+
+function partialToUpdateRow(data: Partial<Phone>): Record<string, unknown> {
+  const row: Record<string, unknown> = {}
+  if (data.brand            !== undefined) row.brand            = data.brand
+  if (data.model            !== undefined) row.model            = data.model
+  if (data.storage          !== undefined) row.storage          = data.storage
+  if (data.color            !== undefined) row.color            = data.color
+  if (data.battery          !== undefined) row.battery          = data.battery
+  if (data.condition        !== undefined) row.condition        = data.condition
+  if (data.com9Score        !== undefined) row.com9score        = data.com9Score
+  if (data.price            !== undefined) row.price            = data.price
+  if (data.status           !== undefined) row.status           = data.status
+  if (data.image            !== undefined) row.image            = data.image
+  if (data.description      !== undefined) row.description      = data.description
+  if (data.labels           !== undefined) row.labels           = data.labels
+  if (data.whatsappMessage  !== undefined) row.whatsapp_message = data.whatsappMessage
+  return row
+}
+
+// ─── CRUD ─────────────────────────────────────────────────────────────────────
 
 export async function getPhones(): Promise<Phone[]> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    // Dev local : retourne les données en mémoire (vide au départ)
-    return _memPhones ? [..._memPhones] : []
-  }
+  const sb = getSupabase()
+  if (!sb) return _mem ?? []
 
-  try {
-    const { list } = await import('@vercel/blob')
-    const { blobs } = await list({ prefix: DATA_PATHNAME })
-    const blob = blobs.find(b => b.pathname === DATA_PATHNAME)
-    if (!blob) return []
+  const { data, error } = await sb
+    .from(TABLE)
+    .select('*')
+    .order('created_at', { ascending: true })
 
-    const res = await fetch(blob.url, {
-      cache: 'no-store',
-      next: { revalidate: 0 },
-    })
-    if (!res.ok) return []
-    return (await res.json()) as Phone[]
-  } catch {
-    return []
-  }
+  if (error) throw new Error(error.message)
+  return (data ?? []).map(rowToPhone)
 }
-
-// ─── Écriture (remplace tout le tableau) ──────────────────────────────────────
-
-export async function savePhones(phones: Phone[]): Promise<void> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    _memPhones = [...phones]
-    return
-  }
-
-  const { put } = await import('@vercel/blob')
-  await put(DATA_PATHNAME, JSON.stringify(phones), {
-    access: 'public',
-    addRandomSuffix: false,
-    contentType: 'application/json',
-  })
-}
-
-// ─── CRUD helpers ─────────────────────────────────────────────────────────────
 
 export async function addPhone(phone: Phone): Promise<Phone[]> {
-  const phones = await getPhones()
-  const updated = [...phones, phone]
-  await savePhones(updated)
-  return updated
+  const sb = getSupabase()
+  if (!sb) {
+    _mem = [...(_mem ?? []), phone]
+    return [..._mem]
+  }
+
+  const { error } = await sb.from(TABLE).insert(phoneToInsertRow(phone))
+  if (error) throw new Error(error.message)
+  return getPhones()
 }
 
 export async function updatePhone(id: string, data: Partial<Phone>): Promise<Phone[]> {
-  const phones = await getPhones()
-  const updated = phones.map(p => p.id === id ? { ...p, ...data } : p)
-  await savePhones(updated)
-  return updated
+  const sb = getSupabase()
+  if (!sb) {
+    _mem = (_mem ?? []).map(p => p.id === id ? { ...p, ...data } : p)
+    return [..._mem]
+  }
+
+  const row = partialToUpdateRow(data)
+  if (Object.keys(row).length === 0) return getPhones()
+
+  const { error } = await sb.from(TABLE).update(row).eq('id', id)
+  if (error) throw new Error(error.message)
+  return getPhones()
 }
 
 export async function deletePhone(id: string): Promise<Phone[]> {
-  const phones = await getPhones()
-  const updated = phones.filter(p => p.id !== id)
-  await savePhones(updated)
-  return updated
+  const sb = getSupabase()
+  if (!sb) {
+    _mem = (_mem ?? []).filter(p => p.id !== id)
+    return [...(_mem)]
+  }
+
+  const { error } = await sb.from(TABLE).delete().eq('id', id)
+  if (error) throw new Error(error.message)
+  return getPhones()
 }

@@ -1,28 +1,30 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // COM'9 — API /api/upload
-//   POST : upload d'une image vers Vercel Blob (admin uniquement)
+//   POST : upload d'une image vers Supabase Storage (admin uniquement)
 //          Accepte : multipart/form-data avec champ "file"
 //          Retourne : { url: string }
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from 'next/server'
 import { validateAdmin } from '@/lib/validate-admin'
+import { getSupabase } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const VALID_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-const MAX_SIZE    = 5 * 1024 * 1024  // 5 Mo
+const BUCKET     = 'phones-images'
+const VALID_MIME = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+const MAX_BYTES  = 5 * 1024 * 1024   // 5 Mo
 
 export async function POST(req: Request) {
   if (!validateAdmin(req)) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
-  // Vercel Blob non configuré
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  const sb = getSupabase()
+  if (!sb) {
     return NextResponse.json(
-      { error: 'Stockage non configuré. Ajoutez BLOB_READ_WRITE_TOKEN dans vos variables Vercel.' },
+      { error: 'Supabase non configuré — ajoutez SUPABASE_URL et SUPABASE_SERVICE_KEY dans Vercel.' },
       { status: 503 }
     )
   }
@@ -34,35 +36,30 @@ export async function POST(req: Request) {
     if (!file) {
       return NextResponse.json({ error: 'Aucun fichier reçu' }, { status: 400 })
     }
-
-    if (!VALID_TYPES.includes(file.type)) {
-      return NextResponse.json(
-        { error: 'Format invalide. JPG, PNG ou WebP uniquement.' },
-        { status: 400 }
-      )
+    if (!VALID_MIME.includes(file.type)) {
+      return NextResponse.json({ error: 'Format invalide. JPG, PNG ou WebP uniquement.' }, { status: 400 })
+    }
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json({ error: 'Fichier trop volumineux (max 5 Mo).' }, { status: 400 })
     }
 
-    if (file.size > MAX_SIZE) {
-      return NextResponse.json(
-        { error: 'Fichier trop volumineux (maximum 5 Mo).' },
-        { status: 400 }
-      )
-    }
+    const ext    = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
+    const suffix = Math.random().toString(36).slice(2, 8)
+    const path   = `${Date.now()}-${suffix}.${ext}`
 
-    const { put } = await import('@vercel/blob')
+    const buffer = await file.arrayBuffer()
 
-    const ext      = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
-    const suffix   = Math.random().toString(36).slice(2, 8)
-    const pathname = `phones/${Date.now()}-${suffix}.${ext}`
+    const { error: uploadError } = await sb.storage
+      .from(BUCKET)
+      .upload(path, buffer, { contentType: file.type, upsert: false })
 
-    const blob = await put(pathname, file, {
-      access: 'public',
-      contentType: file.type,
-    })
+    if (uploadError) throw new Error(uploadError.message)
 
-    return NextResponse.json({ url: blob.url })
+    const { data: { publicUrl } } = sb.storage.from(BUCKET).getPublicUrl(path)
+
+    return NextResponse.json({ url: publicUrl })
   } catch (err) {
     console.error('[upload]', err)
-    return NextResponse.json({ error: 'Erreur lors de l\'upload' }, { status: 500 })
+    return NextResponse.json({ error: "Erreur lors de l'upload" }, { status: 500 })
   }
 }
