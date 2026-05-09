@@ -1,0 +1,238 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --space-black: #050816;
+  --neon-blue: #00d1ff;
+  --electric-blue: #0066ff;
+  --cold-white: #eafbff;
+  --section-py: clamp(5rem, 8vw, 7rem);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--space-black);
+  color: var(--cold-white);
+  font-family: var(--font-space-grotesk), sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scroll offset pour navbar ─────── */
+#services, #tarifs, #diagnostic, #occasion, #contact {
+  scroll-margin-top: 72px;
+}
+
+/* ─── Scrollbar ─────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,209,255,0.18); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,209,255,0.38); }
+::selection { background: rgba(0,209,255,0.22); color: #eafbff; }
+
+/* ─── Focus visible ──────────────────── */
+:focus-visible {
+  outline: 1.5px solid rgba(0,209,255,0.5);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ─── Glassmorphism card ─────────────── */
+.glass-card {
+  background: linear-gradient(160deg, rgba(0,209,255,0.04) 0%, rgba(0,30,60,0.22) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(0,209,255,0.09);
+  box-shadow:
+    0 2px 20px rgba(0,0,0,0.35),
+    0 8px 40px rgba(0,0,0,0.25),
+    inset 0 1px 0 rgba(0,209,255,0.07);
+  transition: transform 0.45s cubic-bezier(0.23,1,0.32,1),
+              border-color 0.45s cubic-bezier(0.23,1,0.32,1),
+              box-shadow 0.45s cubic-bezier(0.23,1,0.32,1),
+              background 0.45s cubic-bezier(0.23,1,0.32,1);
+}
+
+@media (hover: hover) {
+  .glass-card:hover {
+    background: linear-gradient(160deg, rgba(0,209,255,0.065) 0%, rgba(0,30,60,0.32) 100%);
+    border-color: rgba(0,209,255,0.2);
+    box-shadow:
+      0 0 0 1px rgba(0,209,255,0.04),
+      0 16px 56px rgba(0,0,0,0.55),
+      0 0 70px rgba(0,102,255,0.07),
+      inset 0 1px 0 rgba(0,209,255,0.1);
+    transform: translateY(-3px);
+  }
+}
+
+/* ─── Gradient text ──────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #00d1ff 0%, #4da6ff 35%, #0066ff 65%, #00d1ff 100%);
+  background-size: 260% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 6s linear infinite;
+}
+
+/* ─── Neon glow ──────────────────────── */
+.glow-text {
+  animation: glowPulse 3.5s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    text-shadow:
+      0 0 18px rgba(0,209,255,0.35),
+      0 0 36px rgba(0,209,255,0.18);
+  }
+  50% {
+    text-shadow:
+      0 0 36px rgba(0,209,255,0.7),
+      0 0 72px rgba(0,209,255,0.4),
+      0 0 110px rgba(0,102,255,0.25);
+  }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 0% center; }
+  100% { background-position: 260% center; }
+}
+
+/* ─── Grid overlay ───────────────────── */
+.grid-overlay {
+  background-image:
+    linear-gradient(rgba(0,209,255,0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,209,255,0.022) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* ─── Neon button ────────────────────── */
+.neon-btn {
+  position: relative;
+  overflow: hidden;
+}
+.neon-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,209,255,0.12), rgba(0,102,255,0.08));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.neon-btn:hover::before { opacity: 1; }
+
+/* ─── Section label ──────────────────── */
+.section-label {
+  font-family: var(--font-space-mono), monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(0,209,255,0.6);
+}
+
+/* ─── Premium border ─────────────────── */
+.premium-border {
+  position: relative;
+}
+.premium-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(0,209,255,0.28) 0%, transparent 50%, rgba(0,102,255,0.18) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ─── HUD line ───────────────────────── */
+.hud-line {
+  position: relative;
+}
+.hud-line::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 2rem;
+  height: 1px;
+  background: linear-gradient(to right, var(--neon-blue), transparent);
+  transform: translateY(-50%);
+}
+
+/* ─── Phone mockup ───────────────────── */
+.phone-mockup {
+  position: relative;
+  width: 160px;
+  height: 320px;
+  background: linear-gradient(145deg, #0d1424, #0a0f1e);
+  border-radius: 28px;
+  border: 2px solid rgba(0,209,255,0.22);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.8),
+    0 30px 80px rgba(0,0,0,0.8),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.phone-screen {
+  position: absolute;
+  top: 20px; left: 8px; right: 8px; bottom: 20px;
+  border-radius: 20px;
+  overflow: hidden;
+}
+.phone-notch {
+  position: absolute;
+  top: 8px; left: 50%;
+  transform: translateX(-50%);
+  width: 50px; height: 5px;
+  background: rgba(0,0,0,0.8);
+  border-radius: 4px;
+  z-index: 2;
+}
+
+/* ─── Diagnostic print ───────────────── */
+.diag-print-sheet { display: none; }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body > * { display: none !important; }
+  #diag-print-portal { display: block !important; }
+  .diag-print-sheet {
+    display: block !important;
+    width: 100%; height: 100%;
+    background: #050816 !important;
+    color: #eafbff !important;
+    font-family: 'Space Grotesk', sans-serif;
+    page-break-inside: avoid;
+  }
+  .diag-print-sheet * { page-break-inside: avoid; }
+}
+
+/* ─── Mobile overrides ───────────────── */
+@media (max-width: 640px) {
+  .glass-card { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+}
