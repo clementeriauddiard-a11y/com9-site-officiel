@@ -63,7 +63,7 @@ export default function Services() {
             Expertise <span className="gradient-text">Chirurgicale</span>
           </h2>
           <p className="font-space max-w-xs mx-auto text-sm leading-relaxed"
-            style={{ color: 'rgba(234,251,255,0.62)', fontSize: 'clamp(0.82rem, 2vw, 0.875rem)' }}>
+            style={{ color: 'rgba(255,255,255,0.88)', fontSize: 'clamp(0.82rem, 2vw, 0.875rem)' }}>
             Chaque intervention est une opération de précision.<br className="hidden sm:block" /> Protocoles avancés, composants premium.
           </p>
         </motion.div>
@@ -88,9 +88,9 @@ export default function Services() {
 
               {/* Header row */}
               <div className="flex items-center justify-between mb-5">
-                <span className="font-mono text-[10px] tracking-[0.25em]" style={{ color: 'rgba(0,209,255,0.22)' }}>{s.num}</span>
+                <span className="font-mono text-[10px] tracking-[0.25em]" style={{ color: 'rgba(0,209,255,0.65)' }}>{s.num}</span>
                 <span className="font-mono text-[8.5px] tracking-[0.14em] uppercase px-2 py-0.5 rounded"
-                  style={{ border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)', color: 'rgba(234,251,255,0.18)' }}>
+                  style={{ border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.60)' }}>
                   {s.tag}
                 </span>
               </div>
@@ -100,16 +100,16 @@ export default function Services() {
                 style={{
                   background: 'rgba(0,209,255,0.04)',
                   border: '1px solid rgba(0,209,255,0.1)',
-                  color: 'rgba(0,209,255,0.45)',
+                  color: 'rgba(0,209,255,0.80)',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#00d1ff'; e.currentTarget.style.background = 'rgba(0,209,255,0.08)' }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(0,209,255,0.45)'; e.currentTarget.style.background = 'rgba(0,209,255,0.04)' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#00d1ff'; e.currentTarget.style.background = 'rgba(0,209,255,0.12)' }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(0,209,255,0.80)'; e.currentTarget.style.background = 'rgba(0,209,255,0.04)' }}
               >
                 {s.icon}
               </div>
 
               <h3 className="text-cold-white font-bold font-space text-sm mb-2.5 tracking-wide">{s.title}</h3>
-              <p className="font-space text-[12.5px] leading-relaxed" style={{ color: 'rgba(234,251,255,0.62)' }}>{s.desc}</p>
+              <p className="font-space text-[12.5px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.88)' }}>{s.desc}</p>
 
               {/* Hover underline */}
               <div className="mt-5 h-px w-0 group-hover:w-full transition-all duration-500"

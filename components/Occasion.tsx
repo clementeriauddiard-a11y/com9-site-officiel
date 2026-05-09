@@ -103,7 +103,7 @@ function CertifiedBlock({ labels }: { labels: string[] }) {
             />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-[8px] tracking-[0.3em] uppercase" style={{ color: 'rgba(0,209,255,0.5)' }}>
+            <div className="font-mono text-[8px] tracking-[0.3em] uppercase" style={{ color: 'rgba(0,209,255,0.90)' }}>
               Com&apos;9
             </div>
             <div className="font-black font-space tracking-widest" style={{ fontSize: '0.72rem', color: '#eafbff' }}>
@@ -133,7 +133,7 @@ function CertifiedBlock({ labels }: { labels: string[] }) {
                 style={{ background: 'rgba(0,209,255,0.08)' }}>
                 <CheckIcon />
               </div>
-              <span className="font-mono leading-tight truncate" style={{ fontSize: '0.58rem', letterSpacing: '0.06em', color: 'rgba(234,251,255,0.52)' }}>
+              <span className="font-mono leading-tight truncate" style={{ fontSize: '0.58rem', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.88)' }}>
                 {label}
               </span>
             </div>
@@ -207,7 +207,7 @@ function TrustBanner() {
             </div>
 
             <div>
-              <div className="font-mono text-[8.5px] tracking-[0.35em] uppercase mb-1" style={{ color: 'rgba(0,209,255,0.55)' }}>
+              <div className="font-mono text-[8.5px] tracking-[0.35em] uppercase mb-1" style={{ color: 'rgba(0,209,255,0.92)' }}>
                 Protocole de certification
               </div>
               <h3 className="font-black font-space tracking-wider" style={{ fontSize: 'clamp(1rem, 3vw, 1.4rem)', color: '#eafbff', letterSpacing: '0.06em' }}>
@@ -232,7 +232,7 @@ function TrustBanner() {
         </div>
 
         {/* Description */}
-        <p className="font-space text-sm leading-relaxed mb-5 max-w-lg" style={{ color: 'rgba(234,251,255,0.42)' }}>
+        <p className="font-space text-sm leading-relaxed mb-5 max-w-lg" style={{ color: 'rgba(255,255,255,0.85)' }}>
           Chaque appareil est vérifié et validé par le système de diagnostic Com&apos;9.
           Chaque point de contrôle est documenté avant toute mise en vente.
         </p>
@@ -254,7 +254,7 @@ function TrustBanner() {
                 style={{ background: 'rgba(0,209,255,0.1)', border: '1px solid rgba(0,209,255,0.2)' }}>
                 <CertIcon type={pt.icon} />
               </div>
-              <span className="font-mono leading-tight" style={{ fontSize: '0.6rem', letterSpacing: '0.06em', color: 'rgba(234,251,255,0.55)' }}>
+              <span className="font-mono leading-tight" style={{ fontSize: '0.6rem', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.88)' }}>
                 {pt.label}
               </span>
             </motion.div>
@@ -364,7 +364,7 @@ function PhoneCard({ phone, index }: { phone: Phone; index: number }) {
         <div className="absolute top-3 right-3 z-20 flex flex-col items-center justify-center w-11 h-11 rounded-full"
           style={{ background: 'rgba(5,8,22,0.9)', border: '1px solid rgba(0,209,255,0.3)', backdropFilter: 'blur(12px)', boxShadow: '0 0 16px rgba(0,209,255,0.15)' }}>
           <span className="font-black font-space text-neon-blue text-sm leading-none">{phone.com9Score}</span>
-          <span className="font-mono text-[7px] leading-none mt-0.5" style={{ color: 'rgba(234,251,255,0.3)' }}>/100</span>
+          <span className="font-mono text-[7px] leading-none mt-0.5" style={{ color: 'rgba(255,255,255,0.72)' }}>/100</span>
         </div>
       </div>
 
@@ -378,13 +378,13 @@ function PhoneCard({ phone, index }: { phone: Phone; index: number }) {
             {[phone.storage, phone.color].map((tag) => (
               <span key={tag}
                 className="font-mono text-[9px] tracking-[0.12em] px-2 py-0.5 rounded"
-                style={{ color: 'rgba(234,251,255,0.4)', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                style={{ color: 'rgba(255,255,255,0.80)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.11)' }}>
                 {tag}
               </span>
             ))}
           </div>
           {phone.description && (
-            <p className="font-space text-[11px] leading-relaxed mt-2" style={{ color: 'rgba(234,251,255,0.28)' }}>
+            <p className="font-space text-[11px] leading-relaxed mt-2" style={{ color: 'rgba(255,255,255,0.75)' }}>
               {phone.description}
             </p>
           )}
@@ -397,7 +397,7 @@ function PhoneCard({ phone, index }: { phone: Phone; index: number }) {
               <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.2" className="w-2.5 h-2.5" style={{ color: 'rgba(0,209,255,0.5)' }}>
                 <rect x="0.5" y="2.5" width="9" height="7" rx="1"/><path d="M11 5v2"/><path d="M2.5 6h4"/>
               </svg>
-              <span className="font-mono text-[9px] tracking-[0.15em] uppercase" style={{ color: 'rgba(234,251,255,0.28)' }}>
+              <span className="font-mono text-[9px] tracking-[0.15em] uppercase" style={{ color: 'rgba(255,255,255,0.72)' }}>
                 Batterie
               </span>
             </div>
@@ -526,13 +526,13 @@ function EmptyState() {
             </svg>
           </div>
 
-          <div className="font-mono text-[9px] tracking-[0.3em] uppercase mb-3" style={{ color: 'rgba(0,209,255,0.5)' }}>
+          <div className="font-mono text-[9px] tracking-[0.3em] uppercase mb-3" style={{ color: 'rgba(0,209,255,0.92)' }}>
             Bientôt disponible
           </div>
           <h3 className="font-black font-space text-cold-white text-xl mb-3 leading-tight">
             Les appareils certifiés<br />arrivent prochainement
           </h3>
-          <p className="font-space text-sm mb-8 max-w-xs mx-auto leading-relaxed" style={{ color: 'rgba(234,251,255,0.32)' }}>
+          <p className="font-space text-sm mb-8 max-w-xs mx-auto leading-relaxed" style={{ color: 'rgba(255,255,255,0.82)' }}>
             Rejoins notre liste WhatsApp pour être alerté en priorité dès la mise en ligne.
           </p>
 
@@ -600,7 +600,7 @@ export default function Occasion() {
             <span className="gradient-text">Marketplace</span>
           </h2>
           <p className="font-space max-w-md mx-auto text-sm leading-relaxed"
-            style={{ color: 'rgba(234,251,255,0.32)' }}>
+            style={{ color: 'rgba(255,255,255,0.85)' }}>
             Chaque appareil est diagnostiqué sur 100 points et certifié par nos techniciens avant mise en vente.
           </p>
         </motion.div>
@@ -624,7 +624,7 @@ export default function Occasion() {
                   onClick={() => setActiveBrand(brand)}
                   className="px-4 py-2 rounded-xl font-mono text-[10px] tracking-[0.15em] uppercase transition-all duration-250"
                   style={{
-                    color:      activeBrand === brand ? '#00d1ff' : 'rgba(234,251,255,0.35)',
+                    color:      activeBrand === brand ? '#00d1ff' : 'rgba(255,255,255,0.72)',
                     background: activeBrand === brand ? 'rgba(0,209,255,0.1)' : 'transparent',
                     border:     activeBrand === brand ? '1px solid rgba(0,209,255,0.25)' : '1px solid transparent',
                   }}>

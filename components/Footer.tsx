@@ -71,12 +71,12 @@ export default function Footer() {
               </span>
             </div>
             <p className="font-mono text-[8.5px] tracking-[0.28em] uppercase mb-4"
-              style={{ color: 'rgba(0,209,255,0.45)' }}>
+              style={{ color: 'rgba(0,209,255,0.88)' }}>
               Next Generation Mobile Systems
             </p>
-            <p className="font-space text-xs leading-relaxed" style={{ color: 'rgba(234,251,255,0.58)' }}>
+            <p className="font-space text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.88)' }}>
               Réparation & reconditionnement<br />de smartphones.
-              <span style={{ color: 'rgba(234,251,255,0.45)' }}> Nogent-le-Rotrou · 28.</span>
+              <span style={{ color: 'rgba(255,255,255,0.72)' }}> Nogent-le-Rotrou · 28.</span>
             </p>
 
             {/* Social icons */}
@@ -112,16 +112,16 @@ export default function Footer() {
             className="md:mx-auto"
           >
             <p className="font-mono text-[8.5px] tracking-[0.28em] uppercase mb-5"
-              style={{ color: 'rgba(0,209,255,0.38)' }}>Navigation</p>
+              style={{ color: 'rgba(0,209,255,0.85)' }}>Navigation</p>
             <nav className="flex flex-col gap-2.5">
               {navLinks.map((l) => (
                 <a
                   key={l.href}
                   href={l.href}
                   className="group flex items-center gap-2.5 font-mono text-[10px] tracking-[0.2em] uppercase transition-colors duration-250"
-                  style={{ color: 'rgba(234,251,255,0.58)', minHeight: '36px' }}
+                  style={{ color: 'rgba(255,255,255,0.88)', minHeight: '36px' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#00d1ff'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(234,251,255,0.58)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.88)'}
                 >
                   <span className="w-3.5 h-px transition-all duration-250 group-hover:w-5"
                     style={{ background: 'rgba(0,209,255,0.38)' }} />
@@ -140,7 +140,7 @@ export default function Footer() {
             className="md:ml-auto"
           >
             <p className="font-mono text-[8.5px] tracking-[0.28em] uppercase mb-5"
-              style={{ color: 'rgba(0,209,255,0.38)' }}>Informations</p>
+              style={{ color: 'rgba(0,209,255,0.85)' }}>Informations</p>
             <div className="space-y-4">
               {[
                 { icon: '◎', label: 'Zone',    value: 'Nogent-le-Rotrou · 28400'  },
@@ -148,13 +148,13 @@ export default function Footer() {
                 { icon: '◈', label: 'Contact', value: 'WhatsApp prioritaire'       },
               ].map((info) => (
                 <div key={info.label} className="flex items-start gap-3">
-                  <span className="font-mono text-xs mt-0.5 shrink-0" style={{ color: 'rgba(0,209,255,0.4)' }}>
+                  <span className="font-mono text-xs mt-0.5 shrink-0" style={{ color: 'rgba(0,209,255,0.88)' }}>
                     {info.icon}
                   </span>
                   <div>
                     <span className="block font-mono text-[8.5px] tracking-[0.2em] uppercase mb-0.5"
-                      style={{ color: 'rgba(234,251,255,0.18)' }}>{info.label}</span>
-                    <span className="font-space text-[12px]" style={{ color: 'rgba(234,251,255,0.72)' }}>
+                      style={{ color: 'rgba(255,255,255,0.60)' }}>{info.label}</span>
+                    <span className="font-space text-[12px]" style={{ color: 'rgba(255,255,255,0.92)' }}>
                       {info.value}
                     </span>
                   </div>
@@ -173,7 +173,7 @@ export default function Footer() {
           className="py-5 flex flex-col sm:flex-row items-center justify-between gap-3"
         >
           <p className="font-mono text-[8.5px] tracking-[0.2em] uppercase"
-            style={{ color: 'rgba(234,251,255,0.15)' }}>
+            style={{ color: 'rgba(255,255,255,0.52)' }}>
             © {new Date().getFullYear()} COM&apos;9 — Tous droits réservés
           </p>
           <div className="flex items-center gap-2">
@@ -184,7 +184,7 @@ export default function Footer() {
               style={{ background: 'rgba(0,209,255,0.55)' }}
             />
             <span className="font-mono text-[8.5px] tracking-[0.2em] uppercase"
-              style={{ color: 'rgba(0,209,255,0.3)' }}>
+              style={{ color: 'rgba(0,209,255,0.78)' }}>
               Système opérationnel
             </span>
           </div>

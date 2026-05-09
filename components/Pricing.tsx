@@ -56,11 +56,11 @@ function SerieBlock({ serie, tierLabels }: { serie: RepairCategory['series'][num
       >
         <div className="flex items-center gap-3">
           <span className="text-base leading-none">{serie.icon}</span>
-          <span className="font-space text-sm font-semibold" style={{ color: open ? '#eafbff' : 'rgba(234,251,255,0.82)' }}>
+          <span className="font-space text-sm font-semibold" style={{ color: open ? '#ffffff' : 'rgba(255,255,255,0.94)' }}>
             {serie.serie}
           </span>
           <span className="font-mono text-[9px] tracking-[0.15em] uppercase px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(0,209,255,0.07)', color: 'rgba(0,209,255,0.5)', border: '1px solid rgba(0,209,255,0.1)' }}>
+            style={{ background: 'rgba(0,209,255,0.07)', color: 'rgba(0,209,255,0.88)', border: '1px solid rgba(0,209,255,0.18)' }}>
             {serie.rows.length} modèles
           </span>
         </div>
@@ -90,9 +90,9 @@ function SerieBlock({ serie, tierLabels }: { serie: RepairCategory['series'][num
             {/* Column headers */}
             <div className="grid grid-cols-3 px-5 py-2.5 font-mono text-[9px] tracking-[0.2em] uppercase"
               style={{ borderTop: '1px solid rgba(0,209,255,0.08)', background: 'rgba(0,0,0,0.18)' }}>
-              <span style={{ color: 'rgba(234,251,255,0.25)' }}>Modèle</span>
-              <span className="text-center" style={{ color: 'rgba(234,251,255,0.35)' }}>{tierLabels.compatible}</span>
-              <span className="text-right" style={{ color: 'rgba(0,209,255,0.65)' }}>{tierLabels.premium}</span>
+              <span style={{ color: 'rgba(255,255,255,0.68)' }}>Modèle</span>
+              <span className="text-center" style={{ color: 'rgba(255,255,255,0.75)' }}>{tierLabels.compatible}</span>
+              <span className="text-right" style={{ color: 'rgba(0,209,255,0.95)' }}>{tierLabels.premium}</span>
             </div>
 
             <div className="divide-y" style={{ borderColor: 'rgba(0,209,255,0.04)' }}>
@@ -103,8 +103,8 @@ function SerieBlock({ serie, tierLabels }: { serie: RepairCategory['series'][num
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,209,255,0.04)')}
                   onMouseLeave={e => (e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.08)')}
                 >
-                  <span className="font-space text-xs pr-2" style={{ color: 'rgba(234,251,255,0.80)' }}>{row.model}</span>
-                  <span className="text-center font-mono text-xs font-bold" style={{ color: 'rgba(234,251,255,0.68)' }}>
+                  <span className="font-space text-xs pr-2" style={{ color: 'rgba(255,255,255,0.96)' }}>{row.model}</span>
+                  <span className="text-center font-mono text-xs font-bold" style={{ color: 'rgba(255,255,255,0.88)' }}>
                     {row.compatible} €
                   </span>
                   <div className="flex justify-end">
@@ -132,13 +132,13 @@ function RepairTab({ cat }: { cat: RepairCategory }) {
       <div className="flex items-center gap-5 mb-6 px-1">
         <div className="flex items-center gap-2.5">
           <div className="w-5 h-px" style={{ background: 'rgba(234,251,255,0.3)' }} />
-          <span className="font-mono text-[9px] tracking-[0.18em] uppercase" style={{ color: 'rgba(234,251,255,0.38)' }}>
+          <span className="font-mono text-[9px] tracking-[0.18em] uppercase" style={{ color: 'rgba(255,255,255,0.75)' }}>
             {cat.tierLabels.compatible} — {cat.tierDesc.compatible}
           </span>
         </div>
         <div className="flex items-center gap-2.5">
           <div className="w-5 h-px" style={{ background: 'rgba(0,209,255,0.8)' }} />
-          <span className="font-mono text-[9px] tracking-[0.18em] uppercase" style={{ color: 'rgba(0,209,255,0.65)' }}>
+          <span className="font-mono text-[9px] tracking-[0.18em] uppercase" style={{ color: 'rgba(0,209,255,0.95)' }}>
             {cat.tierLabels.premium} — {cat.tierDesc.premium}
           </span>
         </div>
@@ -175,12 +175,12 @@ function DiagnosticTab() {
           <div className="font-black font-space text-neon-blue mb-1" style={{ fontSize: 'clamp(2.5rem, 7vw, 3.5rem)', lineHeight: 1 }}>
             Gratuit
           </div>
-          <p className="font-mono text-[9px] tracking-[0.25em] uppercase mt-2" style={{ color: 'rgba(0,209,255,0.4)' }}>{diagnostic.note}</p>
+          <p className="font-mono text-[9px] tracking-[0.25em] uppercase mt-2" style={{ color: 'rgba(0,209,255,0.88)' }}>{diagnostic.note}</p>
         </div>
 
         {/* Inclus */}
         <div className="px-8 py-6">
-          <p className="font-mono text-[9px] tracking-[0.25em] uppercase mb-4" style={{ color: 'rgba(234,251,255,0.25)' }}>Ce qui est inclus</p>
+          <p className="font-mono text-[9px] tracking-[0.25em] uppercase mb-4" style={{ color: 'rgba(255,255,255,0.68)' }}>Ce qui est inclus</p>
           <ul className="space-y-3">
             {diagnostic.inclus.map((item) => (
               <li key={item} className="flex items-start gap-3">
@@ -190,7 +190,7 @@ function DiagnosticTab() {
                     <path d="M2 6l3 3 5-5"/>
                   </svg>
                 </div>
-                <span className="font-space text-sm leading-relaxed" style={{ color: 'rgba(234,251,255,0.6)' }}>{item}</span>
+                <span className="font-space text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.92)' }}>{item}</span>
               </li>
             ))}
           </ul>
@@ -257,7 +257,7 @@ export default function Pricing() {
           <h2 className="font-black font-space text-cold-white mb-5" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', letterSpacing: '-0.025em' }}>
             Tarification <span className="gradient-text">Transparente</span>
           </h2>
-          <p className="font-space text-sm max-w-sm mx-auto leading-relaxed" style={{ color: 'rgba(234,251,255,0.62)' }}>
+          <p className="font-space text-sm max-w-sm mx-auto leading-relaxed" style={{ color: 'rgba(255,255,255,0.88)' }}>
             Prix réels, sans surprise. iPhone uniquement pour le moment.
           </p>
         </motion.div>
@@ -281,13 +281,13 @@ export default function Pricing() {
                   onClick={() => setActiveTab(tab.id)}
                   className="relative flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-2 sm:px-5 py-2.5 rounded-xl font-mono text-[10px] sm:text-[11px] tracking-[0.1em] sm:tracking-[0.14em] uppercase transition-all duration-300 min-w-0"
                   style={{
-                    color:      isActive ? '#00d1ff' : 'rgba(234,251,255,0.35)',
+                    color:      isActive ? '#00d1ff' : 'rgba(255,255,255,0.72)',
                     background: isActive ? 'rgba(0,209,255,0.1)' : 'transparent',
                     border:     isActive ? '1px solid rgba(0,209,255,0.25)' : '1px solid transparent',
                     boxShadow:  isActive ? '0 0 20px rgba(0,209,255,0.08)' : 'none',
                   }}
                 >
-                  <span className="shrink-0" style={{ color: isActive ? '#00d1ff' : 'rgba(234,251,255,0.3)' }}>
+                  <span className="shrink-0" style={{ color: isActive ? '#00d1ff' : 'rgba(255,255,255,0.62)' }}>
                     {TabIcons[tab.id]}
                   </span>
                   <span className="truncate">{tab.label}</span>
@@ -325,7 +325,7 @@ export default function Pricing() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8"
             style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(0,209,255,0.08)' }}>
             <span className="w-1 h-1 rounded-full" style={{ background: 'rgba(0,209,255,0.5)' }} />
-            <p className="font-mono text-[9px] tracking-[0.2em] uppercase" style={{ color: 'rgba(234,251,255,0.25)' }}>
+            <p className="font-mono text-[9px] tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.68)' }}>
               Garantie pièces & main d&apos;œuvre — CB / Espèces / Virement
             </p>
           </div>

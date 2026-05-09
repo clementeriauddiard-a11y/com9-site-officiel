@@ -144,7 +144,7 @@ export default function Hero() {
           <motion.p
             variants={item}
             className="font-mono tracking-[0.18em] mb-5"
-            style={{ fontSize: 'clamp(0.62rem, 1.8vw, 0.72rem)', color: 'rgba(234,251,255,0.62)' }}
+            style={{ fontSize: 'clamp(0.62rem, 1.8vw, 0.72rem)', color: 'rgba(255,255,255,0.90)' }}
           >
             📍 Nogent-le-Rotrou · Eure-et-Loir
           </motion.p>

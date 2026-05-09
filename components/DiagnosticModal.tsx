@@ -232,7 +232,7 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
               <span className="w-px h-3.5" style={{ background: 'rgba(0,209,255,0.2)' }} />
               <span className="font-mono text-[9px] tracking-[0.28em] uppercase" style={{ color: 'rgba(0,209,255,0.45)' }}>Diagnostic</span>
               <span className="font-mono text-[8px] tracking-[0.15em] uppercase px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(0,209,255,0.1)', border: '1px solid rgba(0,209,255,0.25)', color: '#00d1ff' }}>
+                style={{ background: 'rgba(0,209,255,0.12)', border: '1px solid rgba(0,209,255,0.4)', color: '#00d1ff' }}>
                 Premium
               </span>
             </div>
@@ -248,15 +248,15 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                   style={{ background: 'linear-gradient(to right, rgba(0,102,255,0.8), #00d1ff)' }}
                 />
               </div>
-              <span className="font-mono text-[10px] text-cold-white/30 tabular-nums shrink-0">{step + 1}/{TOTAL_STEPS}</span>
+              <span className="font-mono text-[10px] text-cold-white/75 tabular-nums shrink-0">{step + 1}/{TOTAL_STEPS}</span>
             </div>
           )}
 
           <button onClick={onClose}
             className="font-mono text-[10px] tracking-[0.2em] uppercase transition-colors duration-200"
-            style={{ color: 'rgba(234,251,255,0.3)' }}
-            onMouseEnter={e => e.currentTarget.style.color = 'rgba(234,251,255,0.7)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'rgba(234,251,255,0.3)'}
+            style={{ color: 'rgba(255,255,255,0.65)' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.95)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.65)'}
           >
             ✕ Fermer
           </button>
@@ -298,20 +298,20 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                     style={{ background: 'rgba(0,209,255,0.08)', border: '1px solid rgba(0,209,255,0.25)' }}>
                     <span className="font-black font-space text-neon-blue text-lg leading-none">4,99 €</span>
                   </div>
-                  <span className="font-space text-xs" style={{ color: 'rgba(234,251,255,0.35)' }}>
+                  <span className="font-space text-xs" style={{ color: 'rgba(255,255,255,0.78)' }}>
                     Déduit si réparation
                   </span>
                 </div>
 
-                <p className="font-space text-sm mb-8 max-w-sm" style={{ color: 'rgba(234,251,255,0.4)' }}>
+                <p className="font-space text-sm mb-8 max-w-sm" style={{ color: 'rgba(255,255,255,0.82)' }}>
                   Analyse avancée sur 100 points. Validation complète de tous les composants.
                 </p>
 
                 <div className="w-full rounded-2xl p-5 mb-8 text-left space-y-3" style={{ border: '1px solid rgba(0,209,255,0.1)', background: 'rgba(0,209,255,0.02)' }}>
-                  <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-cold-white/30 mb-4">Informations (optionnel)</p>
+                  <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-cold-white/75 mb-4">Informations (optionnel)</p>
                   {(['client', 'modele', 'technicien'] as const).map((key) => (
                     <div key={key}>
-                      <label className="block font-mono text-[10px] tracking-widest uppercase text-cold-white/30 mb-1.5">
+                      <label className="block font-mono text-[10px] tracking-widest uppercase text-cold-white/75 mb-1.5">
                         {key === 'client' ? 'Client' : key === 'modele' ? 'Modèle' : 'Technicien'}
                       </label>
                       <input type="text" value={info[key]}
@@ -333,7 +333,7 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                   {DIAG_CATEGORIES.map(c => (
                     <div key={c.id} className="flex flex-col items-center gap-1 py-2 rounded-xl" style={{ border: '1px solid rgba(0,209,255,0.06)', background: 'rgba(0,209,255,0.02)' }}>
                       <span className="text-lg">{c.icon}</span>
-                      <span className="font-mono text-[9px] text-neon-blue/60">/{c.max}</span>
+                      <span className="font-mono text-[9px] text-neon-blue/90">/{c.max}</span>
                     </div>
                   ))}
                 </div>
@@ -349,47 +349,47 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                     <span className="text-3xl">{cat.icon}</span>
                     <div>
                       <h3 className="font-black font-space text-cold-white text-lg leading-tight">{cat.label}</h3>
-                      <p className="font-mono text-[10px] text-cold-white/30 tracking-widest">Note sur {cat.max} pts</p>
+                      <p className="font-mono text-[10px] text-cold-white/72 tracking-widest">Note sur {cat.max} pts</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="font-black font-space text-neon-blue text-2xl">{clamp(current.base + current.malus, 0, cat.max)}</div>
-                    <div className="font-mono text-[10px] text-cold-white/20">/ {cat.max}</div>
+                    <div className="font-mono text-[10px] text-cold-white/60">/ {cat.max}</div>
                   </div>
                 </div>
 
-                <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-cold-white/30 mb-3">État observé</p>
+                <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-cold-white/75 mb-3">État observé</p>
                 <div className="space-y-2 mb-6">
                   {cat.options.map((opt, oi) => {
                     const sel = current.base === opt.value
                     return (
                       <button key={`opt-${oi}`} onClick={() => setBase(opt.value)}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-all duration-200 ${sel ? 'border-neon-blue/50 bg-neon-blue/8 text-cold-white' : 'border-white/6 bg-white/2 text-cold-white/50 hover:border-white/15 hover:text-cold-white/70'}`}>
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-left transition-all duration-200 ${sel ? 'border-neon-blue/50 bg-neon-blue/8 text-cold-white' : 'border-white/10 bg-white/3 text-cold-white/78 hover:border-white/22 hover:text-cold-white/95'}`}>
                         <div className="flex items-center gap-3">
-                          <span className={`w-3 h-3 rounded-full border-2 shrink-0 transition-colors ${sel ? 'border-neon-blue bg-neon-blue' : 'border-white/20'}`} />
+                          <span className={`w-3 h-3 rounded-full border-2 shrink-0 transition-colors ${sel ? 'border-neon-blue bg-neon-blue' : 'border-white/35'}`} />
                           <div>
                             <span className="font-space text-sm">{opt.label}</span>
-                            {opt.desc && <span className="font-mono text-[10px] text-cold-white/30 ml-2">{opt.desc}</span>}
+                            {opt.desc && <span className="font-mono text-[10px] text-cold-white/70 ml-2">{opt.desc}</span>}
                           </div>
                         </div>
-                        <span className={`font-mono text-xs font-bold tabular-nums shrink-0 ${sel ? 'text-neon-blue' : 'text-cold-white/25'}`}>{opt.value}/{cat.max}</span>
+                        <span className={`font-mono text-xs font-bold tabular-nums shrink-0 ${sel ? 'text-neon-blue' : 'text-cold-white/65'}`}>{opt.value}/{cat.max}</span>
                       </button>
                     )
                   })}
                 </div>
 
-                <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-cold-white/30 mb-3">Malus expert</p>
+                <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-cold-white/75 mb-3">Malus expert</p>
                 <div className="space-y-2 mb-8">
                   {cat.malus.map((m, mi) => {
                     const sel = current.malus === m.value
                     return (
                       <button key={`malus-${mi}`} onClick={() => setMalus(m.value)}
-                        className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-left transition-all duration-200 ${sel ? 'border-neon-blue/40 bg-neon-blue/5 text-cold-white' : 'border-white/6 bg-transparent text-cold-white/40 hover:border-white/12'}`}>
+                        className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border text-left transition-all duration-200 ${sel ? 'border-neon-blue/40 bg-neon-blue/5 text-cold-white' : 'border-white/10 bg-transparent text-cold-white/80 hover:border-white/20'}`}>
                         <div className="flex items-center gap-3">
-                          <span className={`w-2.5 h-2.5 rounded-full border-2 shrink-0 ${sel ? 'border-neon-blue bg-neon-blue' : 'border-white/15'}`} />
+                          <span className={`w-2.5 h-2.5 rounded-full border-2 shrink-0 ${sel ? 'border-neon-blue bg-neon-blue' : 'border-white/30'}`} />
                           <span className="font-space text-sm">{m.label}</span>
                         </div>
-                        <span className={`font-mono text-xs font-bold tabular-nums shrink-0 ${m.value < 0 ? 'text-red-400/70' : sel ? 'text-neon-blue/60' : 'text-cold-white/20'}`}>
+                        <span className={`font-mono text-xs font-bold tabular-nums shrink-0 ${m.value < 0 ? 'text-red-400' : sel ? 'text-neon-blue' : 'text-cold-white/65'}`}>
                           {m.value === 0 ? '—' : m.value}
                         </span>
                       </button>
@@ -399,7 +399,7 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
 
                 <div className="flex gap-3">
                   <button onClick={() => setStep(s => s - 1)}
-                    className="flex-1 py-3.5 rounded-full border border-white/10 text-cold-white/40 font-mono text-[11px] tracking-[0.2em] uppercase hover:border-white/20 hover:text-cold-white/60 transition-all">
+                    className="flex-1 py-3.5 rounded-full border border-white/18 text-cold-white/78 font-mono text-[11px] tracking-[0.2em] uppercase hover:border-white/32 hover:text-cold-white/95 transition-all">
                     ← Précédent
                   </button>
                   <motion.button onClick={() => setStep(s => s + 1)} whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.97 }}
@@ -417,10 +417,10 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
 
                 {/* Score */}
                 <div className="rounded-3xl p-8 text-center mb-6" style={{ border: '1px solid rgba(0,209,255,0.2)', background: 'linear-gradient(135deg, rgba(0,102,255,0.08) 0%, rgba(0,209,255,0.03) 100%)' }}>
-                  {info.modele && <p className="font-mono text-[10px] tracking-widest uppercase text-cold-white/30 mb-1">{info.modele}</p>}
-                  {info.client && <p className="font-space text-sm text-cold-white/50 mb-3">{info.client}</p>}
+                  {info.modele && <p className="font-mono text-[10px] tracking-widest uppercase text-cold-white/75 mb-1">{info.modele}</p>}
+                  {info.client && <p className="font-space text-sm text-cold-white/88 mb-3">{info.client}</p>}
                   <div className="font-black font-space leading-none mb-1" style={{ fontSize: 'clamp(4rem,15vw,6rem)', color: rating.color }}>{total}</div>
-                  <div className="font-mono text-cold-white/30 text-sm mb-3">/ 100</div>
+                  <div className="font-mono text-cold-white/72 text-sm mb-3">/ 100</div>
                   <div className="inline-block font-mono text-sm font-bold tracking-[0.15em] uppercase px-5 py-1.5 rounded-full"
                     style={{ color: rating.color, border: `1px solid ${rating.color}30`, background: `${rating.color}10` }}>
                     {rating.label}
@@ -430,7 +430,7 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                 {/* Détail */}
                 <div className="rounded-2xl overflow-hidden mb-6" style={{ border: '1px solid rgba(0,209,255,0.08)' }}>
                   <div className="px-5 py-3" style={{ background: 'rgba(0,209,255,0.03)', borderBottom: '1px solid rgba(0,209,255,0.06)' }}>
-                    <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-cold-white/30">Détail des scores</p>
+                    <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-cold-white/75">Détail des scores</p>
                   </div>
                   {DIAG_CATEGORIES.map((c, i) => {
                     const s    = scores[c.id]
@@ -441,7 +441,7 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                         <span className="text-base shrink-0">{c.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="font-space text-xs text-cold-white/60 truncate">{c.label}</span>
+                            <span className="font-space text-xs text-cold-white/90 truncate">{c.label}</span>
                             <span className="font-mono text-xs font-bold text-neon-blue shrink-0 ml-2">{note}/{c.max}</span>
                           </div>
                           <div className="h-px rounded-full overflow-hidden" style={{ background: 'rgba(0,209,255,0.08)' }}>
@@ -460,7 +460,7 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                     🖨 Imprimer / Exporter PDF
                   </motion.button>
                   <button onClick={handleReset}
-                    className="w-full py-3 rounded-full border border-white/8 text-cold-white/30 font-mono text-[11px] tracking-[0.2em] uppercase hover:border-white/15 hover:text-cold-white/50 transition-all">
+                    className="w-full py-3 rounded-full border border-white/18 text-cold-white/75 font-mono text-[11px] tracking-[0.2em] uppercase hover:border-white/30 hover:text-cold-white/95 transition-all">
                     ↺ Nouveau diagnostic
                   </button>
                 </div>

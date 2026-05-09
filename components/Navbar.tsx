@@ -78,7 +78,7 @@ export default function Navbar() {
           </span>
           <span className="hidden sm:flex items-center gap-1.5">
             <span className="w-px h-3" style={{ background: 'rgba(0,209,255,0.18)' }} />
-            <span className="font-mono text-[7.5px] tracking-[0.24em] uppercase" style={{ color: 'rgba(0,209,255,0.38)' }}>
+            <span className="font-mono text-[7.5px] tracking-[0.24em] uppercase" style={{ color: 'rgba(0,209,255,0.82)' }}>
               Mobile Systems
             </span>
           </span>
@@ -91,9 +91,9 @@ export default function Navbar() {
               key={l.href}
               href={l.href}
               className="relative px-3.5 py-2 rounded-lg text-[11px] font-mono tracking-[0.2em] uppercase transition-colors duration-250 group"
-              style={{ color: 'rgba(234,251,255,0.38)' }}
-              onMouseEnter={e => e.currentTarget.style.color = 'rgba(234,251,255,0.78)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'rgba(234,251,255,0.38)'}
+              style={{ color: 'rgba(255,255,255,0.72)' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.98)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.72)'}
             >
               {l.label}
               <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-250"

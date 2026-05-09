@@ -11,7 +11,7 @@ module.exports = {
         'space-black': '#050816',
         'neon-blue': '#00D1FF',
         'electric-blue': '#0066FF',
-        'cold-white': '#EAFBFF',
+        'cold-white': '#FFFFFF',
       },
       fontFamily: {
         space: ['var(--font-space-grotesk)', 'sans-serif'],

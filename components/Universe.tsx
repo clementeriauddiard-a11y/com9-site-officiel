@@ -15,9 +15,9 @@ const keywords = [
 ]
 
 const sizeMap: Record<string, string> = {
-  sm:  'text-[10px] md:text-xs text-neon-blue/30',
-  md:  'text-sm md:text-base text-neon-blue/50',
-  lg:  'text-base md:text-xl text-neon-blue/70 font-semibold',
+  sm:  'text-[10px] md:text-xs text-neon-blue/62',
+  md:  'text-sm md:text-base text-neon-blue/80',
+  lg:  'text-base md:text-xl text-neon-blue/92 font-semibold',
   xl:  'text-xl md:text-3xl text-neon-blue font-black',
 }
 
@@ -78,7 +78,7 @@ export default function Universe() {
             style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>
             Un <span className="gradient-text">Réseau</span> en Construction
           </h2>
-          <p className="text-cold-white/40 font-space max-w-md mx-auto text-sm">
+          <p className="text-cold-white/85 font-space max-w-md mx-auto text-sm">
             COM&apos;9 n&apos;est pas un réparateur. C&apos;est une infrastructure technologique mobile en expansion.
           </p>
         </motion.div>
@@ -128,7 +128,7 @@ export default function Universe() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: k.delay }}
-              className="font-mono text-neon-blue/60 text-xs tracking-widest border border-neon-blue/15 rounded-full px-4 py-1.5"
+              className="font-mono text-neon-blue/90 text-xs tracking-widest border border-neon-blue/28 rounded-full px-4 py-1.5"
             >
               {k.label}
             </motion.span>
@@ -152,7 +152,7 @@ export default function Universe() {
                 style={{ fontSize: 'clamp(1.6rem, 4vw, 2.5rem)' }}>
                 <Counter target={s.value} suffix={s.suffix} />
               </div>
-              <div className="text-cold-white/40 font-mono text-[10px] tracking-[0.2em] uppercase">
+              <div className="text-cold-white/82 font-mono text-[10px] tracking-[0.2em] uppercase">
                 {s.label}
               </div>
             </div>
@@ -160,7 +160,7 @@ export default function Universe() {
         </motion.div>
 
         {/* Asterisk note */}
-        <p className="mt-4 text-center text-cold-white/40 font-mono tracking-[0.15em]" style={{ fontSize: '0.7rem' }}>
+        <p className="mt-4 text-center text-cold-white/78 font-mono tracking-[0.15em]" style={{ fontSize: '0.7rem' }}>
           * Délai après réception des pièces
         </p>
       </div>

@@ -78,7 +78,7 @@ function PhoneCard({
             className={`px-5 py-1.5 rounded-full font-mono text-[10px] tracking-[0.2em] uppercase transition-all duration-300 ${
               (flipped && label === 'APRÈS') || (!flipped && label === 'AVANT')
                 ? 'bg-neon-blue/15 text-neon-blue border border-neon-blue/30'
-                : 'text-cold-white/30 hover:text-cold-white/50'
+                : 'text-cold-white/75 hover:text-cold-white/95'
             }`}
           >
             {label}
@@ -120,7 +120,7 @@ function PhoneCard({
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
                     <span className="text-neon-blue font-mono text-[8px] tracking-widest opacity-50">COM&apos;9</span>
                     <div className="w-8 h-px bg-neon-blue/30" />
-                    <span className="text-cold-white/20 font-mono text-[7px] tracking-wider">RESTORED</span>
+                    <span className="text-cold-white/65 font-mono text-[7px] tracking-wider">RESTORED</span>
                   </div>
                 </div>
               )}
@@ -173,7 +173,7 @@ export default function BeforeAfter() {
             style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>
             Avant / <span className="gradient-text">Après</span>
           </h2>
-          <p className="text-cold-white/40 font-space max-w-sm mx-auto text-sm">
+          <p className="text-cold-white/85 font-space max-w-sm mx-auto text-sm">
             Cliquez sur les boutons pour voir la transformation. Chaque appareil redevient neuf.
           </p>
         </motion.div>
