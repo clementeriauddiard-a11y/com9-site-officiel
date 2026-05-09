@@ -1,7 +1,6 @@
 'use client'
 
-import { motion, useScroll, useTransform } from 'framer-motion'
-import { useRef } from 'react'
+import { motion } from 'framer-motion'
 import { LINKS } from '@/lib/links'
 
 const socials = [
@@ -62,13 +61,8 @@ const item = {
 }
 
 export default function Hero() {
-  const ref = useRef<HTMLElement>(null)
-  const { scrollYProgress } = useScroll({ target: ref })
-  const yContent = useTransform(scrollYProgress, [0, 1], ['0%', '30%'])
-
   return (
     <section
-      ref={ref}
       id="home"
       className="relative min-h-screen flex items-center justify-center overflow-x-hidden"
     >
@@ -109,10 +103,7 @@ export default function Hero() {
       </div>
 
       {/* ── Content ── */}
-      <motion.div
-        style={{ y: yContent }}
-        className="relative z-10 text-center px-5 max-w-5xl mx-auto pb-24 pt-20"
-      >
+      <div className="relative z-10 text-center px-5 max-w-5xl mx-auto pb-24 pt-20">
         {/* Logo */}
         <div
           className="relative mb-7 flex items-center justify-center mx-auto"
@@ -153,7 +144,7 @@ export default function Hero() {
           <motion.p
             variants={item}
             className="font-mono tracking-[0.18em] mb-5"
-            style={{ fontSize: 'clamp(0.5rem, 1.3vw, 0.68rem)', color: 'rgba(234,251,255,0.28)' }}
+            style={{ fontSize: 'clamp(0.62rem, 1.8vw, 0.72rem)', color: 'rgba(234,251,255,0.62)' }}
           >
             📍 Nogent-le-Rotrou · Eure-et-Loir
           </motion.p>
@@ -198,7 +189,7 @@ export default function Hero() {
             ))}
           </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
 
       {/* ── Scroll indicator ── */}
       <motion.div

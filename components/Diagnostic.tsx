@@ -92,7 +92,7 @@ export default function Diagnostic() {
               Contrôle Technique <span className="gradient-text">Officiel</span>
             </h2>
             <p className="font-space text-sm max-w-md mx-auto leading-relaxed"
-              style={{ color: 'rgba(234,251,255,0.32)' }}>
+              style={{ color: 'rgba(234,251,255,0.62)' }}>
               Deux niveaux d&apos;analyse — de l&apos;estimation rapide à la validation complète sur 100 points.
             </p>
           </motion.div>

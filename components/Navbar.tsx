@@ -155,13 +155,14 @@ export default function Navbar() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.2, delay: i * 0.04 }}
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 py-3.5 font-mono text-[11px] tracking-[0.24em] uppercase transition-colors duration-200"
+                  className="flex items-center gap-3 py-4 font-mono text-[11px] tracking-[0.24em] uppercase transition-colors duration-200"
                   style={{
-                    color: 'rgba(234,251,255,0.42)',
-                    borderBottom: i < links.length ? '1px solid rgba(0,209,255,0.045)' : 'none',
+                    color: 'rgba(234,251,255,0.78)',
+                    borderBottom: i < links.length ? '1px solid rgba(0,209,255,0.07)' : 'none',
+                    minHeight: '48px',
                   }}
                   onMouseEnter={e => e.currentTarget.style.color = '#00d1ff'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(234,251,255,0.42)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(234,251,255,0.78)'}
                 >
                   <span className="w-4 h-px shrink-0 transition-all duration-200"
                     style={{ background: 'rgba(0,209,255,0.32)' }} />

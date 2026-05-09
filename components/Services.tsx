@@ -63,7 +63,7 @@ export default function Services() {
             Expertise <span className="gradient-text">Chirurgicale</span>
           </h2>
           <p className="font-space max-w-xs mx-auto text-sm leading-relaxed"
-            style={{ color: 'rgba(234,251,255,0.32)', fontSize: 'clamp(0.8rem, 2vw, 0.875rem)' }}>
+            style={{ color: 'rgba(234,251,255,0.62)', fontSize: 'clamp(0.82rem, 2vw, 0.875rem)' }}>
             Chaque intervention est une opération de précision.<br className="hidden sm:block" /> Protocoles avancés, composants premium.
           </p>
         </motion.div>
@@ -109,7 +109,7 @@ export default function Services() {
               </div>
 
               <h3 className="text-cold-white font-bold font-space text-sm mb-2.5 tracking-wide">{s.title}</h3>
-              <p className="font-space text-[12.5px] leading-relaxed" style={{ color: 'rgba(234,251,255,0.3)' }}>{s.desc}</p>
+              <p className="font-space text-[12.5px] leading-relaxed" style={{ color: 'rgba(234,251,255,0.62)' }}>{s.desc}</p>
 
               {/* Hover underline */}
               <div className="mt-5 h-px w-0 group-hover:w-full transition-all duration-500"

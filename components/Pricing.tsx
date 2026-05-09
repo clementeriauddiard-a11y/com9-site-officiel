@@ -56,7 +56,7 @@ function SerieBlock({ serie, tierLabels }: { serie: RepairCategory['series'][num
       >
         <div className="flex items-center gap-3">
           <span className="text-base leading-none">{serie.icon}</span>
-          <span className="font-space text-sm font-semibold" style={{ color: open ? '#eafbff' : 'rgba(234,251,255,0.65)' }}>
+          <span className="font-space text-sm font-semibold" style={{ color: open ? '#eafbff' : 'rgba(234,251,255,0.82)' }}>
             {serie.serie}
           </span>
           <span className="font-mono text-[9px] tracking-[0.15em] uppercase px-2 py-0.5 rounded-full"
@@ -103,8 +103,8 @@ function SerieBlock({ serie, tierLabels }: { serie: RepairCategory['series'][num
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,209,255,0.04)')}
                   onMouseLeave={e => (e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.08)')}
                 >
-                  <span className="font-space text-xs pr-2" style={{ color: 'rgba(234,251,255,0.55)' }}>{row.model}</span>
-                  <span className="text-center font-mono text-xs font-bold" style={{ color: 'rgba(234,251,255,0.45)' }}>
+                  <span className="font-space text-xs pr-2" style={{ color: 'rgba(234,251,255,0.80)' }}>{row.model}</span>
+                  <span className="text-center font-mono text-xs font-bold" style={{ color: 'rgba(234,251,255,0.68)' }}>
                     {row.compatible} €
                   </span>
                   <div className="flex justify-end">
@@ -257,7 +257,7 @@ export default function Pricing() {
           <h2 className="font-black font-space text-cold-white mb-5" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', letterSpacing: '-0.025em' }}>
             Tarification <span className="gradient-text">Transparente</span>
           </h2>
-          <p className="font-space text-sm max-w-sm mx-auto leading-relaxed" style={{ color: 'rgba(234,251,255,0.32)' }}>
+          <p className="font-space text-sm max-w-sm mx-auto leading-relaxed" style={{ color: 'rgba(234,251,255,0.62)' }}>
             Prix réels, sans surprise. iPhone uniquement pour le moment.
           </p>
         </motion.div>

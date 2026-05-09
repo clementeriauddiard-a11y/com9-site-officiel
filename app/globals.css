@@ -235,4 +235,27 @@ body {
 /* ─── Mobile overrides ───────────────── */
 @media (max-width: 640px) {
   .glass-card { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+
+  /* Section spacing réduit sur très petit écran */
+  :root { --section-py: clamp(3.5rem, 10vw, 5rem); }
+
+  /* Meilleur rendu texte sur iOS/Android */
+  body {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* ─── Touch targets (pointer coarse = écran tactile) ── */
+@media (pointer: coarse) {
+  /* Supprime le tap highlight bleu iOS */
+  * { -webkit-tap-highlight-color: transparent; }
+}
+
+/* ─── Évite les overflow de titres sur mobile ── */
+@media (max-width: 768px) {
+  h1, h2, h3 {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
 }

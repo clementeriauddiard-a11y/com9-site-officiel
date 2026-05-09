@@ -102,9 +102,9 @@ export default function Contact() {
           <p className="section-label mb-5">— Contact —</p>
           <h2 className="font-black font-space text-cold-white mb-4"
             style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', letterSpacing: '-0.025em' }}>
-            Établir la <span className="gradient-text">Connexion</span>
+            Nous <span className="gradient-text">Contacter</span>
           </h2>
-          <p className="font-space text-sm" style={{ color: 'rgba(234,251,255,0.28)' }}>
+          <p className="font-space text-sm" style={{ color: 'rgba(234,251,255,0.62)' }}>
             Nogent-le-Rotrou · Eure-et-Loir
           </p>
         </motion.div>
@@ -150,7 +150,7 @@ export default function Contact() {
                   <span className="font-mono text-[9px] tracking-wider w-12 shrink-0 mt-0.5" style={{ color: 'rgba(234,251,255,0.22)' }}>
                     {item.label}
                   </span>
-                  <span className="font-space text-[12px] leading-relaxed" style={{ color: 'rgba(234,251,255,0.48)' }}>
+                  <span className="font-space text-[12px] leading-relaxed" style={{ color: 'rgba(234,251,255,0.72)' }}>
                     {item.value}
                   </span>
                 </div>

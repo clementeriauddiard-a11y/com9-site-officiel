@@ -74,9 +74,9 @@ export default function Footer() {
               style={{ color: 'rgba(0,209,255,0.45)' }}>
               Next Generation Mobile Systems
             </p>
-            <p className="font-space text-xs leading-relaxed" style={{ color: 'rgba(234,251,255,0.25)' }}>
+            <p className="font-space text-xs leading-relaxed" style={{ color: 'rgba(234,251,255,0.58)' }}>
               Réparation & reconditionnement<br />de smartphones.
-              <span style={{ color: 'rgba(234,251,255,0.18)' }}> Nogent-le-Rotrou · 28.</span>
+              <span style={{ color: 'rgba(234,251,255,0.45)' }}> Nogent-le-Rotrou · 28.</span>
             </p>
 
             {/* Social icons */}
@@ -119,9 +119,9 @@ export default function Footer() {
                   key={l.href}
                   href={l.href}
                   className="group flex items-center gap-2.5 font-mono text-[10px] tracking-[0.2em] uppercase transition-colors duration-250"
-                  style={{ color: 'rgba(234,251,255,0.26)' }}
+                  style={{ color: 'rgba(234,251,255,0.58)', minHeight: '36px' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#00d1ff'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(234,251,255,0.26)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(234,251,255,0.58)'}
                 >
                   <span className="w-3.5 h-px transition-all duration-250 group-hover:w-5"
                     style={{ background: 'rgba(0,209,255,0.38)' }} />
@@ -154,7 +154,7 @@ export default function Footer() {
                   <div>
                     <span className="block font-mono text-[8.5px] tracking-[0.2em] uppercase mb-0.5"
                       style={{ color: 'rgba(234,251,255,0.18)' }}>{info.label}</span>
-                    <span className="font-space text-[12px]" style={{ color: 'rgba(234,251,255,0.42)' }}>
+                    <span className="font-space text-[12px]" style={{ color: 'rgba(234,251,255,0.72)' }}>
                       {info.value}
                     </span>
                   </div>
