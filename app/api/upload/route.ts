@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   const sb = getSupabase()
   if (!sb) {
     return NextResponse.json(
-      { error: 'Supabase non configuré — ajoutez SUPABASE_URL et SUPABASE_SERVICE_KEY dans Vercel.' },
+      { error: 'Supabase non configuré — ajoutez SUPABASE_URL et SUPABASE_KEY dans Vercel.' },
       { status: 503 }
     )
   }
