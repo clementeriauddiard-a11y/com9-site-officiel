@@ -268,9 +268,10 @@ export default function Pricing() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="flex items-center justify-center gap-2 mb-10"
+          className="w-full mb-10"
         >
-          <div className="flex items-center p-1 rounded-2xl gap-1"
+          {/* Barre d'onglets — pleine largeur sur mobile, auto sur desktop */}
+          <div className="flex items-center p-1 rounded-2xl gap-1 w-full sm:w-auto sm:mx-auto sm:inline-flex"
             style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(0,209,255,0.08)' }}>
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id
@@ -278,18 +279,18 @@ export default function Pricing() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className="relative flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono text-[11px] tracking-[0.14em] uppercase transition-all duration-300"
+                  className="relative flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-2 sm:px-5 py-2.5 rounded-xl font-mono text-[10px] sm:text-[11px] tracking-[0.1em] sm:tracking-[0.14em] uppercase transition-all duration-300 min-w-0"
                   style={{
-                    color: isActive ? '#00d1ff' : 'rgba(234,251,255,0.35)',
+                    color:      isActive ? '#00d1ff' : 'rgba(234,251,255,0.35)',
                     background: isActive ? 'rgba(0,209,255,0.1)' : 'transparent',
-                    border: isActive ? '1px solid rgba(0,209,255,0.25)' : '1px solid transparent',
-                    boxShadow: isActive ? '0 0 20px rgba(0,209,255,0.08)' : 'none',
+                    border:     isActive ? '1px solid rgba(0,209,255,0.25)' : '1px solid transparent',
+                    boxShadow:  isActive ? '0 0 20px rgba(0,209,255,0.08)' : 'none',
                   }}
                 >
-                  <span style={{ color: isActive ? '#00d1ff' : 'rgba(234,251,255,0.3)' }}>
+                  <span className="shrink-0" style={{ color: isActive ? '#00d1ff' : 'rgba(234,251,255,0.3)' }}>
                     {TabIcons[tab.id]}
                   </span>
-                  <span>{tab.label}</span>
+                  <span className="truncate">{tab.label}</span>
                 </button>
               )
             })}
