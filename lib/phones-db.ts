@@ -1,19 +1,25 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// COM'9 — Base de données téléphones (Supabase PostgreSQL)
+// COM'9 — Base de données téléphones (Vercel Postgres)
 //
-// Table : phones
-// Sans SUPABASE_URL/SERVICE_KEY → fallback mémoire pour dev local
+// La table `phones` est créée automatiquement au premier appel API.
+// Aucune action manuelle nécessaire.
+//
+// Sans POSTGRES_URL → fallback mémoire (dev local)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { getSupabase } from './supabase'
 import type { Phone, PhoneCondition, PhoneStatus } from '@/data/phones'
 
-const TABLE = 'phones'
+// ─── Fallback mémoire (dev local sans base de données) ───────────────────────
+let _mem: Phone[] = []
 
-// ─── Fallback mémoire (dev local sans Supabase) ───────────────────────────────
-let _mem: Phone[] | null = null
+// ─── Flag création table (chaud lambda) ──────────────────────────────────────
+let _tableReady = false
 
-// ─── Mapping DB ↔ Phone ───────────────────────────────────────────────────────
+function isDbAvailable(): boolean {
+  return !!process.env.POSTGRES_URL
+}
+
+// ─── Mapping DB row → Phone ───────────────────────────────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rowToPhone(row: any): Phone {
@@ -30,98 +36,115 @@ function rowToPhone(row: any): Phone {
     status:          String(row.status) as PhoneStatus,
     image:           String(row.image   ?? ''),
     description:     String(row.description ?? ''),
-    labels:          (row.labels as string[]) ?? [],
+    labels:          Array.isArray(row.labels) ? row.labels : JSON.parse(String(row.labels ?? '[]')),
     whatsappMessage: String(row.whatsapp_message ?? ''),
   }
 }
 
-function phoneToInsertRow(phone: Phone): Record<string, unknown> {
-  return {
-    id:               phone.id,
-    brand:            phone.brand,
-    model:            phone.model,
-    storage:          phone.storage,
-    color:            phone.color,
-    battery:          phone.battery,
-    condition:        phone.condition,
-    com9score:        phone.com9Score,
-    price:            phone.price,
-    status:           phone.status,
-    image:            phone.image           ?? '',
-    description:      phone.description     ?? '',
-    labels:           phone.labels,
-    whatsapp_message: phone.whatsappMessage,
-  }
-}
+// ─── Auto-création table (une seule fois par démarrage serveur) ───────────────
 
-function partialToUpdateRow(data: Partial<Phone>): Record<string, unknown> {
-  const row: Record<string, unknown> = {}
-  if (data.brand            !== undefined) row.brand            = data.brand
-  if (data.model            !== undefined) row.model            = data.model
-  if (data.storage          !== undefined) row.storage          = data.storage
-  if (data.color            !== undefined) row.color            = data.color
-  if (data.battery          !== undefined) row.battery          = data.battery
-  if (data.condition        !== undefined) row.condition        = data.condition
-  if (data.com9Score        !== undefined) row.com9score        = data.com9Score
-  if (data.price            !== undefined) row.price            = data.price
-  if (data.status           !== undefined) row.status           = data.status
-  if (data.image            !== undefined) row.image            = data.image
-  if (data.description      !== undefined) row.description      = data.description
-  if (data.labels           !== undefined) row.labels           = data.labels
-  if (data.whatsappMessage  !== undefined) row.whatsapp_message = data.whatsappMessage
-  return row
+async function ensureTable() {
+  if (_tableReady) return
+  const { sql } = await import('@vercel/postgres')
+  await sql`
+    CREATE TABLE IF NOT EXISTS phones (
+      id               TEXT        PRIMARY KEY,
+      brand            TEXT        NOT NULL,
+      model            TEXT        NOT NULL,
+      storage          TEXT        NOT NULL,
+      color            TEXT        NOT NULL,
+      battery          INTEGER     NOT NULL DEFAULT 100,
+      condition        TEXT        NOT NULL DEFAULT 'Tres bon',
+      com9score        INTEGER     NOT NULL DEFAULT 90,
+      price            INTEGER     NOT NULL DEFAULT 0,
+      status           TEXT        NOT NULL DEFAULT 'Disponible',
+      image            TEXT                 DEFAULT '',
+      description      TEXT                 DEFAULT '',
+      labels           JSONB       NOT NULL DEFAULT '[]',
+      whatsapp_message TEXT        NOT NULL DEFAULT '',
+      created_at       TIMESTAMPTZ          DEFAULT NOW()
+    )
+  `
+  _tableReady = true
 }
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
 export async function getPhones(): Promise<Phone[]> {
-  const sb = getSupabase()
-  if (!sb) return _mem ?? []
+  if (!isDbAvailable()) return [..._mem]
 
-  const { data, error } = await sb
-    .from(TABLE)
-    .select('*')
-    .order('created_at', { ascending: true })
-
-  if (error) throw new Error(error.message)
-  return (data ?? []).map(rowToPhone)
+  const { sql } = await import('@vercel/postgres')
+  await ensureTable()
+  const { rows } = await sql`SELECT * FROM phones ORDER BY created_at ASC`
+  return rows.map(rowToPhone)
 }
 
 export async function addPhone(phone: Phone): Promise<Phone[]> {
-  const sb = getSupabase()
-  if (!sb) {
-    _mem = [...(_mem ?? []), phone]
+  if (!isDbAvailable()) {
+    _mem = [..._mem, phone]
     return [..._mem]
   }
 
-  const { error } = await sb.from(TABLE).insert(phoneToInsertRow(phone))
-  if (error) throw new Error(error.message)
+  const { sql } = await import('@vercel/postgres')
+  await ensureTable()
+
+  await sql`
+    INSERT INTO phones
+      (id, brand, model, storage, color, battery, condition, com9score,
+       price, status, image, description, labels, whatsapp_message)
+    VALUES
+      (${phone.id}, ${phone.brand}, ${phone.model}, ${phone.storage},
+       ${phone.color}, ${phone.battery}, ${phone.condition}, ${phone.com9Score},
+       ${phone.price}, ${phone.status}, ${phone.image ?? ''},
+       ${phone.description ?? ''}, ${JSON.stringify(phone.labels)},
+       ${phone.whatsappMessage})
+  `
   return getPhones()
 }
 
 export async function updatePhone(id: string, data: Partial<Phone>): Promise<Phone[]> {
-  const sb = getSupabase()
-  if (!sb) {
-    _mem = (_mem ?? []).map(p => p.id === id ? { ...p, ...data } : p)
+  if (!isDbAvailable()) {
+    _mem = _mem.map(p => p.id === id ? { ...p, ...data } : p)
     return [..._mem]
   }
 
-  const row = partialToUpdateRow(data)
-  if (Object.keys(row).length === 0) return getPhones()
+  const { sql } = await import('@vercel/postgres')
+  await ensureTable()
 
-  const { error } = await sb.from(TABLE).update(row).eq('id', id)
-  if (error) throw new Error(error.message)
+  // Récupère le téléphone actuel, fusionne les changements, met tout à jour
+  const { rows } = await sql`SELECT * FROM phones WHERE id = ${id}`
+  if (rows.length === 0) return getPhones()
+
+  const merged = { ...rowToPhone(rows[0]), ...data }
+
+  await sql`
+    UPDATE phones SET
+      brand            = ${merged.brand},
+      model            = ${merged.model},
+      storage          = ${merged.storage},
+      color            = ${merged.color},
+      battery          = ${merged.battery},
+      condition        = ${merged.condition},
+      com9score        = ${merged.com9Score},
+      price            = ${merged.price},
+      status           = ${merged.status},
+      image            = ${merged.image ?? ''},
+      description      = ${merged.description ?? ''},
+      labels           = ${JSON.stringify(merged.labels)},
+      whatsapp_message = ${merged.whatsappMessage}
+    WHERE id = ${id}
+  `
   return getPhones()
 }
 
 export async function deletePhone(id: string): Promise<Phone[]> {
-  const sb = getSupabase()
-  if (!sb) {
-    _mem = (_mem ?? []).filter(p => p.id !== id)
-    return [...(_mem)]
+  if (!isDbAvailable()) {
+    _mem = _mem.filter(p => p.id !== id)
+    return [..._mem]
   }
 
-  const { error } = await sb.from(TABLE).delete().eq('id', id)
-  if (error) throw new Error(error.message)
+  const { sql } = await import('@vercel/postgres')
+  await ensureTable()
+  await sql`DELETE FROM phones WHERE id = ${id}`
   return getPhones()
 }

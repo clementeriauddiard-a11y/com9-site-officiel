@@ -1,18 +1,16 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // COM'9 — API /api/upload
-//   POST : upload d'une image vers Supabase Storage (admin uniquement)
+//   POST : upload d'une image vers Vercel Blob (admin uniquement)
 //          Accepte : multipart/form-data avec champ "file"
 //          Retourne : { url: string }
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from 'next/server'
 import { validateAdmin } from '@/lib/validate-admin'
-import { getSupabase } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const BUCKET     = 'phones-images'
 const VALID_MIME = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 const MAX_BYTES  = 5 * 1024 * 1024   // 5 Mo
 
@@ -21,10 +19,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
-  const sb = getSupabase()
-  if (!sb) {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
     return NextResponse.json(
-      { error: 'Supabase non configuré — ajoutez SUPABASE_URL et SUPABASE_KEY dans Vercel.' },
+      { error: 'Vercel Blob non configuré. Créez un Blob Store dans Vercel → Storage.' },
       { status: 503 }
     )
   }
@@ -43,21 +40,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Fichier trop volumineux (max 5 Mo).' }, { status: 400 })
     }
 
-    const ext    = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
-    const suffix = Math.random().toString(36).slice(2, 8)
-    const path   = `${Date.now()}-${suffix}.${ext}`
+    const { put } = await import('@vercel/blob')
 
-    const buffer = await file.arrayBuffer()
+    const ext      = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
+    const suffix   = Math.random().toString(36).slice(2, 8)
+    const filename = `phones/${Date.now()}-${suffix}.${ext}`
 
-    const { error: uploadError } = await sb.storage
-      .from(BUCKET)
-      .upload(path, buffer, { contentType: file.type, upsert: false })
+    const blob = await put(filename, file, { access: 'public' })
 
-    if (uploadError) throw new Error(uploadError.message)
-
-    const { data: { publicUrl } } = sb.storage.from(BUCKET).getPublicUrl(path)
-
-    return NextResponse.json({ url: publicUrl })
+    return NextResponse.json({ url: blob.url })
   } catch (err) {
     console.error('[upload]', err)
     return NextResponse.json({ error: "Erreur lors de l'upload" }, { status: 500 })
