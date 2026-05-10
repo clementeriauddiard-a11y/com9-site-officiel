@@ -2,15 +2,17 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 const links = [
-  { href: '#services',    label: 'Services'    },
-  { href: '#tarifs',      label: 'Tarifs'      },
-  { href: '#diagnostic',  label: 'Diagnostic'  },
+  { href: '/#services',   label: 'Services'    },
+  { href: '/#tarifs',     label: 'Tarifs'      },
+  { href: '/#diagnostic', label: 'Diagnostic'  },
   { href: '/marketplace', label: 'Marketplace' },
 ]
 
 export default function Navbar() {
+  const pathname               = usePathname()
   const [scrolled, setScrolled] = useState(false)
   const [open,     setOpen]     = useState(false)
 
@@ -40,20 +42,51 @@ export default function Navbar() {
    * le menu, puis après l'animation (320ms) on scroll programmatiquement
    * avec scrollIntoView — API fiable sur tous les moteurs mobiles.
    */
+  /**
+   * Navigation mobile universelle.
+   *
+   * Trois cas :
+   * A) Lien de page pure (ex: /marketplace) → ferme le menu, navigation native.
+   * B) Ancre absolue (ex: /#services) depuis la page d'accueil → scroll programmatique
+   *    avec délai pour laisser l'animation du menu se terminer (Android Chrome fiable).
+   * C) Ancre absolue depuis une autre page → ferme le menu, redirige vers /#section
+   *    (le navigateur gère le scroll via le hash dans l'URL).
+   */
   function handleMobileNav(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
-    // Lien de page (ex: /marketplace) → navigation normale, juste fermer le menu
-    if (!href.startsWith('#')) {
+    // A) Lien de page (pas d'ancre)
+    if (!href.startsWith('#') && !href.startsWith('/#')) {
       setOpen(false)
       return
     }
-    // Ancre → scroll programmatique (robuste Android Chrome)
+
     e.preventDefault()
     setOpen(false)
-    const id = href.replace('#', '')
+
+    // B+C) Ancre absolue /#section
+    if (href.startsWith('/#')) {
+      const sectionId = href.slice(2) // retire le '/#'
+
+      if (pathname === '/') {
+        // B) Sur l'accueil → scroll après fermeture du menu (320ms > durée animation 280ms)
+        setTimeout(() => {
+          const el = document.getElementById(sectionId)
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 320)
+      } else {
+        // C) Autre page → naviguer vers l'accueil avec hash (scroll géré par le navigateur)
+        setTimeout(() => {
+          window.location.href = href
+        }, 280)
+      }
+      return
+    }
+
+    // Ancre pure #section (fallback si jamais) → scroll local
+    const id = href.slice(1)
     setTimeout(() => {
       const el = document.getElementById(id)
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 320) // légèrement supérieur à la durée d'animation (0.28s)
+    }, 320)
   }
 
   return (
@@ -110,7 +143,7 @@ export default function Navbar() {
           <div className="w-px h-3.5 mx-2" style={{ background: 'rgba(0,209,255,0.14)' }} />
 
           <a
-            href="#contact"
+            href="/#contact"
             className="flex items-center gap-2 px-4 py-2 rounded-full font-mono text-[11px] tracking-[0.2em] uppercase transition-all duration-300"
             style={{
               border: '1px solid rgba(0,209,255,0.28)',
@@ -175,7 +208,7 @@ export default function Navbar() {
             }}
           >
             <div className="px-5 py-4 flex flex-col gap-0.5">
-              {[...links, { href: '#contact', label: 'Contact' }].map((l, i) => (
+              {[...links, { href: '/#contact', label: 'Contact' }].map((l, i) => (
                 <motion.a
                   key={l.href}
                   href={l.href}

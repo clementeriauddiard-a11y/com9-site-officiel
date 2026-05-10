@@ -229,14 +229,30 @@ export default async function MarketplacePage() {
 
       {/* ── Hero section ── */}
       <section className="relative z-10 pt-32 pb-14 px-5 text-center">
+        {/* Bouton retour accueil */}
+        <div className="flex justify-center mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-mono text-[10px] tracking-[0.18em] uppercase transition-all duration-200"
+            style={{
+              border:     '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.04)',
+              color:      'rgba(255,255,255,0.72)',
+            }}
+          >
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" className="w-3 h-3">
+              <path d="M10 7H4M7 4L4 7l3 3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Retour accueil
+          </Link>
+        </div>
+
         {/* Breadcrumb */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <Link href="/"
-            className="font-mono text-[9px] tracking-[0.22em] uppercase transition-colors duration-200"
-            style={{ color: 'rgba(255,255,255,0.38)' }}
-            onMouseEnter={undefined}>
+          <span className="font-mono text-[9px] tracking-[0.22em] uppercase"
+            style={{ color: 'rgba(255,255,255,0.32)' }}>
             Accueil
-          </Link>
+          </span>
           <span className="font-mono text-[8px]" style={{ color: 'rgba(0,209,255,0.3)' }}>›</span>
           <span className="font-mono text-[9px] tracking-[0.22em] uppercase" style={{ color: 'rgba(0,209,255,0.7)' }}>
             Marketplace
