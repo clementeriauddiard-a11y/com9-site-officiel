@@ -1,7 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { conditionColor, statusColor, type Phone } from '@/data/phones'
 import { usePhones } from '@/context/PhonesContext'
@@ -576,11 +575,11 @@ function EmptyState() {
 
 export default function Occasion() {
   const { phones } = usePhones()
-  const [activeBrand, setActiveBrand] = useState('Tous')
 
-  const BRANDS  = ['Tous', ...Array.from(new Set(phones.map(p => p.brand)))]
-  const filtered = phones.filter(p => activeBrand === 'Tous' || p.brand === activeBrand)
-  const isEmpty  = phones.length === 0
+  // Aperçu accueil : 3 téléphones max, disponibles en priorité
+  const statusOrder = (s: Phone['status']) => (s === 'Vendu' ? 2 : s === 'Réservé' ? 1 : 0)
+  const preview = [...phones].sort((a, b) => statusOrder(a.status) - statusOrder(b.status)).slice(0, 3)
+  const isEmpty = phones.length === 0
 
   return (
     <section id="occasion"
@@ -622,47 +621,52 @@ export default function Occasion() {
         {/* ── Trust banner ── */}
         <TrustBanner />
 
-        {/* ── Filtre marque (visible seulement si plusieurs marques) ── */}
-        {!isEmpty && BRANDS.length > 2 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex items-center justify-center gap-2 flex-wrap mb-10"
-          >
-            <div className="flex items-center gap-1 p-1 rounded-2xl"
-              style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(0,209,255,0.07)' }}>
-              {BRANDS.map(brand => (
-                <button
-                  key={brand}
-                  onClick={() => setActiveBrand(brand)}
-                  className="px-4 py-2 rounded-xl font-mono text-[10px] tracking-[0.15em] uppercase transition-all duration-250"
-                  style={{
-                    color:      activeBrand === brand ? '#00d1ff' : 'rgba(255,255,255,0.72)',
-                    background: activeBrand === brand ? 'rgba(0,209,255,0.1)' : 'transparent',
-                    border:     activeBrand === brand ? '1px solid rgba(0,209,255,0.25)' : '1px solid transparent',
-                  }}>
-                  {brand}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* ── Grid ou état vide ── */}
+        {/* ── Aperçu (3 téléphones max) ou état vide ── */}
         {isEmpty ? (
           <EmptyState />
         ) : (
-          <AnimatePresence mode="popLayout">
-            <motion.div
-              layout
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
-            >
-              {filtered.map((phone, i) => (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
+              {preview.map((phone, i) => (
                 <PhoneCard key={phone.id} phone={phone} index={i} />
               ))}
+            </div>
+
+            {/* CTA vers la Marketplace complète */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              className="flex justify-center mt-12"
+            >
+              <Link
+                href="/marketplace"
+                className="group inline-flex items-center gap-3 px-8 py-4 rounded-full font-mono text-[11px] tracking-[0.22em] uppercase transition-all duration-300"
+                style={{
+                  border:     '1px solid rgba(0,209,255,0.28)',
+                  background: 'rgba(0,209,255,0.05)',
+                  color:      '#00d1ff',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background  = 'rgba(0,209,255,0.11)'
+                  e.currentTarget.style.borderColor = 'rgba(0,209,255,0.55)'
+                  e.currentTarget.style.boxShadow   = '0 0 24px rgba(0,209,255,0.12)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background  = 'rgba(0,209,255,0.05)'
+                  e.currentTarget.style.borderColor = 'rgba(0,209,255,0.28)'
+                  e.currentTarget.style.boxShadow   = 'none'
+                }}
+              >
+                Voir toute la Marketplace
+                <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"
+                  className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1">
+                  <path d="M2 7h10M7 2l5 5-5 5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </Link>
             </motion.div>
-          </AnimatePresence>
+          </>
         )}
 
       </div>

@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { LINKS } from '@/lib/links'
 
 const navLinks = [
-  { href: '/#services',   label: 'Services'    },
   { href: '/#tarifs',     label: 'Tarifs'      },
   { href: '/#diagnostic', label: 'Diagnostic'  },
   { href: '/marketplace', label: 'Marketplace' },

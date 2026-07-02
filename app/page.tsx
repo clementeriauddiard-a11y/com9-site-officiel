@@ -1,7 +1,6 @@
 import ParticleBackground from '@/components/ParticleBackground'
 import Navbar from '@/components/Navbar'
 import Hero from '@/components/Hero'
-import Services from '@/components/Services'
 import Pricing from '@/components/Pricing'
 import Diagnostic from '@/components/Diagnostic'
 import Occasion from '@/components/Occasion'
@@ -14,10 +13,9 @@ export default function Home() {
       <ParticleBackground />
       <Navbar />
       <Hero />
-      <Services />
       <Pricing />
-      <Diagnostic />
       <Occasion />
+      <Diagnostic />
       <Contact />
       <Footer />
     </main>
