@@ -7,7 +7,7 @@
   --neon-blue: #00d1ff;
   --electric-blue: #0066ff;
   --cold-white: #ffffff;
-  --section-py: clamp(5rem, 8vw, 7rem);
+  --section-py: clamp(6.5rem, 10vw, 10rem);
 }
 
 * {
@@ -81,36 +81,15 @@ body {
 
 /* ─── Gradient text ──────────────────── */
 .gradient-text {
-  background: linear-gradient(135deg, #00d1ff 0%, #4da6ff 35%, #0066ff 65%, #00d1ff 100%);
-  background-size: 260% auto;
+  background: linear-gradient(120deg, #7fe4ff 0%, #00d1ff 45%, #2b8cff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: shimmer 6s linear infinite;
 }
 
 /* ─── Neon glow ──────────────────────── */
 .glow-text {
-  animation: glowPulse 3.5s ease-in-out infinite;
-}
-
-@keyframes glowPulse {
-  0%, 100% {
-    text-shadow:
-      0 0 18px rgba(0,209,255,0.35),
-      0 0 36px rgba(0,209,255,0.18);
-  }
-  50% {
-    text-shadow:
-      0 0 36px rgba(0,209,255,0.7),
-      0 0 72px rgba(0,209,255,0.4),
-      0 0 110px rgba(0,102,255,0.25);
-  }
-}
-
-@keyframes shimmer {
-  0%   { background-position: 0% center; }
-  100% { background-position: 260% center; }
+  text-shadow: 0 0 24px rgba(0,209,255,0.25), 0 0 48px rgba(0,209,255,0.12);
 }
 
 /* ─── Grid overlay ───────────────────── */
@@ -237,7 +216,7 @@ body {
   .glass-card { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
 
   /* Section spacing réduit sur très petit écran */
-  :root { --section-py: clamp(3.5rem, 10vw, 5rem); }
+  :root { --section-py: clamp(4.5rem, 12vw, 6rem); }
 
   /* Meilleur rendu texte sur iOS/Android */
   body {

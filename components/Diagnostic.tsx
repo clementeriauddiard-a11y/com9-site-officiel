@@ -43,19 +43,6 @@ const PREMIUM_CATS = [
   { label: 'État physique /5',     color: '#0066ff' },
 ]
 
-// ─── Scan line animation ───────────────────────────────────────────────────────
-
-function ScanLine({ delay = 0 }: { delay?: number }) {
-  return (
-    <motion.div
-      animate={{ y: ['-100%', '400%'] }}
-      transition={{ duration: 4, repeat: Infinity, ease: 'linear', repeatDelay: 6, delay }}
-      className="absolute inset-x-0 pointer-events-none z-0"
-      style={{ height: '1px', background: 'linear-gradient(to right, transparent, rgba(0,209,255,0.3), transparent)' }}
-    />
-  )
-}
-
 // ─── Section ───────────────────────────────────────────────────────────────────
 
 export default function Diagnostic() {
@@ -86,13 +73,13 @@ export default function Diagnostic() {
             transition={{ duration: 0.7 }}
             className="text-center mb-16"
           >
-            <p className="section-label mb-5">— Diagnostic —</p>
+            <p className="section-label mb-5">Diagnostic</p>
             <h2 className="font-black font-space text-cold-white mb-5"
-              style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', letterSpacing: '-0.025em' }}>
+              style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', letterSpacing: '-0.03em' }}>
               Contrôle Technique <span className="gradient-text">Officiel</span>
             </h2>
-            <p className="font-space text-sm max-w-md mx-auto leading-relaxed"
-              style={{ color: 'rgba(234,251,255,0.62)' }}>
+            <p className="font-space text-[15px] max-w-md mx-auto leading-relaxed"
+              style={{ color: 'rgba(255,255,255,0.65)' }}>
               Deux niveaux d&apos;analyse — de l&apos;estimation rapide à la validation complète sur 100 points.
             </p>
           </motion.div>
@@ -104,10 +91,10 @@ export default function Diagnostic() {
                 CARD GRATUIT
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
             <motion.div
-              initial={{ opacity: 0, x: -24 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.7 }}
+              transition={{ duration: 0.9, ease: [0.23, 1, 0.32, 1] }}
               className="relative flex flex-col rounded-3xl overflow-hidden"
               style={{
                 background: 'linear-gradient(160deg, rgba(0,12,30,0.97) 0%, rgba(5,8,22,0.99) 100%)',
@@ -115,17 +102,9 @@ export default function Diagnostic() {
                 boxShadow: '0 0 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(0,209,255,0.08)',
               }}
             >
-              <ScanLine delay={0} />
-
               {/* Top neon line */}
               <div className="absolute top-0 inset-x-0 h-px"
                 style={{ background: 'linear-gradient(to right, transparent, rgba(0,209,255,0.5), transparent)' }} />
-
-              {/* Grid overlay */}
-              <div className="absolute inset-0 opacity-[0.06] pointer-events-none" style={{
-                backgroundImage: 'linear-gradient(rgba(0,209,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,209,255,0.5) 1px, transparent 1px)',
-                backgroundSize: '40px 40px',
-              }} />
 
               <div className="relative z-10 flex flex-col flex-1 p-7">
 
@@ -154,11 +133,8 @@ export default function Diagnostic() {
                 </div>
 
                 {/* Taglines */}
-                <p className="font-space text-sm leading-relaxed mb-1.5" style={{ color: 'rgba(234,251,255,0.55)' }}>
-                  Analyse rapide de l&apos;état de votre appareil.
-                </p>
-                <p className="font-mono text-[10px] tracking-[0.12em] mb-6" style={{ color: 'rgba(0,209,255,0.45)' }}>
-                  Première estimation intelligente par le système Com&apos;9.
+                <p className="font-space text-sm leading-relaxed mb-6" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                  Analyse rapide de l&apos;état de votre appareil. Résultat immédiat.
                 </p>
 
                 {/* 4 analysis points */}
@@ -174,17 +150,9 @@ export default function Diagnostic() {
                       <div className="shrink-0" style={{ color: 'rgba(0,209,255,0.7)' }}>
                         {cat.icon}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#00d1ff' }} />
-                          <span className="font-mono text-[8px] tracking-[0.15em] uppercase" style={{ color: 'rgba(0,209,255,0.5)' }}>
-                            ✔ Vérifié
-                          </span>
-                        </div>
-                        <span className="font-space text-xs font-semibold" style={{ color: 'rgba(234,251,255,0.75)' }}>
-                          {cat.label}
-                        </span>
-                      </div>
+                      <span className="font-space text-[13px] font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                        {cat.label}
+                      </span>
                     </motion.div>
                   ))}
                 </div>
@@ -231,10 +199,10 @@ export default function Diagnostic() {
                 CARD PREMIUM
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
             <motion.div
-              initial={{ opacity: 0, x: 24 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.7, delay: 0.1 }}
+              transition={{ duration: 0.9, delay: 0.12, ease: [0.23, 1, 0.32, 1] }}
               className="relative flex flex-col rounded-3xl overflow-hidden"
               style={{
                 background: 'linear-gradient(160deg, rgba(0,18,50,0.98) 0%, rgba(0,8,25,0.99) 100%)',
@@ -242,8 +210,6 @@ export default function Diagnostic() {
                 boxShadow: '0 0 60px rgba(0,102,255,0.1), inset 0 1px 0 rgba(0,209,255,0.1)',
               }}
             >
-              <ScanLine delay={2} />
-
               {/* Top premium line */}
               <div className="absolute top-0 inset-x-0 h-px"
                 style={{ background: 'linear-gradient(to right, transparent, rgba(0,209,255,0.7), rgba(0,102,255,0.5), rgba(0,209,255,0.7), transparent)' }} />
@@ -275,8 +241,8 @@ export default function Diagnostic() {
                 </div>
 
                 {/* Tagline */}
-                <p className="font-space text-sm leading-relaxed mb-6" style={{ color: 'rgba(234,251,255,0.55)' }}>
-                  Analyse avancée sur <span style={{ color: '#00d1ff' }}>100 points</span>. Validation complète de tous les composants — résultat officiel imprimable.
+                <p className="font-space text-sm leading-relaxed mb-6" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                  Analyse avancée sur <span style={{ color: '#00d1ff' }}>100 points</span>. Résultat officiel imprimable.
                 </p>
 
                 {/* 8 categories grid */}
@@ -295,7 +261,7 @@ export default function Diagnostic() {
                           <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
-                      <span className="font-mono leading-tight" style={{ fontSize: '0.6rem', letterSpacing: '0.06em', color: 'rgba(234,251,255,0.5)' }}>
+                      <span className="font-mono leading-tight" style={{ fontSize: '0.66rem', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.72)' }}>
                         {cat.label}
                       </span>
                     </motion.div>
@@ -380,7 +346,7 @@ export default function Diagnostic() {
                     <div className="font-mono text-[10px] tracking-[0.2em] uppercase mb-0.5" style={{ color: '#00d1ff' }}>
                       {item.label}
                     </div>
-                    <div className="font-space text-xs" style={{ color: 'rgba(234,251,255,0.35)' }}>{item.desc}</div>
+                    <div className="font-space text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{item.desc}</div>
                   </div>
                 )
               ))}

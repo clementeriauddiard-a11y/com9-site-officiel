@@ -250,7 +250,7 @@ function SerieBlock({
             <div className="px-4 py-2.5 flex items-center gap-2"
               style={{ borderTop: '1px solid rgba(0,209,255,0.04)', background: 'rgba(0,0,0,0.12)' }}>
               <WaIcon size="sm" />
-              <span className="font-mono text-[8px] tracking-[0.14em] uppercase"
+              <span className="font-mono text-[9.5px] tracking-[0.14em] uppercase"
                 style={{ color: 'rgba(34,197,94,0.75)' }}>
                 Appuyez sur un modèle pour contacter via WhatsApp
               </span>
@@ -361,16 +361,16 @@ export default function Pricing() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          className="text-center mb-14"
+          transition={{ duration: 0.9, ease: [0.23, 1, 0.32, 1] }}
+          className="text-center mb-16"
         >
-          <p className="section-label mb-5">— Tarifs —</p>
+          <p className="section-label mb-5">Tarifs</p>
           <h2 className="font-black font-space text-cold-white mb-5"
-            style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', letterSpacing: '-0.025em' }}>
+            style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', letterSpacing: '-0.03em' }}>
             Tarification <span className="gradient-text">Transparente</span>
           </h2>
-          <p className="font-space text-sm max-w-sm mx-auto leading-relaxed"
-            style={{ color: 'rgba(255,255,255,0.88)' }}>
+          <p className="font-space text-[15px] max-w-sm mx-auto leading-relaxed"
+            style={{ color: 'rgba(255,255,255,0.65)' }}>
             Prix réels, sans surprise. iPhone uniquement pour le moment.
           </p>
         </motion.div>
@@ -445,8 +445,8 @@ export default function Pricing() {
                 Garantie pièces &amp; main d&apos;œuvre
               </p>
             </div>
-            <p className="font-mono text-[8.5px] tracking-[0.14em] uppercase text-center"
-              style={{ color: 'rgba(255,255,255,0.52)' }}>
+            <p className="font-mono text-[9.5px] tracking-[0.14em] uppercase text-center"
+              style={{ color: 'rgba(255,255,255,0.6)' }}>
               CB &nbsp;·&nbsp; Espèces &nbsp;·&nbsp; Virement
             </p>
           </div>
@@ -454,7 +454,7 @@ export default function Pricing() {
           {/* CTA devis */}
           <div className="flex justify-center">
             <motion.a
-              href="#contact"
+              href="/#contact"
               whileHover={{ scale: 1.04, y: -2 }}
               whileTap={{ scale: 0.97 }}
               className="inline-flex items-center gap-3 px-8 py-3.5 rounded-full font-mono text-[11px] tracking-[0.2em] uppercase transition-all duration-300"
