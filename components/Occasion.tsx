@@ -225,6 +225,10 @@ export default function Occasion() {
       className="relative overflow-hidden"
       style={{ paddingTop: 'var(--section-py)', paddingBottom: 'var(--section-py)' }}>
 
+      {/* Ancre secondaire : /#marketplace pointe aussi sur cette section.
+          top:0 pour que scroll-margin-top se calcule depuis le bord réel. */}
+      <span id="marketplace" aria-hidden className="absolute left-0 top-0" />
+
       <div className="max-w-6xl mx-auto px-5 md:px-8">
 
         {/* ── Header ── */}
@@ -235,14 +239,9 @@ export default function Occasion() {
           transition={{ duration: 0.9 }}
           className="text-center mb-16"
         >
-          <p className="section-label mb-5">Marketplace</p>
-          <h2 className="c9-title mb-5">
-            Des appareils
-            <br />
-            <span className="gradient-text">déjà éprouvés.</span>
-          </h2>
-          <p className="c9-subtitle mx-auto max-w-md">
-            Chaque appareil est contrôlé sur 100 points et certifié avant mise en vente.
+          <h2 className="c9-title mb-4">Marketplace</h2>
+          <p className="c9-subtitle mx-auto max-w-sm">
+            Des appareils certifiés sur 100 points.
           </p>
         </motion.div>
 

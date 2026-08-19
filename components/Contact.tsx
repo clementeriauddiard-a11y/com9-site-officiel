@@ -44,10 +44,7 @@ export default function Contact() {
           transition={{ duration: 0.9 }}
           className="mb-12"
         >
-          <p className="section-label mb-5">Contact</p>
-          <h2 className="c9-title mb-4">
-            Parlons de votre <span className="gradient-text">appareil</span>
-          </h2>
+          <h2 className="c9-title mb-4">Contact</h2>
           <p className="c9-subtitle">Nogent-le-Rotrou · Eure-et-Loir</p>
         </motion.div>
 

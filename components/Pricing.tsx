@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   MODELS,
   REPAIRS,
@@ -14,6 +14,7 @@ import {
 } from '@/data/tarifs'
 import { WaCta } from '@/components/ui/Wa'
 import { waLink } from '@/lib/links'
+import { scrollToElement } from '@/lib/scroll'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
@@ -340,6 +341,31 @@ export default function Pricing() {
   const [repair, setRepair] = useState<RepairId>('ecran')
   const [model, setModel] = useState<string | null>(null)
 
+  // Bloc « 03 · Tarif » — cible du défilement automatique.
+  const resultRef = useRef<HTMLDivElement>(null)
+  // N'entre en jeu que sur une action volontaire de l'utilisateur :
+  // jamais au premier rendu, jamais sur un simple re-render.
+  const pendingScroll = useRef(false)
+
+  useEffect(() => {
+    if (!pendingScroll.current) return
+    pendingScroll.current = false
+    if (!model) return
+
+    // Deux frames d'attente : le temps que la carte d'offre soit montée
+    // et mesurable (AnimatePresence + layout), sinon on viserait l'ancienne
+    // hauteur du bloc.
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        // Sur grand écran le tarif est souvent déjà à l'écran : on ne
+        // déplace la page que si c'est réellement utile.
+        const onlyIfHidden = window.innerWidth >= 1024
+        scrollToElement(resultRef.current, 88, onlyIfHidden)
+      })
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [model, repair])
+
   // Tous les modèles de la grille proposent les trois prestations,
   // mais on filtre malgré tout : aucune offre indisponible n'est affichée.
   const models = useMemo(
@@ -355,7 +381,17 @@ export default function Pricing() {
     // On conserve le modèle sélectionné si la nouvelle prestation existe pour lui.
     if (!model) return
     const m = MODELS.find((x) => x.model === model)
-    if (!m || getOptions(id, m).length === 0) setModel(null)
+    if (!m || getOptions(id, m).length === 0) {
+      setModel(null)
+      return
+    }
+    // Un modèle est déjà choisi : le tarif change, on y emmène l'utilisateur.
+    pendingScroll.current = true
+  }
+
+  function handleModel(next: string) {
+    pendingScroll.current = true
+    setModel(next)
   }
 
   return (
@@ -373,15 +409,9 @@ export default function Pricing() {
           transition={{ duration: 0.8, ease: EASE }}
           className="mb-14 text-center sm:mb-16"
         >
-          <p className="section-label mb-5">Tarifs</p>
-          <h2 className="c9-title mb-5">
-            Un prix clair,
-            <br />
-            <span className="gradient-text">en trois gestes.</span>
-          </h2>
-          <p className="c9-subtitle mx-auto max-w-md">
-            Choisissez la réparation, puis votre iPhone. Le tarif s&apos;affiche
-            immédiatement — sans surprise.
+          <h2 className="c9-title mb-4">Tarifs</h2>
+          <p className="c9-subtitle mx-auto max-w-sm">
+            Votre réparation, votre modèle, votre prix.
           </p>
         </motion.div>
 
@@ -406,11 +436,13 @@ export default function Pricing() {
           className="mb-12"
         >
           <StepLabel n="02">Votre iPhone</StepLabel>
-          <ModelPicker models={models} value={model} onChange={setModel} />
+          <ModelPicker models={models} value={model} onChange={handleModel} />
         </motion.div>
 
         {/* ── Étape 3 ── */}
         <motion.div
+          ref={resultRef}
+          className="c9-scroll-target"
           initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}

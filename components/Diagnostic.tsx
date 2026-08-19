@@ -79,15 +79,9 @@ export default function Diagnostic() {
             transition={{ duration: 0.8, ease: EASE }}
             className="mb-16 text-center"
           >
-            <p className="section-label mb-5">Diagnostic</p>
-            <h2 className="c9-title mb-5">
-              Savoir avant
-              <br />
-              <span className="gradient-text">de décider.</span>
-            </h2>
-            <p className="c9-subtitle mx-auto max-w-lg">
-              Le protocole de contrôle Com&apos;9 mesure l&apos;état réel de votre
-              appareil. Deux niveaux, une même méthode.
+            <h2 className="c9-title mb-4">Diagnostic</h2>
+            <p className="c9-subtitle mx-auto max-w-sm">
+              Deux niveaux d&apos;analyse, une même méthode.
             </p>
           </motion.div>
 

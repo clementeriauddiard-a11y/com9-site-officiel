@@ -9,6 +9,7 @@ import { ACCESS_PASSWORD } from '@/lib/config'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 import DiagnosticModal from '@/components/DiagnosticModal'
+import BackLink from '@/components/ui/BackLink'
 
 // ─── Animated corner brackets ─────────────────────────────────────────────────
 
@@ -88,44 +89,16 @@ function AccessGate({ onUnlock }: { onUnlock: () => void }) {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
-      style={{ background: '#050816' }}>
-
-      {/* Grid overlay */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: 'linear-gradient(rgba(0,209,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,209,255,0.025) 1px, transparent 1px)',
-        backgroundSize: '60px 60px',
-      }} />
+      style={{ background: 'var(--c9-bg)' }}>
 
       {/* Ambient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
         style={{ width: '600px', height: '600px', background: 'radial-gradient(ellipse, rgba(0,102,255,0.08) 0%, transparent 70%)' }} />
 
-      {/* Full-screen scan line */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{ y: ['-5%', '105%'] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'linear', repeatDelay: 10 }}
-          className="absolute w-full"
-          style={{ height: '1px', background: 'linear-gradient(to right, transparent, rgba(0,209,255,0.2), rgba(0,209,255,0.4), rgba(0,209,255,0.2), transparent)' }}
-        />
+      {/* Retour unifié — renvoie sur la section Diagnostic de l'accueil */}
+      <div className="absolute left-4 top-4 z-20">
+        <BackLink href="/#diagnostic" label="Diagnostic" />
       </div>
-
-      {/* Back to site */}
-      <motion.a
-        href="/"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2, duration: 0.5 }}
-        className="absolute top-5 left-6 flex items-center gap-2 font-mono text-[9px] tracking-[0.22em] uppercase transition-colors duration-200"
-        style={{ color: 'rgba(234,251,255,0.25)' }}
-        onMouseEnter={e => e.currentTarget.style.color = 'rgba(0,209,255,0.6)'}
-        onMouseLeave={e => e.currentTarget.style.color = 'rgba(234,251,255,0.25)'}
-      >
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
-          <path d="M10 4L6 8l4 4"/>
-        </svg>
-        Retour au site
-      </motion.a>
 
       {/* Main panel */}
       <motion.div

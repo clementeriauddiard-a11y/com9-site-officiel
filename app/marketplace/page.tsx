@@ -5,6 +5,7 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import BackLink from '@/components/ui/BackLink'
 import { getPhones } from '@/lib/phones-db'
 import type { Phone, PhoneStatus, PhoneCondition } from '@/data/phones'
 import Navbar from '@/components/Navbar'
@@ -222,39 +223,13 @@ export default async function MarketplacePage() {
       {/* ── Navbar ── */}
       <Navbar />
 
+      {/* ── Retour unifié ── */}
+      <div className="relative z-10 mx-auto max-w-6xl px-5 pt-24 md:px-8">
+        <BackLink href="/" label="Accueil" />
+      </div>
+
       {/* ── Hero section ── */}
-      <section className="relative z-10 pt-32 pb-14 px-5 text-center">
-        {/* Bouton retour accueil */}
-        <div className="flex justify-center mb-6">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-mono text-[10px] tracking-[0.18em] uppercase transition-all duration-200"
-            style={{
-              border:     '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.04)',
-              color:      'rgba(255,255,255,0.72)',
-            }}
-          >
-            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" className="w-3 h-3">
-              <path d="M10 7H4M7 4L4 7l3 3" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Retour accueil
-          </Link>
-        </div>
-
-        {/* Breadcrumb */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <span className="font-mono text-[9px] tracking-[0.22em] uppercase"
-            style={{ color: 'rgba(255,255,255,0.32)' }}>
-            Accueil
-          </span>
-          <span className="font-mono text-[8px]" style={{ color: 'rgba(58,217,255,0.3)' }}>›</span>
-          <span className="font-mono text-[9px] tracking-[0.22em] uppercase" style={{ color: 'rgba(58,217,255,0.7)' }}>
-            Marketplace
-          </span>
-        </div>
-
-        <p className="section-label mb-5">— Marketplace Com&apos;9 —</p>
+      <section className="relative z-10 px-5 pb-14 pt-8 text-center">
         <h1 className="font-semibold font-space text-white mb-5"
           style={{ fontSize: 'clamp(2rem, 5vw, 3.4rem)', letterSpacing: '-0.025em', lineHeight: 1.1 }}>
           Téléphones{' '}
@@ -270,7 +245,7 @@ export default async function MarketplacePage() {
         </h1>
         <p className="font-space text-sm max-w-sm mx-auto leading-relaxed mb-8"
           style={{ color: 'rgba(255,255,255,0.72)' }}>
-          Chaque appareil est diagnostiqué sur 100 points,<br className="hidden sm:block" />
+          Chaque appareil est diagnostiqué sur 100 points,{' '}<br className="hidden sm:block" />
           testé et validé par Com&apos;9 avant mise en vente.
         </p>
 

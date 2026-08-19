@@ -8,6 +8,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import BackLink from '@/components/ui/BackLink'
 
 // ─── Formulaire (séparé pour useSearchParams + Suspense) ─────────────────────
 
@@ -80,14 +81,6 @@ function LoginForm() {
       style={{ background: '#0f1929' }}
     >
       {/* Grille de fond */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(0,209,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,209,255,0.025) 1px,transparent 1px)',
-          backgroundSize: '60px 60px',
-        }}
-      />
 
       {/* Halo central */}
       <div
@@ -95,32 +88,11 @@ function LoginForm() {
         style={{ width: '600px', height: '600px', background: 'radial-gradient(ellipse,rgba(0,102,255,0.08) 0%,transparent 70%)' }}
       />
 
-      {/* Scan ligne plein écran */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{ y: ['-5%', '105%'] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'linear', repeatDelay: 10 }}
-          className="absolute w-full"
-          style={{ height: '1px', background: 'linear-gradient(to right,transparent,rgba(0,209,255,0.2),rgba(0,209,255,0.4),rgba(0,209,255,0.2),transparent)' }}
-        />
-      </div>
 
-      {/* Retour au site */}
-      <motion.a
-        href="/"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.8 }}
-        className="absolute top-5 left-6 flex items-center gap-2 font-mono text-[9px] tracking-[0.22em] uppercase transition-colors duration-200"
-        style={{ color: 'rgba(234,251,255,0.25)' }}
-        onMouseEnter={e => (e.currentTarget.style.color = 'rgba(0,209,255,0.6)')}
-        onMouseLeave={e => (e.currentTarget.style.color = 'rgba(234,251,255,0.25)')}
-      >
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
-          <path d="M10 4L6 8l4 4"/>
-        </svg>
-        Retour au site
-      </motion.a>
+      {/* Retour unifié — visible dès l'arrivée, aucune temporisation */}
+      <div className="absolute left-4 top-4 z-20">
+        <BackLink href="/" label="Accueil" />
+      </div>
 
       {/* Panneau principal */}
       <motion.div

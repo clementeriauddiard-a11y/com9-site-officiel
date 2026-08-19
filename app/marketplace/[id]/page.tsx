@@ -5,6 +5,7 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import BackLink from '@/components/ui/BackLink'
 import { notFound } from 'next/navigation'
 import { getPhones } from '@/lib/phones-db'
 import type { Phone, PhoneStatus, PhoneCondition } from '@/data/phones'
@@ -121,21 +122,9 @@ export default async function PhoneDetailPage({ params }: Props) {
       {/* ── Content ── */}
       <main className="relative z-10 max-w-6xl mx-auto px-5 md:px-8 pt-28 pb-24">
 
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 mb-8">
-          <Link href="/" className="font-mono text-[8.5px] tracking-[0.2em] uppercase transition-colors duration-200"
-            style={{ color: 'rgba(255,255,255,0.32)' }}>
-            Accueil
-          </Link>
-          <span className="font-mono text-[8px]" style={{ color: 'rgba(58,217,255,0.28)' }}>›</span>
-          <Link href="/marketplace" className="font-mono text-[8.5px] tracking-[0.2em] uppercase transition-colors duration-200"
-            style={{ color: 'rgba(255,255,255,0.32)' }}>
-            Marketplace
-          </Link>
-          <span className="font-mono text-[8px]" style={{ color: 'rgba(58,217,255,0.28)' }}>›</span>
-          <span className="font-mono text-[8.5px] tracking-[0.2em] uppercase" style={{ color: 'rgba(58,217,255,0.7)' }}>
-            {phone.brand} {phone.model}
-          </span>
+        {/* Retour unifié — la page parente logique est la Marketplace */}
+        <div className="mb-8">
+          <BackLink href="/marketplace" label="Marketplace" />
         </div>
 
         {/* ── Layout 2 colonnes ── */}

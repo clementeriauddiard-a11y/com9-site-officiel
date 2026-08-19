@@ -81,8 +81,9 @@ body {
 #tarifs,
 #diagnostic,
 #occasion,
+#marketplace,
 #contact {
-  scroll-margin-top: 84px;
+  scroll-margin-top: 88px;
 }
 
 /* ─── Scrollbar ───────────────────────────────────────────────────────────── */
@@ -193,19 +194,51 @@ body {
   color: var(--c9-accent);
 }
 
-/* ─── Titre de section ────────────────────────────────────────────────────── */
+/* ─── Titre de section ──────────────────────────────────────────────────────
+   Un seul mot, blanc pur, très grand. C'est le repère principal de la page :
+   aucune phrase ne doit lui faire concurrence.
+   ───────────────────────────────────────────────────────────────────────── */
 .c9-title {
   font-weight: 700;
-  color: var(--c9-text);
-  letter-spacing: -0.035em;
-  line-height: 1.05;
-  font-size: clamp(2.1rem, 5.2vw, 3.6rem);
+  color: #ffffff;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-size: clamp(2.75rem, 11vw, 4.5rem);
 }
 
+/* Sous-titre : une ligne, discret, jamais concurrent du titre. */
 .c9-subtitle {
   color: var(--c9-text-2);
-  font-size: clamp(0.95rem, 1.6vw, 1.0625rem);
-  line-height: 1.6;
+  font-size: clamp(0.9375rem, 1.5vw, 1.0625rem);
+  line-height: 1.55;
+}
+
+/* ─── Retour unifié ─────────────────────────────────────────────────────────
+   Sobre au repos, réactif au toucher. Aucune bordure, aucune carte.
+   ───────────────────────────────────────────────────────────────────────── */
+.c9-back {
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.25s var(--c9-ease),
+    opacity 0.25s var(--c9-ease),
+    transform 0.2s var(--c9-ease);
+}
+
+@media (hover: hover) {
+  .c9-back:hover { background-color: rgba(255, 255, 255, 0.07); }
+}
+
+.c9-back:active {
+  transform: scale(0.97);
+  opacity: 0.7;
+}
+
+/* ─── Cible du défilement tarifaire ────────────────────────────────────────
+   Marge de sécurité sous le header fixe (68px) pour les navigateurs qui
+   honorent scroll-margin-top ; le calcul JS assure le reste.
+   ───────────────────────────────────────────────────────────────────────── */
+.c9-scroll-target {
+  scroll-margin-top: 88px;
 }
 
 /* ─── Mockup téléphone (conservé pour BeforeAfter) ────────────────────────── */

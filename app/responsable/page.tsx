@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { usePhones } from '@/context/PhonesContext'
+import BackLink from '@/components/ui/BackLink'
 import { useRouter } from 'next/navigation'
 import {
   conditionColor, statusColor,
@@ -903,12 +904,11 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
       <header className="sticky top-0 z-40 transition-all duration-300"
         style={{ background: 'rgba(5,8,22,0.9)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(0,209,255,0.08)', boxShadow: '0 4px 40px rgba(0,0,0,0.3)' }}>
         <div className="max-w-7xl mx-auto px-5 md:px-8 h-[64px] flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <a href="/" className="flex items-center gap-2 shrink-0">
-              <span className="font-black font-space text-cold-white text-base">COM<span className="gradient-text">&apos;9</span></span>
-            </a>
-            <span className="w-px h-4" style={{ background: 'rgba(0,209,255,0.18)' }} />
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full"
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Retour unifié — seule sortie visible sur mobile */}
+            <BackLink href="/" label="Accueil" />
+            <span className="hidden sm:block w-px h-4 shrink-0" style={{ background: 'rgba(0,209,255,0.18)' }} />
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full shrink-0"
               style={{ background: 'rgba(0,209,255,0.06)', border: '1px solid rgba(0,209,255,0.18)' }}>
               <motion.span animate={{ opacity: [1,0.3,1] }} transition={{ duration: 2, repeat: Infinity }}
                 className="w-1.5 h-1.5 rounded-full" style={{ background: '#00d1ff' }} />
