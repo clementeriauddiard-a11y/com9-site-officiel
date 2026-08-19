@@ -81,7 +81,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${spaceGrotesk.variable} ${spaceMono.variable}`}>
-      <body className="bg-space-black text-cold-white antialiased">
+      <body className="text-cold-white antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

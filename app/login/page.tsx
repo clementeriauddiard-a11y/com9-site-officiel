@@ -77,7 +77,7 @@ function LoginForm() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden"
-      style={{ background: '#050816' }}
+      style={{ background: '#0f1929' }}
     >
       {/* Grille de fond */}
       <div
@@ -426,7 +426,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#050816' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#0f1929' }}>
         <motion.span
           animate={{ opacity: [0.3, 1, 0.3] }}
           transition={{ duration: 1.5, repeat: Infinity }}

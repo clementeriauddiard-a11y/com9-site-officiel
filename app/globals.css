@@ -2,12 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   COM'9 — Direction artistique
+   Bleu ardoise lumineux · lumière diffuse · contraste maîtrisé · zéro bruit.
+   Le premium vient de la composition, pas des effets.
+   ───────────────────────────────────────────────────────────────────────────── */
+
 :root {
-  --space-black: #050816;
-  --neon-blue: #00d1ff;
-  --electric-blue: #0066ff;
-  --cold-white: #ffffff;
-  --section-py: clamp(6.5rem, 10vw, 10rem);
+  /* Surfaces */
+  --c9-bg:            #111f35;   /* base ardoise lumineuse */
+  --c9-bg-deep:       #0b1220;   /* pied de page / zones basses */
+  --c9-elev-1:        rgba(255, 255, 255, 0.045);
+  --c9-elev-2:        rgba(255, 255, 255, 0.075);
+
+  /* Traits — un seul niveau de bordure, très doux */
+  --c9-hairline:      rgba(255, 255, 255, 0.10);
+  --c9-hairline-soft: rgba(255, 255, 255, 0.06);
+  --c9-hairline-lit:  rgba(255, 255, 255, 0.18);
+
+  /* Texte — blanc réellement lumineux, secondaire dosé mais lisible */
+  --c9-text:          #ffffff;
+  --c9-text-2:        rgba(255, 255, 255, 0.80);
+  --c9-text-3:        rgba(255, 255, 255, 0.60);
+
+  /* Accent Com'9 */
+  --c9-accent:        #3ad9ff;
+  --c9-accent-deep:   #1aa9ff;
+  --c9-accent-soft:   rgba(58, 217, 255, 0.12);
+  --c9-accent-line:   rgba(58, 217, 255, 0.28);
+
+  /* Rythme vertical */
+  --section-py:       clamp(6rem, 9vw, 9.5rem);
+
+  /* Courbe d'animation unique — tout le site respire pareil */
+  --c9-ease:          cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Aliases historiques (compatibilité) */
+  --space-black:      var(--c9-bg);
+  --neon-blue:        var(--c9-accent);
+  --electric-blue:    var(--c9-accent-deep);
+  --cold-white:       #ffffff;
 }
 
 * {
@@ -23,152 +57,166 @@ html {
 }
 
 body {
-  background-color: var(--space-black);
-  color: var(--cold-white);
+  color: var(--c9-text);
   font-family: var(--font-space-grotesk), sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
+
+  /* Lumière : trois halos très diffus, statiques. Aucune animation. */
+  background-color: var(--c9-bg);
+  background-image:
+    radial-gradient(132% 76% at 50% -12%, rgba(96, 226, 255, 0.20) 0%, transparent 58%),
+    radial-gradient(96%  66% at 0%   26%, rgba(52,  140, 255, 0.18) 0%, transparent 60%),
+    radial-gradient(104% 72% at 100% 62%, rgba(96,  226, 255, 0.15) 0%, transparent 60%),
+    radial-gradient(90%  60% at 50% 108%, rgba(52,  140, 255, 0.10) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, transparent 26%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
-/* ─── Scroll offset pour navbar ─────── */
-#services, #tarifs, #diagnostic, #occasion, #contact {
-  scroll-margin-top: 72px;
+/* ─── Ancres sous navbar fixe ─────────────────────────────────────────────── */
+#services,
+#tarifs,
+#diagnostic,
+#occasion,
+#contact {
+  scroll-margin-top: 84px;
 }
 
-/* ─── Scrollbar ─────────────────────── */
-::-webkit-scrollbar { width: 4px; }
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,209,255,0.18); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,209,255,0.38); }
-::selection { background: rgba(0,209,255,0.22); color: #eafbff; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.26); }
+::selection { background: rgba(58, 217, 255, 0.24); color: #ffffff; }
 
-/* ─── Focus visible ──────────────────── */
+/* ─── Focus ───────────────────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 1.5px solid rgba(0,209,255,0.5);
+  outline: 2px solid rgba(58, 217, 255, 0.65);
   outline-offset: 3px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
-/* ─── Glassmorphism card ─────────────── */
-.glass-card {
-  background: linear-gradient(160deg, rgba(0,209,255,0.06) 0%, rgba(0,20,50,0.55) 100%);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(0,209,255,0.12);
+/* ─── Surface premium — une seule carte, jamais imbriquée ─────────────────── */
+.c9-surface {
+  background: linear-gradient(
+    168deg,
+    rgba(255, 255, 255, 0.075) 0%,
+    rgba(255, 255, 255, 0.030) 46%,
+    rgba(255, 255, 255, 0.018) 100%
+  );
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  border: 1px solid var(--c9-hairline);
   box-shadow:
-    0 2px 20px rgba(0,0,0,0.45),
-    0 8px 40px rgba(0,0,0,0.35),
-    inset 0 1px 0 rgba(0,209,255,0.09);
-  transition: transform 0.45s cubic-bezier(0.23,1,0.32,1),
-              border-color 0.45s cubic-bezier(0.23,1,0.32,1),
-              box-shadow 0.45s cubic-bezier(0.23,1,0.32,1),
-              background 0.45s cubic-bezier(0.23,1,0.32,1);
+    0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+    0 24px 60px -30px rgba(0, 0, 0, 0.55);
+}
+
+/* Variante mise en avant — accent cyan, toujours sobre */
+.c9-surface-accent {
+  background: linear-gradient(
+    168deg,
+    rgba(58, 217, 255, 0.13) 0%,
+    rgba(58, 217, 255, 0.045) 48%,
+    rgba(255, 255, 255, 0.020) 100%
+  );
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  border: 1px solid var(--c9-accent-line);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.10) inset,
+    0 24px 70px -32px rgba(26, 169, 255, 0.40);
+}
+
+/* Compat : ancien nom conservé pour les composants non refondus */
+.glass-card {
+  background: linear-gradient(
+    168deg,
+    rgba(255, 255, 255, 0.075) 0%,
+    rgba(255, 255, 255, 0.028) 100%
+  );
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  border: 1px solid var(--c9-hairline);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+    0 24px 60px -30px rgba(0, 0, 0, 0.55);
+  transition:
+    transform 0.5s var(--c9-ease),
+    border-color 0.5s var(--c9-ease),
+    box-shadow 0.5s var(--c9-ease);
 }
 
 @media (hover: hover) {
   .glass-card:hover {
-    background: linear-gradient(160deg, rgba(0,209,255,0.065) 0%, rgba(0,30,60,0.32) 100%);
-    border-color: rgba(0,209,255,0.2);
+    border-color: var(--c9-hairline-lit);
     box-shadow:
-      0 0 0 1px rgba(0,209,255,0.04),
-      0 16px 56px rgba(0,0,0,0.55),
-      0 0 70px rgba(0,102,255,0.07),
-      inset 0 1px 0 rgba(0,209,255,0.1);
-    transform: translateY(-3px);
+      0 1px 0 0 rgba(255, 255, 255, 0.10) inset,
+      0 32px 80px -34px rgba(0, 0, 0, 0.6);
+    transform: translateY(-2px);
   }
 }
 
-/* ─── Gradient text ──────────────────── */
-.gradient-text {
-  background: linear-gradient(120deg, #7fe4ff 0%, #00d1ff 45%, #2b8cff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ─── Neon glow ──────────────────────── */
-.glow-text {
-  text-shadow: 0 0 24px rgba(0,209,255,0.25), 0 0 48px rgba(0,209,255,0.12);
-}
-
-/* ─── Grid overlay ───────────────────── */
-.grid-overlay {
-  background-image:
-    linear-gradient(rgba(0,209,255,0.022) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,209,255,0.022) 1px, transparent 1px);
-  background-size: 64px 64px;
-}
-
-/* ─── Neon button ────────────────────── */
-.neon-btn {
-  position: relative;
-  overflow: hidden;
-}
-.neon-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(0,209,255,0.12), rgba(0,102,255,0.08));
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.neon-btn:hover::before { opacity: 1; }
-
-/* ─── Section label ──────────────────── */
-.section-label {
-  font-family: var(--font-space-mono), monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.34em;
-  text-transform: uppercase;
-  color: rgba(0,209,255,0.92);
-}
-
-/* ─── Premium border ─────────────────── */
-.premium-border {
-  position: relative;
-}
-.premium-border::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, rgba(0,209,255,0.28) 0%, transparent 50%, rgba(0,102,255,0.18) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-/* ─── HUD line ───────────────────────── */
-.hud-line {
-  position: relative;
-}
-.hud-line::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 2rem;
+/* ─── Séparateur de section — un seul trait, presque invisible ────────────── */
+.c9-divider {
   height: 1px;
-  background: linear-gradient(to right, var(--neon-blue), transparent);
-  transform: translateY(-50%);
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.10) 22%,
+    rgba(255, 255, 255, 0.10) 78%,
+    transparent
+  );
 }
 
-/* ─── Phone mockup ───────────────────── */
+/* ─── Texte accentué ──────────────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(105deg, #ffffff 0%, #a9ecff 42%, var(--c9-accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ─── Sur-titre de section ────────────────────────────────────────────────── */
+.section-label {
+  display: inline-block;
+  font-family: var(--font-space-mono), monospace;
+  font-size: 0.625rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--c9-accent);
+}
+
+/* ─── Titre de section ────────────────────────────────────────────────────── */
+.c9-title {
+  font-weight: 700;
+  color: var(--c9-text);
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  font-size: clamp(2.1rem, 5.2vw, 3.6rem);
+}
+
+.c9-subtitle {
+  color: var(--c9-text-2);
+  font-size: clamp(0.95rem, 1.6vw, 1.0625rem);
+  line-height: 1.6;
+}
+
+/* ─── Mockup téléphone (conservé pour BeforeAfter) ────────────────────────── */
 .phone-mockup {
   position: relative;
   width: 160px;
   height: 320px;
-  background: linear-gradient(145deg, #0d1424, #0a0f1e);
+  background: linear-gradient(145deg, #1a2740, #121c2e);
   border-radius: 28px;
-  border: 2px solid rgba(0,209,255,0.22);
-  box-shadow:
-    0 0 0 1px rgba(0,0,0,0.8),
-    0 30px 80px rgba(0,0,0,0.8),
-    inset 0 1px 0 rgba(255,255,255,0.04);
+  border: 1px solid var(--c9-hairline-lit);
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7);
 }
 .phone-screen {
   position: absolute;
@@ -181,19 +229,16 @@ body {
   top: 8px; left: 50%;
   transform: translateX(-50%);
   width: 50px; height: 5px;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.8);
   border-radius: 4px;
   z-index: 2;
 }
 
-/* ─── Diagnostic print ───────────────── */
+/* ─── Feuille de diagnostic imprimable (inchangé fonctionnellement) ───────── */
 .diag-print-sheet { display: none; }
 
 @media print {
-  @page {
-    size: A4 portrait;
-    margin: 10mm 12mm;
-  }
+  @page { size: A4 portrait; margin: 10mm 12mm; }
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -203,38 +248,50 @@ body {
   .diag-print-sheet {
     display: block !important;
     width: 100%; height: 100%;
-    background: #050816 !important;
-    color: #eafbff !important;
+    background: #0b1220 !important;
+    color: #ffffff !important;
     font-family: 'Space Grotesk', sans-serif;
     page-break-inside: avoid;
   }
   .diag-print-sheet * { page-break-inside: avoid; }
 }
 
-/* ─── Mobile overrides ───────────────── */
+/* ─── Mobile ──────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .glass-card { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+  :root { --section-py: clamp(4.5rem, 13vw, 6.5rem); }
 
-  /* Section spacing réduit sur très petit écran */
-  :root { --section-py: clamp(4.5rem, 12vw, 6rem); }
+  .c9-surface,
+  .c9-surface-accent,
+  .glass-card {
+    backdrop-filter: blur(18px) saturate(135%);
+    -webkit-backdrop-filter: blur(18px) saturate(135%);
+  }
 
-  /* Meilleur rendu texte sur iOS/Android */
   body {
     text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
+    /* background-attachment: fixed est coûteux et instable sur iOS */
+    background-attachment: scroll;
   }
 }
 
-/* ─── Touch targets (pointer coarse = écran tactile) ── */
+/* ─── Écrans tactiles ─────────────────────────────────────────────────────── */
 @media (pointer: coarse) {
-  /* Supprime le tap highlight bleu iOS */
   * { -webkit-tap-highlight-color: transparent; }
 }
 
-/* ─── Évite les overflow de titres sur mobile ── */
+/* ─── Anti-débordement des titres ─────────────────────────────────────────── */
 @media (max-width: 768px) {
   h1, h2, h3 {
     overflow-wrap: break-word;
-    word-break: break-word;
+  }
+}
+
+/* ─── Accessibilité : respect de « réduire les animations » ───────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

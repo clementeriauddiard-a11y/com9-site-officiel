@@ -26,21 +26,14 @@ function PhoneCard({ phone, index }: { phone: Phone; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.8, delay: index * 0.1, ease: [0.23, 1, 0.32, 1] }}
-      className="relative flex flex-col rounded-3xl overflow-hidden transition-all duration-500"
-      style={{
-        background: 'linear-gradient(170deg, rgba(10,16,34,0.92) 0%, rgba(5,8,22,0.98) 100%)',
-        border:     '1px solid rgba(255,255,255,0.07)',
-        boxShadow:  '0 20px 60px rgba(0,0,0,0.4)',
-      }}
+      className="c9-surface relative flex flex-col overflow-hidden rounded-[28px] transition-all duration-500"
       onMouseEnter={e => {
-        e.currentTarget.style.borderColor = 'rgba(0,209,255,0.22)'
-        e.currentTarget.style.transform   = 'translateY(-4px)'
-        e.currentTarget.style.boxShadow   = '0 28px 80px rgba(0,0,0,0.5), 0 0 50px rgba(0,102,255,0.06)'
+        e.currentTarget.style.borderColor = 'var(--c9-hairline-lit)'
+        e.currentTarget.style.transform   = 'translateY(-3px)'
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'
+        e.currentTarget.style.borderColor = 'var(--c9-hairline)'
         e.currentTarget.style.transform   = 'translateY(0)'
-        e.currentTarget.style.boxShadow   = '0 20px 60px rgba(0,0,0,0.4)'
       }}
     >
       {/* Lien principal sur toute la carte (sauf le bouton WhatsApp) */}
@@ -48,7 +41,7 @@ function PhoneCard({ phone, index }: { phone: Phone; index: number }) {
 
         {/* ── Zone photo ── */}
         <div className="relative overflow-hidden"
-          style={{ height: '230px', background: 'radial-gradient(ellipse at 50% 70%, rgba(0,102,255,0.07) 0%, transparent 70%)' }}>
+          style={{ height: '230px', background: 'radial-gradient(ellipse at 50% 70%, rgba(58,217,255,0.10) 0%, transparent 70%)' }}>
 
           {phone.image ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -60,10 +53,10 @@ function PhoneCard({ phone, index }: { phone: Phone; index: number }) {
           ) : (
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <svg viewBox="0 0 40 72" fill="none" className="h-28 opacity-10">
-                <rect x="2" y="2" width="36" height="68" rx="6" stroke="#00d1ff" strokeWidth="1.5"/>
-                <rect x="8" y="10" width="24" height="44" rx="2" stroke="#00d1ff" strokeWidth="1"/>
-                <circle cx="20" cy="62" r="3" stroke="#00d1ff" strokeWidth="1"/>
-                <rect x="14" y="5" width="12" height="2" rx="1" fill="#00d1ff"/>
+                <rect x="2" y="2" width="36" height="68" rx="6" stroke="#3ad9ff" strokeWidth="1.5"/>
+                <rect x="8" y="10" width="24" height="44" rx="2" stroke="#3ad9ff" strokeWidth="1"/>
+                <circle cx="20" cy="62" r="3" stroke="#3ad9ff" strokeWidth="1"/>
+                <rect x="14" y="5" width="12" height="2" rx="1" fill="#3ad9ff"/>
               </svg>
             </div>
           )}
@@ -71,9 +64,9 @@ function PhoneCard({ phone, index }: { phone: Phone; index: number }) {
           {/* Overlay Vendu */}
           {isSold && (
             <div className="absolute inset-0 z-20 flex items-center justify-center"
-              style={{ background: 'rgba(5,8,22,0.82)', backdropFilter: 'blur(4px)' }}>
-              <div className="font-black font-space text-xl tracking-[0.3em] uppercase rotate-[-12deg] px-4 py-1.5 rounded"
-                style={{ color: 'rgba(234,251,255,0.35)', border: '2px solid rgba(234,251,255,0.1)' }}>
+              style={{ background: 'rgba(15,25,41,0.82)', backdropFilter: 'blur(4px)' }}>
+              <div className="font-space font-semibold text-xl tracking-[0.3em] uppercase rotate-[-12deg] px-4 py-1.5 rounded"
+                style={{ color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.16)' }}>
                 Vendu
               </div>
             </div>
@@ -81,7 +74,7 @@ function PhoneCard({ phone, index }: { phone: Phone; index: number }) {
 
           {/* Badge condition */}
           <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[9.5px] tracking-[0.14em] uppercase"
-            style={{ color: condColor, background: 'rgba(5,8,22,0.72)', border: `1px solid ${condColor}30`, backdropFilter: 'blur(8px)' }}>
+            style={{ color: condColor, background: 'rgba(15,25,41,0.7)', border: `1px solid ${condColor}38`, backdropFilter: 'blur(10px)' }}>
             <span className="w-1 h-1 rounded-full shrink-0" style={{ background: condColor }} />
             {phone.condition}
           </div>
@@ -89,7 +82,7 @@ function PhoneCard({ phone, index }: { phone: Phone; index: number }) {
           {/* Badge Réservé */}
           {isReserved && (
             <div className="absolute top-4 right-[70px] z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[9.5px] tracking-[0.14em] uppercase"
-              style={{ color: statColor, background: 'rgba(5,8,22,0.72)', border: `1px solid ${statColor}35`, backdropFilter: 'blur(8px)' }}>
+              style={{ color: statColor, background: 'rgba(15,25,41,0.7)', border: `1px solid ${statColor}38`, backdropFilter: 'blur(10px)' }}>
               <span className="w-1 h-1 rounded-full shrink-0" style={{ background: statColor }} />
               Réservé
             </div>
@@ -97,23 +90,23 @@ function PhoneCard({ phone, index }: { phone: Phone; index: number }) {
 
           {/* Score Com'9 */}
           <div className="absolute top-4 right-4 z-20 flex flex-col items-center justify-center w-11 h-11 rounded-full"
-            style={{ background: 'rgba(5,8,22,0.85)', border: '1px solid rgba(0,209,255,0.25)', backdropFilter: 'blur(12px)' }}>
-            <span className="font-black font-space text-neon-blue text-sm leading-none">{phone.com9Score}</span>
-            <span className="font-mono text-[7px] leading-none mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>/100</span>
+            style={{ background: 'rgba(15,25,41,0.82)', border: '1px solid var(--c9-accent-line)', backdropFilter: 'blur(12px)' }}>
+            <span className="font-space font-bold text-neon-blue text-sm leading-none">{phone.com9Score}</span>
+            <span className="font-mono text-[7px] leading-none mt-0.5" style={{ color: 'var(--c9-text-3)' }}>/100</span>
           </div>
         </div>
 
         {/* ── Contenu ── */}
         <div className="flex flex-col flex-1 px-6 pt-5 pb-4 gap-1.5">
-          <h3 className="font-bold font-space text-cold-white text-lg leading-tight">{phone.model}</h3>
-          <p className="font-space text-[13px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          <h3 className="font-space text-lg font-semibold leading-tight" style={{ color: 'var(--c9-text)', letterSpacing: '-0.02em' }}>{phone.model}</h3>
+          <p className="font-space text-[13px]" style={{ color: 'var(--c9-text-3)' }}>
             {phone.storage} · {phone.color}
           </p>
 
           {/* Prix */}
           <div className="mt-4">
-            <span className="font-black font-space text-cold-white"
-              style={{ fontSize: 'clamp(1.5rem, 3vw, 1.8rem)', lineHeight: 1 }}>
+            <span className="font-space font-semibold"
+              style={{ color: 'var(--c9-text)', fontSize: 'clamp(1.5rem, 3vw, 1.8rem)', lineHeight: 1, letterSpacing: '-0.035em' }}>
               {phone.price} €
             </span>
           </div>
@@ -123,7 +116,7 @@ function PhoneCard({ phone, index }: { phone: Phone; index: number }) {
       {/* ── Actions — hors du Link ── */}
       <div className="px-6 pb-6 pt-1 flex items-center justify-between gap-3">
         <span className="font-mono text-[9.5px] tracking-[0.16em] uppercase flex items-center gap-1.5"
-          style={{ color: 'rgba(0,209,255,0.55)' }}>
+          style={{ color: 'var(--c9-accent)' }}>
           Voir la fiche
           <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-2.5 h-2.5">
             <path d="M2 7h10M7 2l5 5-5 5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -132,7 +125,7 @@ function PhoneCard({ phone, index }: { phone: Phone; index: number }) {
 
         {isSold ? (
           <span className="font-mono text-[10px] tracking-widest uppercase px-3 py-2 rounded-xl"
-            style={{ color: 'rgba(234,251,255,0.2)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            style={{ color: 'var(--c9-text-3)', border: '1px solid var(--c9-hairline-soft)' }}>
             Vendu
           </span>
         ) : (
@@ -176,30 +169,25 @@ function EmptyState() {
       transition={{ duration: 0.9 }}
       className="max-w-xl mx-auto"
     >
-      <div className="relative rounded-3xl overflow-hidden text-center px-8 py-14"
-        style={{
-          background: 'linear-gradient(170deg, rgba(10,16,34,0.92) 0%, rgba(5,8,22,0.98) 100%)',
-          border:     '1px solid rgba(255,255,255,0.07)',
-          boxShadow:  '0 20px 60px rgba(0,0,0,0.4)',
-        }}>
+      <div className="c9-surface relative overflow-hidden rounded-[28px] px-8 py-14 text-center">
         <div className="relative z-10">
           <div className="mx-auto mb-6 w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ background: 'rgba(0,209,255,0.05)', border: '1px solid rgba(0,209,255,0.14)' }}>
+            style={{ background: 'rgba(58,217,255,0.08)', border: '1px solid var(--c9-accent-line)' }}>
             <svg viewBox="0 0 40 72" fill="none" className="h-9 opacity-50">
-              <rect x="2" y="2" width="36" height="68" rx="6" stroke="#00d1ff" strokeWidth="1.5"/>
-              <rect x="8" y="10" width="24" height="44" rx="2" stroke="#00d1ff" strokeWidth="1"/>
-              <circle cx="20" cy="62" r="3" stroke="#00d1ff" strokeWidth="1"/>
-              <rect x="14" y="5" width="12" height="2" rx="1" fill="#00d1ff"/>
+              <rect x="2" y="2" width="36" height="68" rx="6" stroke="#3ad9ff" strokeWidth="1.5"/>
+              <rect x="8" y="10" width="24" height="44" rx="2" stroke="#3ad9ff" strokeWidth="1"/>
+              <circle cx="20" cy="62" r="3" stroke="#3ad9ff" strokeWidth="1"/>
+              <rect x="14" y="5" width="12" height="2" rx="1" fill="#3ad9ff"/>
             </svg>
           </div>
 
-          <div className="font-mono text-[10px] tracking-[0.3em] uppercase mb-3" style={{ color: 'rgba(0,209,255,0.85)' }}>
+          <div className="font-mono text-[10px] tracking-[0.3em] uppercase mb-3" style={{ color: 'var(--c9-accent)' }}>
             Bientôt disponible
           </div>
-          <h3 className="font-black font-space text-cold-white text-xl mb-3 leading-tight">
+          <h3 className="font-space text-xl font-semibold mb-3 leading-tight" style={{ color: 'var(--c9-text)', letterSpacing: '-0.025em' }}>
             Les appareils certifiés<br />arrivent prochainement
           </h3>
-          <p className="font-space text-sm mb-8 max-w-xs mx-auto leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          <p className="font-space text-sm mb-8 max-w-xs mx-auto leading-relaxed" style={{ color: 'var(--c9-text-2)' }}>
             Rejoins notre liste WhatsApp pour être alerté en priorité dès la mise en ligne.
           </p>
 
@@ -237,10 +225,6 @@ export default function Occasion() {
       className="relative overflow-hidden"
       style={{ paddingTop: 'var(--section-py)', paddingBottom: 'var(--section-py)' }}>
 
-      {/* Séparateur haut */}
-      <div className="absolute top-0 inset-x-0 h-px"
-        style={{ background: 'linear-gradient(to right, transparent, rgba(0,209,255,0.12), transparent)' }} />
-
       <div className="max-w-6xl mx-auto px-5 md:px-8">
 
         {/* ── Header ── */}
@@ -252,12 +236,12 @@ export default function Occasion() {
           className="text-center mb-16"
         >
           <p className="section-label mb-5">Marketplace</p>
-          <h2 className="font-black font-space text-cold-white mb-5"
-            style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', letterSpacing: '-0.03em' }}>
-            Com&apos;9 <span className="gradient-text">Marketplace</span>
+          <h2 className="c9-title mb-5">
+            Des appareils
+            <br />
+            <span className="gradient-text">déjà éprouvés.</span>
           </h2>
-          <p className="font-space max-w-md mx-auto text-[15px] leading-relaxed"
-            style={{ color: 'rgba(255,255,255,0.65)' }}>
+          <p className="c9-subtitle mx-auto max-w-md">
             Chaque appareil est contrôlé sur 100 points et certifié avant mise en vente.
           </p>
         </motion.div>
@@ -286,20 +270,12 @@ export default function Occasion() {
                 className="group inline-flex items-center gap-3 px-9 rounded-full font-space text-[0.95rem] transition-all duration-500"
                 style={{
                   minHeight: '54px',
-                  border:     '1px solid rgba(0,209,255,0.3)',
-                  background: 'rgba(0,209,255,0.05)',
-                  color:      '#7fe4ff',
+                  border:     '1px solid var(--c9-hairline-lit)',
+                  background: 'rgba(255,255,255,0.05)',
+                  color:      'var(--c9-text)',
                 }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background  = 'rgba(0,209,255,0.1)'
-                  e.currentTarget.style.borderColor = 'rgba(0,209,255,0.55)'
-                  e.currentTarget.style.boxShadow   = '0 0 32px rgba(0,209,255,0.12)'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background  = 'rgba(0,209,255,0.05)'
-                  e.currentTarget.style.borderColor = 'rgba(0,209,255,0.3)'
-                  e.currentTarget.style.boxShadow   = 'none'
-                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
               >
                 Voir toute la Marketplace
                 <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"

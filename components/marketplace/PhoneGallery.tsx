@@ -57,15 +57,15 @@ export default function PhoneGallery({ images, model }: PhoneGalleryProps) {
         style={{
           aspectRatio: '4/3',
           background: 'linear-gradient(160deg,rgba(0,12,30,0.98) 0%,rgba(5,8,22,1) 100%)',
-          border:     '1px solid rgba(0,209,255,0.1)',
+          border:     '1px solid rgba(58,217,255,0.1)',
         }}>
         <div className="flex flex-col items-center gap-3 opacity-25">
           <svg viewBox="0 0 40 72" fill="none" className="h-16">
-            <rect x="2" y="2" width="36" height="68" rx="6" stroke="#00d1ff" strokeWidth="1.5"/>
-            <rect x="8" y="10" width="24" height="44" rx="2" stroke="#00d1ff" strokeWidth="1"/>
-            <circle cx="20" cy="62" r="3" stroke="#00d1ff" strokeWidth="1"/>
+            <rect x="2" y="2" width="36" height="68" rx="6" stroke="#3ad9ff" strokeWidth="1.5"/>
+            <rect x="8" y="10" width="24" height="44" rx="2" stroke="#3ad9ff" strokeWidth="1"/>
+            <circle cx="20" cy="62" r="3" stroke="#3ad9ff" strokeWidth="1"/>
           </svg>
-          <p className="font-mono text-[9px] tracking-[0.22em] uppercase" style={{ color: 'rgba(0,209,255,0.5)' }}>
+          <p className="font-mono text-[9px] tracking-[0.22em] uppercase" style={{ color: 'rgba(58,217,255,0.5)' }}>
             Pas de photo
           </p>
         </div>
@@ -83,7 +83,7 @@ export default function PhoneGallery({ images, model }: PhoneGalleryProps) {
     <div className="relative rounded-2xl overflow-hidden select-none"
       style={{
         background: 'linear-gradient(160deg,rgba(0,12,30,0.98) 0%,rgba(5,8,22,1) 100%)',
-        border:     '1px solid rgba(0,209,255,0.12)',
+        border:     '1px solid rgba(58,217,255,0.12)',
       }}>
 
       {/* ── Zone image ── */}
@@ -118,7 +118,7 @@ export default function PhoneGallery({ images, model }: PhoneGalleryProps) {
         {/* ── Compteur ── */}
         {total > 1 && (
           <div className="absolute top-3 right-3 px-2 py-1 rounded-lg font-mono text-[8.5px] tracking-[0.14em] pointer-events-none"
-            style={{ background: 'rgba(5,8,22,0.75)', backdropFilter: 'blur(8px)', color: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            style={{ background: 'rgba(11,18,32,0.75)', backdropFilter: 'blur(8px)', color: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.07)' }}>
             {active + 1} / {total}
           </div>
         )}
@@ -129,9 +129,9 @@ export default function PhoneGallery({ images, model }: PhoneGalleryProps) {
             <button
               onClick={prev}
               className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-xl transition-all duration-200"
-              style={{ background: 'rgba(5,8,22,0.72)', backdropFilter: 'blur(8px)', border: '1px solid rgba(0,209,255,0.15)', color: 'rgba(0,209,255,0.7)' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,209,255,0.12)'; e.currentTarget.style.color = '#00d1ff' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(5,8,22,0.72)';  e.currentTarget.style.color = 'rgba(0,209,255,0.7)' }}
+              style={{ background: 'rgba(11,18,32,0.72)', backdropFilter: 'blur(8px)', border: '1px solid rgba(58,217,255,0.15)', color: 'rgba(58,217,255,0.7)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(58,217,255,0.12)'; e.currentTarget.style.color = '#3ad9ff' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(11,18,32,0.72)';  e.currentTarget.style.color = 'rgba(58,217,255,0.7)' }}
               aria-label="Photo précédente"
             >
               <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-3.5 h-3.5">
@@ -141,9 +141,9 @@ export default function PhoneGallery({ images, model }: PhoneGalleryProps) {
             <button
               onClick={next}
               className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 items-center justify-center rounded-xl transition-all duration-200"
-              style={{ background: 'rgba(5,8,22,0.72)', backdropFilter: 'blur(8px)', border: '1px solid rgba(0,209,255,0.15)', color: 'rgba(0,209,255,0.7)' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,209,255,0.12)'; e.currentTarget.style.color = '#00d1ff' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(5,8,22,0.72)';  e.currentTarget.style.color = 'rgba(0,209,255,0.7)' }}
+              style={{ background: 'rgba(11,18,32,0.72)', backdropFilter: 'blur(8px)', border: '1px solid rgba(58,217,255,0.15)', color: 'rgba(58,217,255,0.7)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(58,217,255,0.12)'; e.currentTarget.style.color = '#3ad9ff' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(11,18,32,0.72)';  e.currentTarget.style.color = 'rgba(58,217,255,0.7)' }}
               aria-label="Photo suivante"
             >
               <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-3.5 h-3.5">
@@ -157,7 +157,7 @@ export default function PhoneGallery({ images, model }: PhoneGalleryProps) {
       {/* ── Thumbnails / dots ── */}
       {total > 1 && (
         <div className="flex items-center justify-center gap-2 px-4 py-3"
-          style={{ borderTop: '1px solid rgba(0,209,255,0.07)' }}>
+          style={{ borderTop: '1px solid rgba(58,217,255,0.07)' }}>
           {total <= 6 ? (
             /* Thumbnails si ≤ 6 photos */
             images.map((url, i) => (
@@ -167,7 +167,7 @@ export default function PhoneGallery({ images, model }: PhoneGalleryProps) {
                 className="rounded-lg overflow-hidden transition-all duration-200 flex-shrink-0"
                 style={{
                   width: '48px', height: '36px',
-                  border:   i === active ? '1px solid rgba(0,209,255,0.7)'  : '1px solid rgba(255,255,255,0.08)',
+                  border:   i === active ? '1px solid rgba(58,217,255,0.7)'  : '1px solid rgba(255,255,255,0.08)',
                   opacity:  i === active ? 1 : 0.45,
                   transform: i === active ? 'scale(1.04)' : 'scale(1)',
                   background: 'rgba(0,0,0,0.4)',
@@ -188,7 +188,7 @@ export default function PhoneGallery({ images, model }: PhoneGalleryProps) {
                 style={{
                   width:      i === active ? '18px' : '6px',
                   height:     '6px',
-                  background: i === active ? '#00d1ff' : 'rgba(255,255,255,0.2)',
+                  background: i === active ? '#3ad9ff' : 'rgba(255,255,255,0.2)',
                 }}
                 aria-label={`Photo ${i + 1}`}
               />

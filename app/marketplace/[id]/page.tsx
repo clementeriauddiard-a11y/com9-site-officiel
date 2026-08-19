@@ -48,13 +48,13 @@ function buildWaMessage(phone: Phone): string {
 }
 
 const statusCfg: Record<PhoneStatus, { label: string; color: string; bg: string; border: string }> = {
-  'Disponible': { label: 'Disponible', color: '#00d1ff',                bg: 'rgba(0,209,255,0.12)',   border: 'rgba(0,209,255,0.35)'  },
+  'Disponible': { label: 'Disponible', color: '#3ad9ff',                bg: 'rgba(58,217,255,0.12)',   border: 'rgba(58,217,255,0.35)'  },
   'Réservé':    { label: 'Réservé',    color: '#facc15',                bg: 'rgba(250,204,21,0.12)',  border: 'rgba(250,204,21,0.35)' },
   'Vendu':      { label: 'Vendu',      color: 'rgba(255,255,255,0.45)', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.12)' },
 }
 
 const conditionColor: Record<PhoneCondition, string> = {
-  'Excellent':  '#00d1ff',
+  'Excellent':  '#3ad9ff',
   'Très bon':   '#4da6ff',
   'Bon':        '#a0b4d0',
   'Correct':    'rgba(255,255,255,0.45)',
@@ -70,9 +70,9 @@ function SpecRow({ icon, label, value, valueColor }: {
 }) {
   return (
     <div className="flex items-center gap-3 py-3"
-      style={{ borderBottom: '1px solid rgba(0,209,255,0.06)' }}>
+      style={{ borderBottom: '1px solid rgba(58,217,255,0.06)' }}>
       <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-        style={{ background: 'rgba(0,209,255,0.06)', border: '1px solid rgba(0,209,255,0.12)', color: 'rgba(0,209,255,0.65)' }}>
+        style={{ background: 'rgba(58,217,255,0.06)', border: '1px solid rgba(58,217,255,0.12)', color: 'rgba(58,217,255,0.65)' }}>
         {icon}
       </div>
       <span className="font-mono text-[9px] tracking-[0.18em] uppercase w-20 shrink-0"
@@ -104,20 +104,15 @@ export default async function PhoneDetailPage({ params }: Props) {
   const waMessage = buildWaMessage(phone)
   const waUrl     = `${LINKS.whatsapp}?text=${encodeURIComponent(waMessage)}`
 
-  const batteryColor = phone.battery >= 85 ? '#00d1ff' : phone.battery >= 70 ? '#facc15' : '#f87171'
+  const batteryColor = phone.battery >= 85 ? '#3ad9ff' : phone.battery >= 70 ? '#facc15' : '#f87171'
 
   return (
-    <div className="min-h-screen" style={{ background: '#050816' }}>
+    <div className="min-h-screen" style={{ background: 'transparent' }}>
 
       {/* ── Background ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute inset-0"
-          style={{
-            backgroundImage:  'linear-gradient(rgba(0,209,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(0,209,255,0.018) 1px, transparent 1px)',
-            backgroundSize:   '64px 64px',
-          }} />
         <div className="absolute top-0 left-1/2 -translate-x-1/2"
-          style={{ width: '900px', height: '500px', background: 'radial-gradient(ellipse, rgba(0,102,255,0.06) 0%, transparent 70%)' }} />
+          style={{ width: '900px', height: '500px', background: 'radial-gradient(ellipse, rgba(26,169,255,0.06) 0%, transparent 70%)' }} />
       </div>
 
       {/* ── Navbar ── */}
@@ -132,13 +127,13 @@ export default async function PhoneDetailPage({ params }: Props) {
             style={{ color: 'rgba(255,255,255,0.32)' }}>
             Accueil
           </Link>
-          <span className="font-mono text-[8px]" style={{ color: 'rgba(0,209,255,0.28)' }}>›</span>
+          <span className="font-mono text-[8px]" style={{ color: 'rgba(58,217,255,0.28)' }}>›</span>
           <Link href="/marketplace" className="font-mono text-[8.5px] tracking-[0.2em] uppercase transition-colors duration-200"
             style={{ color: 'rgba(255,255,255,0.32)' }}>
             Marketplace
           </Link>
-          <span className="font-mono text-[8px]" style={{ color: 'rgba(0,209,255,0.28)' }}>›</span>
-          <span className="font-mono text-[8.5px] tracking-[0.2em] uppercase" style={{ color: 'rgba(0,209,255,0.7)' }}>
+          <span className="font-mono text-[8px]" style={{ color: 'rgba(58,217,255,0.28)' }}>›</span>
+          <span className="font-mono text-[8.5px] tracking-[0.2em] uppercase" style={{ color: 'rgba(58,217,255,0.7)' }}>
             {phone.brand} {phone.model}
           </span>
         </div>
@@ -153,15 +148,15 @@ export default async function PhoneDetailPage({ params }: Props) {
             {/* Certification labels (sous la galerie) */}
             {phone.labels.length > 0 && (
               <div className="mt-5 rounded-2xl p-4"
-                style={{ background: 'rgba(0,209,255,0.03)', border: '1px solid rgba(0,209,255,0.08)' }}>
+                style={{ background: 'rgba(58,217,255,0.03)', border: '1px solid rgba(58,217,255,0.08)' }}>
                 <p className="font-mono text-[8.5px] tracking-[0.25em] uppercase mb-3"
-                  style={{ color: 'rgba(0,209,255,0.55)' }}>
+                  style={{ color: 'rgba(58,217,255,0.55)' }}>
                   Points de certification
                 </p>
                 <div className="flex flex-col gap-2">
                   {phone.labels.map((label, i) => (
                     <div key={i} className="flex items-center gap-2.5">
-                      <svg viewBox="0 0 10 10" fill="none" className="w-3 h-3 shrink-0" style={{ color: '#00d1ff' }}>
+                      <svg viewBox="0 0 10 10" fill="none" className="w-3 h-3 shrink-0" style={{ color: '#3ad9ff' }}>
                         <path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                       <span className="font-space text-[12.5px]" style={{ color: 'rgba(255,255,255,0.82)' }}>
@@ -197,7 +192,7 @@ export default async function PhoneDetailPage({ params }: Props) {
                 {phone.brand} {phone.model}
               </h1>
               <p className="font-mono text-[10px] tracking-[0.22em] uppercase mb-5"
-                style={{ color: 'rgba(0,209,255,0.65)' }}>
+                style={{ color: 'rgba(58,217,255,0.65)' }}>
                 {phone.storage} · {phone.color}
               </p>
 
@@ -213,7 +208,7 @@ export default async function PhoneDetailPage({ params }: Props) {
 
             {/* Specs */}
             <div className="rounded-2xl overflow-hidden"
-              style={{ background: 'rgba(0,0,0,0.28)', border: '1px solid rgba(0,209,255,0.08)' }}>
+              style={{ background: 'rgba(0,0,0,0.28)', border: '1px solid rgba(58,217,255,0.08)' }}>
               <SpecRow
                 icon={<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" className="w-3.5 h-3.5"><rect x="1" y="2" width="10.5" height="7" rx="1.2"/><path d="M12 5v4"/></svg>}
                 label="Batterie"
@@ -238,7 +233,7 @@ export default async function PhoneDetailPage({ params }: Props) {
               />
               <div className="flex items-center gap-3 py-3 px-0">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ml-3"
-                  style={{ background: 'rgba(0,209,255,0.06)', border: '1px solid rgba(0,209,255,0.12)', color: 'rgba(0,209,255,0.65)' }}>
+                  style={{ background: 'rgba(58,217,255,0.06)', border: '1px solid rgba(58,217,255,0.12)', color: 'rgba(58,217,255,0.65)' }}>
                   <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.3" className="w-3.5 h-3.5">
                     <circle cx="7" cy="7" r="5.5"/><path d="M7 4v2.5l1.5 1.5"/>
                   </svg>
@@ -246,10 +241,10 @@ export default async function PhoneDetailPage({ params }: Props) {
                 <span className="font-mono text-[9px] tracking-[0.18em] uppercase w-20 shrink-0"
                   style={{ color: 'rgba(255,255,255,0.38)' }}>Score</span>
                 <div className="ml-auto mr-3 flex items-baseline gap-1">
-                  <span className="font-black font-space text-2xl leading-none" style={{ color: '#00d1ff' }}>
+                  <span className="font-black font-space text-2xl leading-none" style={{ color: '#3ad9ff' }}>
                     {phone.com9Score}
                   </span>
-                  <span className="font-mono text-[9px]" style={{ color: 'rgba(0,209,255,0.45)' }}>/100</span>
+                  <span className="font-mono text-[9px]" style={{ color: 'rgba(58,217,255,0.45)' }}>/100</span>
                 </div>
               </div>
             </div>
@@ -259,7 +254,7 @@ export default async function PhoneDetailPage({ params }: Props) {
               <div className="rounded-2xl p-4"
                 style={{ background: 'rgba(0,0,0,0.22)', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <p className="font-mono text-[8.5px] tracking-[0.25em] uppercase mb-2"
-                  style={{ color: 'rgba(0,209,255,0.5)' }}>Description</p>
+                  style={{ color: 'rgba(58,217,255,0.5)' }}>Description</p>
                 <p className="font-space text-sm leading-relaxed"
                   style={{ color: 'rgba(255,255,255,0.82)' }}>
                   {phone.description}
@@ -275,7 +270,7 @@ export default async function PhoneDetailPage({ params }: Props) {
                   <div className="px-4 py-3.5"
                     style={{ borderBottom: phone.accessories || phone.guarantee ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
                     <p className="font-mono text-[8.5px] tracking-[0.25em] uppercase mb-1.5"
-                      style={{ color: 'rgba(0,209,255,0.5)' }}>Réparations effectuées</p>
+                      style={{ color: 'rgba(58,217,255,0.5)' }}>Réparations effectuées</p>
                     <p className="font-space text-sm" style={{ color: 'rgba(255,255,255,0.82)' }}>{phone.repairs}</p>
                   </div>
                 )}
@@ -283,14 +278,14 @@ export default async function PhoneDetailPage({ params }: Props) {
                   <div className="px-4 py-3.5"
                     style={{ borderBottom: phone.guarantee ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
                     <p className="font-mono text-[8.5px] tracking-[0.25em] uppercase mb-1.5"
-                      style={{ color: 'rgba(0,209,255,0.5)' }}>Accessoires inclus</p>
+                      style={{ color: 'rgba(58,217,255,0.5)' }}>Accessoires inclus</p>
                     <p className="font-space text-sm" style={{ color: 'rgba(255,255,255,0.82)' }}>{phone.accessories}</p>
                   </div>
                 )}
                 {phone.guarantee && (
                   <div className="px-4 py-3.5">
                     <p className="font-mono text-[8.5px] tracking-[0.25em] uppercase mb-1.5"
-                      style={{ color: 'rgba(0,209,255,0.5)' }}>Garantie</p>
+                      style={{ color: 'rgba(58,217,255,0.5)' }}>Garantie</p>
                     <p className="font-space text-sm" style={{ color: 'rgba(255,255,255,0.82)' }}>{phone.guarantee}</p>
                   </div>
                 )}
@@ -300,27 +295,27 @@ export default async function PhoneDetailPage({ params }: Props) {
             {/* ── Bloc Diagnostic Premium ── */}
             <div className="rounded-2xl overflow-hidden relative"
               style={{
-                background: 'linear-gradient(135deg, rgba(0,12,30,0.98) 0%, rgba(0,30,60,0.6) 100%)',
-                border:     '1px solid rgba(0,209,255,0.18)',
-                boxShadow:  'inset 0 1px 0 rgba(0,209,255,0.1)',
+                background: 'linear-gradient(135deg, rgba(22,35,58,0.98) 0%, rgba(0,30,60,0.6) 100%)',
+                border:     '1px solid rgba(58,217,255,0.18)',
+                boxShadow:  'inset 0 1px 0 rgba(58,217,255,0.1)',
               }}>
 
               {/* Top glow */}
               <div className="absolute top-0 inset-x-0 h-px"
-                style={{ background: 'linear-gradient(to right, transparent, rgba(0,209,255,0.5), transparent)' }} />
+                style={{ background: 'linear-gradient(to right, transparent, rgba(58,217,255,0.5), transparent)' }} />
 
               <div className="p-5">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: 'rgba(0,209,255,0.08)', border: '1px solid rgba(0,209,255,0.22)' }}>
-                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="w-4 h-4" style={{ color: '#00d1ff' }}>
+                    style={{ background: 'rgba(58,217,255,0.08)', border: '1px solid rgba(58,217,255,0.22)' }}>
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="w-4 h-4" style={{ color: '#3ad9ff' }}>
                       <circle cx="8" cy="8" r="6.5"/><path d="M8 5v3l2 2" strokeLinecap="round"/>
                     </svg>
                   </div>
                   <div>
                     <p className="font-mono text-[8.5px] tracking-[0.22em] uppercase mb-0.5"
-                      style={{ color: 'rgba(0,209,255,0.65)' }}>
+                      style={{ color: 'rgba(58,217,255,0.65)' }}>
                       Diagnostic Premium Com&apos;9
                     </p>
                     <div className="flex items-center gap-1.5">
@@ -331,17 +326,17 @@ export default async function PhoneDetailPage({ params }: Props) {
                     </div>
                   </div>
                   <div className="ml-auto text-right">
-                    <span className="font-black font-space text-2xl leading-none" style={{ color: '#00d1ff' }}>
+                    <span className="font-black font-space text-2xl leading-none" style={{ color: '#3ad9ff' }}>
                       {phone.com9Score}
                     </span>
-                    <span className="font-mono text-[9px] ml-0.5" style={{ color: 'rgba(0,209,255,0.5)' }}>/100</span>
+                    <span className="font-mono text-[9px] ml-0.5" style={{ color: 'rgba(58,217,255,0.5)' }}>/100</span>
                   </div>
                 </div>
 
                 {/* Image diagnostic */}
                 {phone.diagnosticImage && (
                   <div className="mb-4 rounded-xl overflow-hidden"
-                    style={{ border: '1px solid rgba(0,209,255,0.12)', background: 'rgba(0,0,0,0.4)' }}>
+                    style={{ border: '1px solid rgba(58,217,255,0.12)', background: 'rgba(0,0,0,0.4)' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={phone.diagnosticImage}
@@ -355,7 +350,7 @@ export default async function PhoneDetailPage({ params }: Props) {
                 <p className="font-space text-xs leading-relaxed"
                   style={{ color: 'rgba(255,255,255,0.65)' }}>
                   Ce téléphone a été vérifié et validé via le{' '}
-                  <span style={{ color: 'rgba(0,209,255,0.85)' }}>Diagnostic Premium Com&apos;9</span>{' '}
+                  <span style={{ color: 'rgba(58,217,255,0.85)' }}>Diagnostic Premium Com&apos;9</span>{' '}
                   avant sa mise en vente. Score calculé sur 100 points de contrôle.
                 </p>
               </div>
@@ -392,7 +387,7 @@ export default async function PhoneDetailPage({ params }: Props) {
             {/* Back link */}
             <Link href="/marketplace"
               className="flex items-center gap-2 font-mono text-[9.5px] tracking-[0.2em] uppercase transition-colors duration-200 self-start"
-              style={{ color: 'rgba(0,209,255,0.45)' }}>
+              style={{ color: 'rgba(58,217,255,0.45)' }}>
               <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6" className="w-3 h-3">
                 <path d="M10 7H4M7 4L4 7l3 3" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>

@@ -37,20 +37,20 @@ function PrintSheet({ scores, info, total }: { scores: Scores; info: Info; total
       {/* ── En-tête ── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(0,209,255,0.25)', paddingBottom: '10px', marginBottom: '14px',
+        borderBottom: '1px solid rgba(58,217,255,0.25)', paddingBottom: '10px', marginBottom: '14px',
       }}>
         <div>
-          <div style={{ fontSize: '22px', fontWeight: 900, color: '#eafbff', letterSpacing: '-0.02em' }}>
-            COM<span style={{ color: '#00d1ff' }}>&apos;9</span>
+          <div style={{ fontSize: '22px', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em' }}>
+            COM<span style={{ color: '#3ad9ff' }}>&apos;9</span>
           </div>
-          <div style={{ fontSize: '9px', color: 'rgba(0,209,255,0.6)', letterSpacing: '0.25em', textTransform: 'uppercase', marginTop: '2px' }}>
+          <div style={{ fontSize: '9px', color: 'rgba(58,217,255,0.6)', letterSpacing: '0.25em', textTransform: 'uppercase', marginTop: '2px' }}>
             Feuille officielle de diagnostic
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '9px', color: 'rgba(234,251,255,0.35)', letterSpacing: '0.12em' }}>{date}</div>
+          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em' }}>{date}</div>
           {info.technicien && (
-            <div style={{ fontSize: '9px', color: 'rgba(234,251,255,0.35)', letterSpacing: '0.1em', marginTop: '2px' }}>
+            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', marginTop: '2px' }}>
               Technicien : {info.technicien}
             </div>
           )}
@@ -61,19 +61,19 @@ function PrintSheet({ scores, info, total }: { scores: Scores; info: Info; total
       {(info.client || info.modele) && (
         <div style={{
           display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px',
-          background: 'rgba(0,209,255,0.04)', border: '1px solid rgba(0,209,255,0.12)',
+          background: 'rgba(58,217,255,0.04)', border: '1px solid rgba(58,217,255,0.12)',
           borderRadius: '10px', padding: '10px 14px', marginBottom: '14px',
         }}>
           {info.client && (
             <div>
-              <div style={{ fontSize: '8px', color: 'rgba(0,209,255,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '2px' }}>Client</div>
-              <div style={{ fontSize: '12px', color: '#eafbff', fontWeight: 700 }}>{info.client}</div>
+              <div style={{ fontSize: '8px', color: 'rgba(58,217,255,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '2px' }}>Client</div>
+              <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 700 }}>{info.client}</div>
             </div>
           )}
           {info.modele && (
             <div>
-              <div style={{ fontSize: '8px', color: 'rgba(0,209,255,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '2px' }}>Modèle</div>
-              <div style={{ fontSize: '12px', color: '#eafbff', fontWeight: 700 }}>{info.modele}</div>
+              <div style={{ fontSize: '8px', color: 'rgba(58,217,255,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '2px' }}>Modèle</div>
+              <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 700 }}>{info.modele}</div>
             </div>
           )}
         </div>
@@ -82,15 +82,15 @@ function PrintSheet({ scores, info, total }: { scores: Scores; info: Info; total
       {/* ── Score principal ── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        background: 'linear-gradient(135deg, rgba(0,102,255,0.12) 0%, rgba(0,209,255,0.05) 100%)',
-        border: '1px solid rgba(0,209,255,0.2)', borderRadius: '14px',
+        background: 'linear-gradient(135deg, rgba(26,169,255,0.12) 0%, rgba(58,217,255,0.05) 100%)',
+        border: '1px solid rgba(58,217,255,0.2)', borderRadius: '14px',
         padding: '14px 20px', marginBottom: '14px', gap: '16px',
       }}>
         <div>
-          <div style={{ fontSize: '8px', color: 'rgba(0,209,255,0.5)', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '4px' }}>Score total</div>
+          <div style={{ fontSize: '8px', color: 'rgba(58,217,255,0.5)', letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: '4px' }}>Score total</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
             <span style={{ fontSize: '56px', fontWeight: 900, color: rating.color, lineHeight: 1 }}>{total}</span>
-            <span style={{ fontSize: '18px', color: 'rgba(234,251,255,0.3)', fontWeight: 700 }}>/100</span>
+            <span style={{ fontSize: '18px', color: 'rgba(255,255,255,0.3)', fontWeight: 700 }}>/100</span>
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -102,7 +102,7 @@ function PrintSheet({ scores, info, total }: { scores: Scores; info: Info; total
             {rating.label}
           </div>
           {/* Barème rapide */}
-          <div style={{ marginTop: '8px', fontSize: '8px', color: 'rgba(234,251,255,0.25)', lineHeight: 1.8, textAlign: 'right' }}>
+          <div style={{ marginTop: '8px', fontSize: '8px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.8, textAlign: 'right' }}>
             {[['90–100','Excellent'],['75–89','Bon état'],['60–74','Correct'],['40–59','Fragile'],['0–39','Dégradé']].map(([range, lbl]) => (
               <div key={range}>{range} — {lbl}</div>
             ))}
@@ -112,7 +112,7 @@ function PrintSheet({ scores, info, total }: { scores: Scores; info: Info; total
 
       {/* ── Détail catégories ── */}
       <div style={{ marginBottom: '14px' }}>
-        <div style={{ fontSize: '8px', color: 'rgba(0,209,255,0.45)', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: '8px' }}>
+        <div style={{ fontSize: '8px', color: 'rgba(58,217,255,0.45)', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: '8px' }}>
           Détail par catégorie
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
@@ -123,22 +123,22 @@ function PrintSheet({ scores, info, total }: { scores: Scores; info: Info; total
             const obs  = s ? cat.options.find(o => o.value === s.base) : null
             return (
               <div key={cat.id} style={{
-                background: 'rgba(0,209,255,0.025)', border: '1px solid rgba(0,209,255,0.1)',
+                background: 'rgba(58,217,255,0.025)', border: '1px solid rgba(58,217,255,0.1)',
                 borderRadius: '10px', padding: '8px 12px',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ fontSize: '14px' }}>{cat.icon}</span>
-                    <span style={{ fontSize: '10px', fontWeight: 700, color: '#eafbff' }}>{cat.label}</span>
+                    <span style={{ fontSize: '10px', fontWeight: 700, color: '#ffffff' }}>{cat.label}</span>
                   </div>
-                  <span style={{ fontSize: '12px', fontWeight: 900, color: '#00d1ff' }}>{note}<span style={{ fontSize: '9px', color: 'rgba(0,209,255,0.4)', fontWeight: 400 }}>/{cat.max}</span></span>
+                  <span style={{ fontSize: '12px', fontWeight: 900, color: '#3ad9ff' }}>{note}<span style={{ fontSize: '9px', color: 'rgba(58,217,255,0.4)', fontWeight: 400 }}>/{cat.max}</span></span>
                 </div>
                 {/* Barre */}
-                <div style={{ height: '3px', borderRadius: '2px', background: 'rgba(0,209,255,0.1)', overflow: 'hidden', marginBottom: '5px' }}>
-                  <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(to right, rgba(0,102,255,0.8), #00d1ff)', borderRadius: '2px' }} />
+                <div style={{ height: '3px', borderRadius: '2px', background: 'rgba(58,217,255,0.1)', overflow: 'hidden', marginBottom: '5px' }}>
+                  <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(to right, rgba(26,169,255,0.8), #3ad9ff)', borderRadius: '2px' }} />
                 </div>
                 {obs && (
-                  <div style={{ fontSize: '8px', color: 'rgba(234,251,255,0.3)', lineHeight: 1.3 }}>
+                  <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', lineHeight: 1.3 }}>
                     {obs.label}{obs.desc ? ` — ${obs.desc}` : ''}{s && s.malus < 0 ? ` (malus ${s.malus})` : ''}
                   </div>
                 )}
@@ -150,20 +150,20 @@ function PrintSheet({ scores, info, total }: { scores: Scores; info: Info; total
 
       {/* ── Pied de page ── */}
       <div style={{
-        borderTop: '1px solid rgba(0,209,255,0.1)', paddingTop: '10px',
+        borderTop: '1px solid rgba(58,217,255,0.1)', paddingTop: '10px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <div style={{ fontSize: '8px', color: 'rgba(234,251,255,0.2)', letterSpacing: '0.12em' }}>
+        <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.12em' }}>
           Diagnostic réalisé selon la méthode officielle Com&apos;9
         </div>
         <div style={{ display: 'flex', gap: '20px' }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ borderTop: '1px solid rgba(234,251,255,0.15)', width: '80px', marginBottom: '3px' }} />
-            <div style={{ fontSize: '7px', color: 'rgba(234,251,255,0.2)', letterSpacing: '0.1em' }}>Signature technicien</div>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', width: '80px', marginBottom: '3px' }} />
+            <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>Signature technicien</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ borderTop: '1px solid rgba(234,251,255,0.15)', width: '80px', marginBottom: '3px' }} />
-            <div style={{ fontSize: '7px', color: 'rgba(234,251,255,0.2)', letterSpacing: '0.1em' }}>Lu et approuvé</div>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', width: '80px', marginBottom: '3px' }} />
+            <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>Lu et approuvé</div>
           </div>
         </div>
       </div>
@@ -222,17 +222,17 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[100] flex flex-col"
-        style={{ background: 'rgba(5,8,22,0.97)', backdropFilter: 'blur(20px)' }}
+        style={{ background: 'rgba(11,18,32,0.97)', backdropFilter: 'blur(20px)' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 shrink-0" style={{ borderBottom: '1px solid rgba(0,209,255,0.08)' }}>
+        <div className="flex items-center justify-between px-5 py-3.5 shrink-0" style={{ borderBottom: '1px solid rgba(58,217,255,0.08)' }}>
           <div className="flex items-center gap-3">
             <span className="font-black font-space text-cold-white text-sm">COM<span className="text-neon-blue">&apos;9</span></span>
             <div className="hidden sm:flex items-center gap-2">
-              <span className="w-px h-3.5" style={{ background: 'rgba(0,209,255,0.2)' }} />
-              <span className="font-mono text-[9px] tracking-[0.28em] uppercase" style={{ color: 'rgba(0,209,255,0.45)' }}>Diagnostic</span>
+              <span className="w-px h-3.5" style={{ background: 'rgba(58,217,255,0.2)' }} />
+              <span className="font-mono text-[9px] tracking-[0.28em] uppercase" style={{ color: 'rgba(58,217,255,0.45)' }}>Diagnostic</span>
               <span className="font-mono text-[8px] tracking-[0.15em] uppercase px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(0,209,255,0.12)', border: '1px solid rgba(0,209,255,0.4)', color: '#00d1ff' }}>
+                style={{ background: 'rgba(58,217,255,0.12)', border: '1px solid rgba(58,217,255,0.4)', color: '#3ad9ff' }}>
                 Premium
               </span>
             </div>
@@ -240,12 +240,12 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
 
           {step >= 0 && step < TOTAL_STEPS && (
             <div className="flex items-center gap-3 flex-1 max-w-xs mx-4">
-              <div className="flex-1 h-px rounded-full overflow-hidden" style={{ background: 'rgba(0,209,255,0.1)' }}>
+              <div className="flex-1 h-px rounded-full overflow-hidden" style={{ background: 'rgba(58,217,255,0.1)' }}>
                 <motion.div
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 0.4 }}
                   className="h-full rounded-full"
-                  style={{ background: 'linear-gradient(to right, rgba(0,102,255,0.8), #00d1ff)' }}
+                  style={{ background: 'linear-gradient(to right, rgba(26,169,255,0.8), #3ad9ff)' }}
                 />
               </div>
               <span className="font-mono text-[10px] text-cold-white/75 tabular-nums shrink-0">{step + 1}/{TOTAL_STEPS}</span>
@@ -275,19 +275,19 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                 <div className="relative w-20 h-20 mb-6">
                   <motion.div animate={{ rotate: 360 }} transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
                     className="absolute inset-0 rounded-full"
-                    style={{ background: 'conic-gradient(from 0deg, transparent 60%, rgba(0,209,255,0.5) 80%, transparent 100%)' }} />
-                  <div className="absolute inset-1.5 rounded-full" style={{ border: '1px solid rgba(0,209,255,0.2)', background: 'rgba(0,209,255,0.05)' }} />
+                    style={{ background: 'conic-gradient(from 0deg, transparent 60%, rgba(58,217,255,0.5) 80%, transparent 100%)' }} />
+                  <div className="absolute inset-1.5 rounded-full" style={{ border: '1px solid rgba(58,217,255,0.2)', background: 'rgba(58,217,255,0.05)' }} />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="w-8 h-8" style={{ color: '#00d1ff' }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="w-8 h-8" style={{ color: '#3ad9ff' }}>
                       <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v3l2 2"/>
                     </svg>
                   </div>
                   <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 2.5, repeat: Infinity }}
                     className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{ boxShadow: '0 0 30px rgba(0,209,255,0.3)' }} />
+                    style={{ boxShadow: '0 0 30px rgba(58,217,255,0.3)' }} />
                 </div>
 
-                <div className="font-mono text-[9px] tracking-[0.3em] uppercase mb-2" style={{ color: 'rgba(0,209,255,0.5)' }}>Com&apos;9</div>
+                <div className="font-mono text-[9px] tracking-[0.3em] uppercase mb-2" style={{ color: 'rgba(58,217,255,0.5)' }}>Com&apos;9</div>
                 <h2 className="font-black font-space text-cold-white mb-1" style={{ fontSize: 'clamp(1.6rem,5vw,2.4rem)', letterSpacing: '-0.02em' }}>
                   Diagnostic <span className="gradient-text">Premium</span>
                 </h2>
@@ -295,7 +295,7 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                 {/* Prix */}
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex items-center gap-2 px-4 py-1.5 rounded-full"
-                    style={{ background: 'rgba(0,209,255,0.08)', border: '1px solid rgba(0,209,255,0.25)' }}>
+                    style={{ background: 'rgba(58,217,255,0.08)', border: '1px solid rgba(58,217,255,0.25)' }}>
                     <span className="font-black font-space text-neon-blue text-lg leading-none">4,99 €</span>
                   </div>
                   <span className="font-space text-xs" style={{ color: 'rgba(255,255,255,0.78)' }}>
@@ -307,7 +307,7 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                   Analyse avancée sur 100 points. Validation complète de tous les composants.
                 </p>
 
-                <div className="w-full rounded-2xl p-5 mb-8 text-left space-y-3" style={{ border: '1px solid rgba(0,209,255,0.1)', background: 'rgba(0,209,255,0.02)' }}>
+                <div className="w-full rounded-2xl p-5 mb-8 text-left space-y-3" style={{ border: '1px solid rgba(58,217,255,0.1)', background: 'rgba(58,217,255,0.02)' }}>
                   <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-cold-white/75 mb-4">Informations (optionnel)</p>
                   {(['client', 'modele', 'technicien'] as const).map((key) => (
                     <div key={key}>
@@ -318,7 +318,7 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                         onChange={e => setInfo(i => ({ ...i, [key]: e.target.value }))}
                         placeholder={key === 'client' ? 'Nom du client' : key === 'modele' ? 'ex : iPhone 15 Pro' : 'Nom du technicien'}
                         className="w-full bg-transparent border rounded-lg px-3 py-2.5 font-space text-sm text-cold-white placeholder-cold-white/20 outline-none focus:border-neon-blue/40 transition-colors"
-                        style={{ borderColor: 'rgba(0,209,255,0.15)' }}
+                        style={{ borderColor: 'rgba(58,217,255,0.15)' }}
                       />
                     </div>
                   ))}
@@ -331,7 +331,7 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
 
                 <div className="mt-8 grid grid-cols-4 gap-2 w-full">
                   {DIAG_CATEGORIES.map(c => (
-                    <div key={c.id} className="flex flex-col items-center gap-1 py-2 rounded-xl" style={{ border: '1px solid rgba(0,209,255,0.06)', background: 'rgba(0,209,255,0.02)' }}>
+                    <div key={c.id} className="flex flex-col items-center gap-1 py-2 rounded-xl" style={{ border: '1px solid rgba(58,217,255,0.06)', background: 'rgba(58,217,255,0.02)' }}>
                       <span className="text-lg">{c.icon}</span>
                       <span className="font-mono text-[9px] text-neon-blue/90">/{c.max}</span>
                     </div>
@@ -416,7 +416,7 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                 className="max-w-lg mx-auto px-5 py-8">
 
                 {/* Score */}
-                <div className="rounded-3xl p-8 text-center mb-6" style={{ border: '1px solid rgba(0,209,255,0.2)', background: 'linear-gradient(135deg, rgba(0,102,255,0.08) 0%, rgba(0,209,255,0.03) 100%)' }}>
+                <div className="rounded-3xl p-8 text-center mb-6" style={{ border: '1px solid rgba(58,217,255,0.2)', background: 'linear-gradient(135deg, rgba(26,169,255,0.08) 0%, rgba(58,217,255,0.03) 100%)' }}>
                   {info.modele && <p className="font-mono text-[10px] tracking-widest uppercase text-cold-white/75 mb-1">{info.modele}</p>}
                   {info.client && <p className="font-space text-sm text-cold-white/88 mb-3">{info.client}</p>}
                   <div className="font-black font-space leading-none mb-1" style={{ fontSize: 'clamp(4rem,15vw,6rem)', color: rating.color }}>{total}</div>
@@ -428,8 +428,8 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                 </div>
 
                 {/* Détail */}
-                <div className="rounded-2xl overflow-hidden mb-6" style={{ border: '1px solid rgba(0,209,255,0.08)' }}>
-                  <div className="px-5 py-3" style={{ background: 'rgba(0,209,255,0.03)', borderBottom: '1px solid rgba(0,209,255,0.06)' }}>
+                <div className="rounded-2xl overflow-hidden mb-6" style={{ border: '1px solid rgba(58,217,255,0.08)' }}>
+                  <div className="px-5 py-3" style={{ background: 'rgba(58,217,255,0.03)', borderBottom: '1px solid rgba(58,217,255,0.06)' }}>
                     <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-cold-white/75">Détail des scores</p>
                   </div>
                   {DIAG_CATEGORIES.map((c, i) => {
@@ -437,15 +437,15 @@ export default function DiagnosticModal({ onClose }: { onClose: () => void }) {
                     const note = s ? clamp(s.base + s.malus, 0, c.max) : 0
                     const pct  = (note / c.max) * 100
                     return (
-                      <div key={c.id} className="flex items-center gap-3 px-5 py-3" style={{ borderTop: i > 0 ? '1px solid rgba(0,209,255,0.04)' : undefined }}>
+                      <div key={c.id} className="flex items-center gap-3 px-5 py-3" style={{ borderTop: i > 0 ? '1px solid rgba(58,217,255,0.04)' : undefined }}>
                         <span className="text-base shrink-0">{c.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-space text-xs text-cold-white/90 truncate">{c.label}</span>
                             <span className="font-mono text-xs font-bold text-neon-blue shrink-0 ml-2">{note}/{c.max}</span>
                           </div>
-                          <div className="h-px rounded-full overflow-hidden" style={{ background: 'rgba(0,209,255,0.08)' }}>
-                            <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'rgba(0,209,255,0.6)' }} />
+                          <div className="h-px rounded-full overflow-hidden" style={{ background: 'rgba(58,217,255,0.08)' }}>
+                            <div className="h-full rounded-full" style={{ width: `${pct}%`, background: 'rgba(58,217,255,0.6)' }} />
                           </div>
                         </div>
                       </div>

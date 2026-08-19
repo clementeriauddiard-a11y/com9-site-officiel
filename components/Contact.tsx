@@ -32,9 +32,7 @@ export default function Contact() {
 
       {/* Halo discret */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none"
-        style={{ width: '600px', height: '320px', background: 'radial-gradient(ellipse, rgba(0,102,255,0.05) 0%, transparent 70%)' }} />
-      <div className="absolute top-0 inset-x-0 h-px"
-        style={{ background: 'linear-gradient(to right, transparent, rgba(0,209,255,0.1), transparent)' }} />
+        style={{ width: '640px', height: '340px', background: 'radial-gradient(ellipse, rgba(58,217,255,0.07) 0%, transparent 70%)' }} />
 
       <div className="max-w-xl mx-auto px-6 text-center">
 
@@ -47,13 +45,10 @@ export default function Contact() {
           className="mb-12"
         >
           <p className="section-label mb-5">Contact</p>
-          <h2 className="font-black font-space text-cold-white mb-4"
-            style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', letterSpacing: '-0.03em' }}>
+          <h2 className="c9-title mb-4">
             Parlons de votre <span className="gradient-text">appareil</span>
           </h2>
-          <p className="font-space text-[15px]" style={{ color: 'rgba(255,255,255,0.6)' }}>
-            Nogent-le-Rotrou · Eure-et-Loir
-          </p>
+          <p className="c9-subtitle">Nogent-le-Rotrou · Eure-et-Loir</p>
         </motion.div>
 
         {/* ── WhatsApp — action principale ── */}
@@ -73,18 +68,16 @@ export default function Contact() {
             className="flex items-center justify-center gap-3 w-full rounded-2xl font-space font-semibold text-base transition-all duration-500"
             style={{
               minHeight: '60px',
-              background: 'linear-gradient(120deg, #22c55e 0%, #16a34a 100%)',
-              color: '#03140a',
-              boxShadow: '0 8px 40px rgba(34,197,94,0.22)',
+              background: 'linear-gradient(118deg, #6fe6ff 0%, #3ad9ff 42%, #1aa9ff 100%)',
+              color: '#06131f',
+              boxShadow: '0 16px 46px -20px rgba(26,169,255,0.85)',
             }}
-            onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 10px 52px rgba(34,197,94,0.34)' }}
-            onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 8px 40px rgba(34,197,94,0.22)' }}
           >
             {WaSvg}
             Nous écrire sur WhatsApp
           </motion.a>
           <p className="font-mono text-[10px] tracking-[0.2em] uppercase mt-3"
-            style={{ color: 'rgba(255,255,255,0.45)' }}>
+            style={{ color: 'var(--c9-text-3)' }}>
             Réponse rapide garantie
           </p>
         </motion.div>
@@ -111,17 +104,17 @@ export default function Contact() {
               className="flex items-center justify-center gap-2.5 rounded-2xl font-space text-sm transition-all duration-500"
               style={{
                 minHeight: '52px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                background: 'rgba(255,255,255,0.02)',
-                color: 'rgba(255,255,255,0.85)',
+                border: '1px solid var(--c9-hairline)',
+                background: 'rgba(255,255,255,0.04)',
+                color: 'var(--c9-text-2)',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.28)'
-                e.currentTarget.style.background  = 'rgba(255,255,255,0.05)'
+                e.currentTarget.style.borderColor = 'var(--c9-hairline-lit)'
+                e.currentTarget.style.background  = 'rgba(255,255,255,0.08)'
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
-                e.currentTarget.style.background  = 'rgba(255,255,255,0.02)'
+                e.currentTarget.style.borderColor = 'var(--c9-hairline)'
+                e.currentTarget.style.background  = 'rgba(255,255,255,0.04)'
               }}
             >
               {s.icon}
@@ -144,10 +137,10 @@ export default function Contact() {
             { label: 'Priorité', value: 'WhatsApp' },
           ].map((info) => (
             <div key={info.label} className="flex items-center gap-2.5">
-              <span className="font-mono text-[9.5px] tracking-[0.2em] uppercase" style={{ color: 'rgba(0,209,255,0.6)' }}>
+              <span className="font-mono text-[9.5px] tracking-[0.2em] uppercase" style={{ color: 'var(--c9-accent)' }}>
                 {info.label}
               </span>
-              <span className="font-space text-[13px]" style={{ color: 'rgba(255,255,255,0.8)' }}>
+              <span className="font-space text-[13px]" style={{ color: 'var(--c9-text-2)' }}>
                 {info.value}
               </span>
             </div>

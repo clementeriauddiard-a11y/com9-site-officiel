@@ -13,7 +13,7 @@ import {
 
 function CategoryIcon({ id, size = 6 }: { id: string; size?: number }) {
   const cls = `w-${size} h-${size}`
-  const s   = { color: '#00d1ff' }
+  const s   = { color: '#3ad9ff' }
   switch (id) {
     case 'batterie': return (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" className={cls} style={s}>
@@ -46,7 +46,7 @@ function CategoryIcon({ id, size = 6 }: { id: string; size?: number }) {
 // ─── Severity color ───────────────────────────────────────────────────────────
 
 function severityColor(s: FreeSeverity): string {
-  return ['#00d1ff','#4ade80','#facc15','#f87171'][s]
+  return ['#3ad9ff','#4ade80','#facc15','#f87171'][s]
 }
 
 function severityLabel(s: FreeSeverity): string {
@@ -86,15 +86,15 @@ function ScanIntro({ onStart }: { onStart: () => void }) {
           transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
           className="absolute inset-0 rounded-full"
           style={{
-            background: 'conic-gradient(from 0deg, transparent 70%, rgba(0,209,255,0.5) 85%, transparent 100%)',
+            background: 'conic-gradient(from 0deg, transparent 70%, rgba(58,217,255,0.5) 85%, transparent 100%)',
           }}
         />
         {/* Inner ring */}
         <div className="absolute inset-1.5 rounded-full"
-          style={{ border: '1px solid rgba(0,209,255,0.2)', background: 'rgba(0,209,255,0.04)' }} />
+          style={{ border: '1px solid rgba(58,217,255,0.2)', background: 'rgba(58,217,255,0.04)' }} />
         {/* Icon */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="w-8 h-8" style={{ color: '#00d1ff' }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="w-8 h-8" style={{ color: '#3ad9ff' }}>
             <circle cx="11" cy="11" r="8"/>
             <path d="M21 21l-4.35-4.35"/><path d="M11 8v3l2 2"/>
           </svg>
@@ -104,7 +104,7 @@ function ScanIntro({ onStart }: { onStart: () => void }) {
           animate={{ opacity: [0.4, 1, 0.4] }}
           transition={{ duration: 2.5, repeat: Infinity }}
           className="absolute inset-0 rounded-full pointer-events-none"
-          style={{ boxShadow: '0 0 30px rgba(0,209,255,0.3)' }}
+          style={{ boxShadow: '0 0 30px rgba(58,217,255,0.3)' }}
         />
       </motion.div>
 
@@ -114,14 +114,14 @@ function ScanIntro({ onStart }: { onStart: () => void }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.5 }}
       >
-        <div className="font-mono text-[9px] tracking-[0.35em] uppercase mb-2" style={{ color: 'rgba(0,209,255,0.55)' }}>
+        <div className="font-mono text-[9px] tracking-[0.35em] uppercase mb-2" style={{ color: 'rgba(58,217,255,0.55)' }}>
           Com&apos;9
         </div>
         <h2 className="font-black font-space text-cold-white mb-1" style={{ fontSize: 'clamp(1.7rem,6vw,2.4rem)', letterSpacing: '-0.02em' }}>
           Diagnostic
         </h2>
         <div className="font-mono text-[9px] tracking-[0.25em] uppercase px-3 py-1 rounded-full inline-block mb-4"
-          style={{ background: 'rgba(0,209,255,0.07)', border: '1px solid rgba(0,209,255,0.2)', color: 'rgba(0,209,255,0.7)' }}>
+          style={{ background: 'rgba(58,217,255,0.07)', border: '1px solid rgba(58,217,255,0.2)', color: 'rgba(58,217,255,0.7)' }}>
           Gratuit
         </div>
       </motion.div>
@@ -132,7 +132,7 @@ function ScanIntro({ onStart }: { onStart: () => void }) {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
         className="font-space text-sm leading-relaxed mb-2 max-w-xs"
-        style={{ color: 'rgba(234,251,255,0.45)' }}
+        style={{ color: 'rgba(255,255,255,0.45)' }}
       >
         Analyse rapide de l&apos;état de votre appareil.
       </motion.p>
@@ -141,7 +141,7 @@ function ScanIntro({ onStart }: { onStart: () => void }) {
         animate={{ opacity: phase >= 1 ? 1 : 0 }}
         transition={{ duration: 0.5 }}
         className="font-mono text-[9px] tracking-[0.18em] uppercase mb-8"
-        style={{ color: 'rgba(0,209,255,0.4)' }}
+        style={{ color: 'rgba(58,217,255,0.4)' }}
       >
         Première estimation intelligente par le système Com&apos;9.
       </motion.p>
@@ -159,10 +159,10 @@ function ScanIntro({ onStart }: { onStart: () => void }) {
             animate={{ opacity: phase >= 2 ? 1 : 0, scale: phase >= 2 ? 1 : 0.85 }}
             transition={{ duration: 0.4, delay: i * 0.08 }}
             className="flex flex-col items-center gap-1.5 py-3 rounded-2xl"
-            style={{ background: 'rgba(0,209,255,0.03)', border: '1px solid rgba(0,209,255,0.1)' }}>
+            style={{ background: 'rgba(58,217,255,0.03)', border: '1px solid rgba(58,217,255,0.1)' }}>
             <CategoryIcon id={cat.id} size={5} />
             <span className="font-mono text-[8px] tracking-[0.1em] uppercase text-center leading-tight"
-              style={{ color: 'rgba(234,251,255,0.4)' }}>
+              style={{ color: 'rgba(255,255,255,0.4)' }}>
               {cat.label}
             </span>
           </motion.div>
@@ -175,7 +175,7 @@ function ScanIntro({ onStart }: { onStart: () => void }) {
         animate={{ opacity: phase >= 2 ? 1 : 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
         className="w-full rounded-2xl p-4 mb-8"
-        style={{ background: 'rgba(0,209,255,0.025)', border: '1px solid rgba(0,209,255,0.08)' }}
+        style={{ background: 'rgba(58,217,255,0.025)', border: '1px solid rgba(58,217,255,0.08)' }}
       >
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
           {[
@@ -185,7 +185,7 @@ function ScanIntro({ onStart }: { onStart: () => void }) {
             '✔ Vitre arrière',
           ].map(item => (
             <div key={item} className="flex items-center gap-2">
-              <span className="font-space text-xs" style={{ color: 'rgba(234,251,255,0.55)' }}>{item}</span>
+              <span className="font-space text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>{item}</span>
             </div>
           ))}
         </div>
@@ -200,18 +200,18 @@ function ScanIntro({ onStart }: { onStart: () => void }) {
         onClick={onStart}
         className="w-full py-4 rounded-2xl font-mono text-[11px] tracking-[0.22em] uppercase cursor-pointer transition-all duration-300"
         style={{
-          border: '1px solid rgba(0,209,255,0.35)',
-          background: 'rgba(0,209,255,0.08)',
-          color: '#00d1ff',
-          boxShadow: '0 0 30px rgba(0,102,255,0.08)',
+          border: '1px solid rgba(58,217,255,0.35)',
+          background: 'rgba(58,217,255,0.08)',
+          color: '#3ad9ff',
+          boxShadow: '0 0 30px rgba(26,169,255,0.08)',
         }}
         onMouseEnter={e => {
-          e.currentTarget.style.background = 'rgba(0,209,255,0.14)'
-          e.currentTarget.style.boxShadow = '0 0 40px rgba(0,209,255,0.15)'
+          e.currentTarget.style.background = 'rgba(58,217,255,0.14)'
+          e.currentTarget.style.boxShadow = '0 0 40px rgba(58,217,255,0.15)'
         }}
         onMouseLeave={e => {
-          e.currentTarget.style.background = 'rgba(0,209,255,0.08)'
-          e.currentTarget.style.boxShadow = '0 0 30px rgba(0,102,255,0.08)'
+          e.currentTarget.style.background = 'rgba(58,217,255,0.08)'
+          e.currentTarget.style.boxShadow = '0 0 30px rgba(26,169,255,0.08)'
         }}
       >
         <span className="mr-2">▶</span> Lancer l&apos;analyse
@@ -247,12 +247,12 @@ function StepView({
         {/* Icon container */}
         <div className="relative w-14 h-14 shrink-0">
           <div className="absolute inset-0 rounded-2xl"
-            style={{ background: 'rgba(0,209,255,0.06)', border: '1px solid rgba(0,209,255,0.2)' }} />
+            style={{ background: 'rgba(58,217,255,0.06)', border: '1px solid rgba(58,217,255,0.2)' }} />
           <motion.div
             animate={{ y: ['-100%', '200%'] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: 'linear', repeatDelay: 4 }}
             className="absolute inset-x-0 pointer-events-none"
-            style={{ height: '1px', background: 'linear-gradient(to right, transparent, rgba(0,209,255,0.5), transparent)' }}
+            style={{ height: '1px', background: 'linear-gradient(to right, transparent, rgba(58,217,255,0.5), transparent)' }}
           />
           <div className="absolute inset-0 flex items-center justify-center">
             <CategoryIcon id={cat.id} size={6} />
@@ -260,11 +260,11 @@ function StepView({
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="font-mono text-[9px] tracking-[0.2em] uppercase mb-0.5" style={{ color: 'rgba(0,209,255,0.45)' }}>
+          <div className="font-mono text-[9px] tracking-[0.2em] uppercase mb-0.5" style={{ color: 'rgba(58,217,255,0.45)' }}>
             Analyse {stepIndex + 1}/{total}
           </div>
           <h3 className="font-black font-space text-cold-white text-xl leading-tight">{cat.label}</h3>
-          <p className="font-space text-xs leading-relaxed mt-0.5" style={{ color: 'rgba(234,251,255,0.35)' }}>
+          <p className="font-space text-xs leading-relaxed mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
             {cat.subtitle}
           </p>
         </div>
@@ -296,15 +296,15 @@ function StepView({
                     borderColor: sel ? col : 'rgba(255,255,255,0.2)',
                     background: sel ? col : 'transparent',
                   }}>
-                  {sel && <div className="w-1.5 h-1.5 rounded-full bg-[rgba(5,8,22,0.9)]" />}
+                  {sel && <div className="w-1.5 h-1.5 rounded-full bg-[rgba(11,18,32,0.9)]" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-space text-sm font-semibold leading-tight mb-0.5"
-                    style={{ color: sel ? '#eafbff' : 'rgba(234,251,255,0.65)' }}>
+                    style={{ color: sel ? '#ffffff' : 'rgba(255,255,255,0.65)' }}>
                     {opt.label}
                   </div>
                   <div className="font-space text-xs leading-relaxed"
-                    style={{ color: sel ? 'rgba(234,251,255,0.5)' : 'rgba(234,251,255,0.3)' }}>
+                    style={{ color: sel ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.3)' }}>
                     {opt.desc}
                   </div>
                 </div>
@@ -327,9 +327,9 @@ function StepView({
       <div className="flex gap-3">
         <button onClick={onPrev}
           className="flex-1 py-3.5 rounded-xl font-mono text-[11px] tracking-[0.18em] uppercase transition-all duration-200"
-          style={{ border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(234,251,255,0.35)' }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; e.currentTarget.style.color = 'rgba(234,251,255,0.6)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(234,251,255,0.35)' }}
+          style={{ border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
         >
           ← Précédent
         </button>
@@ -340,9 +340,9 @@ function StepView({
           whileTap={answer !== undefined ? { scale: 0.97 } : {}}
           className="flex-[2] py-3.5 rounded-xl font-mono text-[11px] tracking-[0.18em] uppercase transition-all duration-200"
           style={{
-            border: answer !== undefined ? '1px solid rgba(0,209,255,0.4)' : '1px solid rgba(0,209,255,0.12)',
-            background: answer !== undefined ? 'rgba(0,209,255,0.09)' : 'rgba(0,209,255,0.02)',
-            color: answer !== undefined ? '#00d1ff' : 'rgba(0,209,255,0.3)',
+            border: answer !== undefined ? '1px solid rgba(58,217,255,0.4)' : '1px solid rgba(58,217,255,0.12)',
+            background: answer !== undefined ? 'rgba(58,217,255,0.09)' : 'rgba(58,217,255,0.02)',
+            color: answer !== undefined ? '#3ad9ff' : 'rgba(58,217,255,0.3)',
             cursor: answer !== undefined ? 'pointer' : 'not-allowed',
           }}
         >
@@ -381,7 +381,7 @@ function ResultView({
       {/* Main result card */}
       <div className="relative rounded-3xl overflow-hidden mb-5"
         style={{
-          background: 'linear-gradient(135deg, rgba(0,12,35,0.98) 0%, rgba(5,8,22,0.99) 100%)',
+          background: 'linear-gradient(135deg, rgba(0,12,35,0.98) 0%, rgba(11,18,32,0.99) 100%)',
           border: `1px solid ${result.color}30`,
           boxShadow: `0 0 60px ${result.glow}, inset 0 1px 0 ${result.color}15`,
         }}>
@@ -399,13 +399,13 @@ function ResultView({
 
         <div className="px-8 py-8 text-center">
           <div className="font-mono text-[9px] tracking-[0.32em] uppercase mb-3"
-            style={{ color: 'rgba(0,209,255,0.45)' }}>
+            style={{ color: 'rgba(58,217,255,0.45)' }}>
             Analyse complète — Com&apos;9
           </div>
           <div className="font-black font-space mb-1" style={{ fontSize: 'clamp(2rem,8vw,3rem)', color: result.color, lineHeight: 1 }}>
             {result.label}
           </div>
-          <p className="font-space text-sm mb-4" style={{ color: 'rgba(234,251,255,0.4)' }}>{result.action}</p>
+          <p className="font-space text-sm mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>{result.action}</p>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full"
             style={{ background: `${result.color}10`, border: `1px solid ${result.color}30` }}>
             <motion.span
@@ -425,7 +425,7 @@ function ResultView({
       <div className="space-y-2 mb-5">
         {FREE_CATEGORIES.map((cat, i) => {
           const sev  = answers[cat.id]
-          const col  = sev !== undefined ? severityColor(sev) : 'rgba(234,251,255,0.2)'
+          const col  = sev !== undefined ? severityColor(sev) : 'rgba(255,255,255,0.2)'
           const lbl  = sev !== undefined ? severityLabel(sev) : '—'
           const opt  = sev !== undefined ? cat.options[sev] : null
           return (
@@ -434,14 +434,14 @@ function ResultView({
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: i * 0.08 }}
               className="flex items-center gap-3 px-4 py-3 rounded-xl"
-              style={{ background: 'rgba(0,209,255,0.025)', border: '1px solid rgba(0,209,255,0.07)' }}>
+              style={{ background: 'rgba(58,217,255,0.025)', border: '1px solid rgba(58,217,255,0.07)' }}>
               <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: 'rgba(0,209,255,0.06)', border: '1px solid rgba(0,209,255,0.12)' }}>
+                style={{ background: 'rgba(58,217,255,0.06)', border: '1px solid rgba(58,217,255,0.12)' }}>
                 <CategoryIcon id={cat.id} size={4} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-space text-xs font-semibold" style={{ color: 'rgba(234,251,255,0.75)' }}>{cat.label}</div>
-                <div className="font-space text-[11px]" style={{ color: 'rgba(234,251,255,0.35)' }}>{opt?.label || '—'}</div>
+                <div className="font-space text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>{cat.label}</div>
+                <div className="font-space text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{opt?.label || '—'}</div>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: col }} />
@@ -459,27 +459,27 @@ function ResultView({
         transition={{ duration: 0.5, delay: 0.4 }}
         className="relative rounded-2xl overflow-hidden mb-5 px-5 py-4"
         style={{
-          background: 'linear-gradient(135deg, rgba(0,102,255,0.07) 0%, rgba(0,209,255,0.03) 100%)',
-          border: '1px solid rgba(0,209,255,0.15)',
+          background: 'linear-gradient(135deg, rgba(26,169,255,0.07) 0%, rgba(58,217,255,0.03) 100%)',
+          border: '1px solid rgba(58,217,255,0.15)',
         }}
       >
         <div className="flex items-start gap-3">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-            style={{ background: 'rgba(0,209,255,0.1)', border: '1px solid rgba(0,209,255,0.2)' }}>
-            <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4" style={{ color: '#00d1ff' }}>
-              <path d="M8 1l1.9 4 4.1.6-3 3 .7 4.1L8 10.5l-3.7 2.2.7-4.1-3-3L6.1 5z" stroke="currentColor" strokeWidth="1.2" fill="rgba(0,209,255,0.1)"/>
+            style={{ background: 'rgba(58,217,255,0.1)', border: '1px solid rgba(58,217,255,0.2)' }}>
+            <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4" style={{ color: '#3ad9ff' }}>
+              <path d="M8 1l1.9 4 4.1.6-3 3 .7 4.1L8 10.5l-3.7 2.2.7-4.1-3-3L6.1 5z" stroke="currentColor" strokeWidth="1.2" fill="rgba(58,217,255,0.1)"/>
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-[9px] tracking-[0.2em] uppercase mb-0.5" style={{ color: 'rgba(0,209,255,0.5)' }}>
+            <div className="font-mono text-[9px] tracking-[0.2em] uppercase mb-0.5" style={{ color: 'rgba(58,217,255,0.5)' }}>
               Aller plus loin
             </div>
             <div className="font-space text-sm font-bold text-cold-white mb-1">
               Diagnostic Premium — 4,99 €
             </div>
-            <p className="font-space text-[11px] leading-relaxed" style={{ color: 'rgba(234,251,255,0.4)' }}>
+            <p className="font-space text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
               Analyse complète sur 100 points. Audio, réseau, capteurs, Face ID, performances et plus.
-              <span style={{ color: 'rgba(0,209,255,0.7)' }}> Déduit du prix si réparation.</span>
+              <span style={{ color: 'rgba(58,217,255,0.7)' }}> Déduit du prix si réparation.</span>
             </p>
           </div>
         </div>
@@ -502,9 +502,9 @@ function ResultView({
         </motion.a>
         <button onClick={onReset}
           className="w-full py-3 rounded-xl font-mono text-[10px] tracking-[0.2em] uppercase transition-all duration-200"
-          style={{ border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(234,251,255,0.3)' }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'rgba(234,251,255,0.55)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(234,251,255,0.3)' }}
+          style={{ border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.3)' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.3)' }}
         >
           ↺ Refaire l&apos;analyse
         </button>
@@ -556,22 +556,22 @@ export default function DiagnosticFreeModal({ onClose }: { onClose: () => void }
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] flex flex-col"
-      style={{ background: 'rgba(5,8,22,0.97)', backdropFilter: 'blur(20px)' }}
+      style={{ background: 'rgba(11,18,32,0.97)', backdropFilter: 'blur(20px)' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-3.5 shrink-0"
-        style={{ borderBottom: '1px solid rgba(0,209,255,0.08)' }}>
+        style={{ borderBottom: '1px solid rgba(58,217,255,0.08)' }}>
         <div className="flex items-center gap-3">
           <span className="font-black font-space text-cold-white text-sm">
             COM<span className="text-neon-blue">&apos;9</span>
           </span>
           <div className="hidden sm:flex items-center gap-2">
-            <span className="w-px h-3.5" style={{ background: 'rgba(0,209,255,0.2)' }} />
-            <span className="font-mono text-[9px] tracking-[0.28em] uppercase" style={{ color: 'rgba(0,209,255,0.45)' }}>
+            <span className="w-px h-3.5" style={{ background: 'rgba(58,217,255,0.2)' }} />
+            <span className="font-mono text-[9px] tracking-[0.28em] uppercase" style={{ color: 'rgba(58,217,255,0.45)' }}>
               Diagnostic
             </span>
             <span className="font-mono text-[8px] tracking-[0.15em] uppercase px-2 py-0.5 rounded-full"
-              style={{ background: 'rgba(0,209,255,0.07)', border: '1px solid rgba(0,209,255,0.18)', color: 'rgba(0,209,255,0.65)' }}>
+              style={{ background: 'rgba(58,217,255,0.07)', border: '1px solid rgba(58,217,255,0.18)', color: 'rgba(58,217,255,0.65)' }}>
               Gratuit
             </span>
           </div>
@@ -580,16 +580,16 @@ export default function DiagnosticFreeModal({ onClose }: { onClose: () => void }
         {/* Progress bar */}
         {step !== 'intro' && (
           <div className="flex items-center gap-3 flex-1 max-w-xs mx-4">
-            <div className="flex-1 h-px rounded-full overflow-hidden" style={{ background: 'rgba(0,209,255,0.1)' }}>
+            <div className="flex-1 h-px rounded-full overflow-hidden" style={{ background: 'rgba(58,217,255,0.1)' }}>
               <motion.div
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.4 }}
                 className="h-full rounded-full"
-                style={{ background: 'linear-gradient(to right, rgba(0,102,255,0.8), #00d1ff)' }}
+                style={{ background: 'linear-gradient(to right, rgba(26,169,255,0.8), #3ad9ff)' }}
               />
             </div>
             {typeof step === 'number' && (
-              <span className="font-mono text-[10px] shrink-0" style={{ color: 'rgba(234,251,255,0.3)' }}>
+              <span className="font-mono text-[10px] shrink-0" style={{ color: 'rgba(255,255,255,0.3)' }}>
                 {step + 1}/{catCount}
               </span>
             )}
@@ -598,9 +598,9 @@ export default function DiagnosticFreeModal({ onClose }: { onClose: () => void }
 
         <button onClick={onClose}
           className="font-mono text-[10px] tracking-[0.2em] uppercase transition-colors duration-200"
-          style={{ color: 'rgba(234,251,255,0.3)' }}
-          onMouseEnter={e => e.currentTarget.style.color = 'rgba(234,251,255,0.7)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'rgba(234,251,255,0.3)'}
+          style={{ color: 'rgba(255,255,255,0.3)' }}
+          onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
         >
           ✕ Fermer
         </button>

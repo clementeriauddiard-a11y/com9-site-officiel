@@ -1,28 +1,31 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 
+const EASE = [0.22, 1, 0.36, 1] as const
+
+// Ordre aligné sur la hiérarchie de l'accueil :
+// Tarification (réparer) → Marketplace (acheter) → Diagnostic (analyser)
 const links = [
   { href: '/#tarifs',     label: 'Tarifs'      },
-  { href: '/#diagnostic', label: 'Diagnostic'  },
   { href: '/marketplace', label: 'Marketplace' },
+  { href: '/#diagnostic', label: 'Diagnostic'  },
 ]
 
 export default function Navbar() {
-  const pathname               = usePathname()
+  const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
-  const [open,     setOpen]     = useState(false)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 50)
+    const fn = () => setScrolled(window.scrollY > 24)
     window.addEventListener('scroll', fn, { passive: true })
     fn()
     return () => window.removeEventListener('scroll', fn)
   }, [])
 
-  // Ferme le menu mobile si on resize vers desktop
   useEffect(() => {
     const fn = () => { if (window.innerWidth >= 768) setOpen(false) }
     window.addEventListener('resize', fn)
@@ -30,29 +33,14 @@ export default function Navbar() {
   }, [])
 
   /**
-   * Navigation mobile fiable Android + iOS.
+   * Navigation mobile universelle (comportement conservé — fiable Android + iOS).
    *
-   * Problème : sur Android Chrome, setOpen(false) déclenche l'animation
-   * Framer Motion (height: 0 en 280ms). Pendant cette mutation DOM, le
-   * navigateur abandonne la navigation d'ancre native (href="#section").
-   * Sur iOS/WebKit le comportement est plus tolérant — d'où la différence.
-   *
-   * Correction : preventDefault() stoppe la navigation native, on ferme
-   * le menu, puis après l'animation (320ms) on scroll programmatiquement
-   * avec scrollIntoView — API fiable sur tous les moteurs mobiles.
-   */
-  /**
-   * Navigation mobile universelle.
-   *
-   * Trois cas :
    * A) Lien de page pure (ex: /marketplace) → ferme le menu, navigation native.
-   * B) Ancre absolue (ex: /#services) depuis la page d'accueil → scroll programmatique
-   *    avec délai pour laisser l'animation du menu se terminer (Android Chrome fiable).
-   * C) Ancre absolue depuis une autre page → ferme le menu, redirige vers /#section
-   *    (le navigateur gère le scroll via le hash dans l'URL).
+   * B) Ancre absolue depuis l'accueil → scroll programmatique après fermeture
+   *    du menu (Android Chrome abandonne l'ancre native pendant la mutation DOM).
+   * C) Ancre absolue depuis une autre page → redirection vers /#section.
    */
   function handleMobileNav(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
-    // A) Lien de page (pas d'ancre)
     if (!href.startsWith('#') && !href.startsWith('/#')) {
       setOpen(false)
       return
@@ -61,26 +49,20 @@ export default function Navbar() {
     e.preventDefault()
     setOpen(false)
 
-    // B+C) Ancre absolue /#section
     if (href.startsWith('/#')) {
-      const sectionId = href.slice(2) // retire le '/#'
+      const sectionId = href.slice(2)
 
       if (pathname === '/') {
-        // B) Sur l'accueil → scroll après fermeture du menu (320ms > durée animation 280ms)
         setTimeout(() => {
           const el = document.getElementById(sectionId)
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }, 320)
       } else {
-        // C) Autre page → naviguer vers l'accueil avec hash (scroll géré par le navigateur)
-        setTimeout(() => {
-          window.location.href = href
-        }, 280)
+        setTimeout(() => { window.location.href = href }, 280)
       }
       return
     }
 
-    // Ancre pure #section (fallback si jamais) → scroll local
     const id = href.slice(1)
     setTimeout(() => {
       const el = document.getElementById(id)
@@ -90,148 +72,157 @@ export default function Navbar() {
 
   return (
     <motion.header
-      initial={{ y: -72, opacity: 0 }}
+      initial={{ y: -70, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.9, ease: [0.23, 1, 0.32, 1] }}
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
-      style={scrolled ? {
-        background: 'rgba(5,8,22,0.88)',
-        backdropFilter: 'blur(28px)',
-        WebkitBackdropFilter: 'blur(28px)',
-        borderBottom: '1px solid rgba(0,209,255,0.07)',
-        boxShadow: '0 4px 40px rgba(0,0,0,0.35)',
-      } : {}}
+      transition={{ duration: 0.8, ease: EASE }}
+      className="fixed inset-x-0 top-0 z-50 transition-all duration-500"
+      style={
+        scrolled
+          ? {
+              background: 'rgba(15,25,41,0.72)',
+              backdropFilter: 'blur(24px) saturate(160%)',
+              WebkitBackdropFilter: 'blur(24px) saturate(160%)',
+              borderBottom: '1px solid var(--c9-hairline-soft)',
+            }
+          : { borderBottom: '1px solid transparent' }
+      }
     >
-      <div className="max-w-7xl mx-auto px-5 md:px-10 h-[68px] flex items-center justify-between gap-4">
-
+      <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-4 px-5 md:px-10">
         {/* Logo */}
         <motion.a
           href="/"
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          className="flex items-center gap-2 select-none shrink-0"
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.25, ease: EASE }}
+          className="flex shrink-0 select-none items-center gap-2.5"
         >
-          <span className="text-[1.15rem] font-black tracking-tight font-space text-cold-white">
+          <span
+            className="font-space text-[1.15rem] font-bold tracking-tight"
+            style={{ color: 'var(--c9-text)' }}
+          >
             COM<span className="gradient-text">&apos;9</span>
           </span>
-          <span className="hidden sm:flex items-center gap-1.5">
-            <span className="w-px h-3" style={{ background: 'rgba(0,209,255,0.18)' }} />
-            <span className="font-mono text-[7.5px] tracking-[0.24em] uppercase" style={{ color: 'rgba(0,209,255,0.82)' }}>
+          <span className="hidden items-center gap-2 sm:flex">
+            <span className="h-3 w-px" style={{ background: 'var(--c9-hairline)' }} />
+            <span
+              className="font-mono text-[7.5px] uppercase tracking-[0.24em]"
+              style={{ color: 'var(--c9-text-3)' }}
+            >
               Mobile Systems
             </span>
           </span>
         </motion.a>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        {/* Navigation desktop */}
+        <nav className="hidden items-center gap-1 md:flex">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className="relative px-3.5 py-2 rounded-lg text-[11px] font-mono tracking-[0.2em] uppercase transition-colors duration-250 group"
-              style={{ color: 'rgba(255,255,255,0.72)' }}
-              onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.98)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.72)'}
+              className="rounded-lg px-3.5 py-2 font-space text-[0.875rem] transition-colors duration-300"
+              style={{ color: 'var(--c9-text-2)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--c9-text)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--c9-text-2)' }}
             >
               {l.label}
-              <span className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-250"
-                style={{ background: 'rgba(0,209,255,0.04)' }} />
             </a>
           ))}
 
-          <div className="w-px h-3.5 mx-2" style={{ background: 'rgba(0,209,255,0.14)' }} />
+          <span className="mx-2 h-3.5 w-px" style={{ background: 'var(--c9-hairline)' }} />
+
+          {/* Accès espace responsable — discret */}
+          <a
+            href="/login"
+            className="rounded-lg px-3 py-2 font-space text-[0.875rem] transition-colors duration-300"
+            style={{ color: 'var(--c9-text-3)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--c9-text)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--c9-text-3)' }}
+          >
+            Connexion
+          </a>
 
           <a
             href="/#contact"
-            className="flex items-center gap-2 px-4 py-2 rounded-full font-mono text-[11px] tracking-[0.2em] uppercase transition-all duration-300"
+            className="ml-1.5 flex items-center rounded-full px-5 font-space text-[0.875rem] font-medium transition-all duration-300"
             style={{
-              border: '1px solid rgba(0,209,255,0.28)',
-              background: 'rgba(0,209,255,0.05)',
-              color: '#00d1ff',
+              minHeight: '40px',
+              border: '1px solid var(--c9-hairline-lit)',
+              background: 'rgba(255,255,255,0.05)',
+              color: 'var(--c9-text)',
             }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background    = 'rgba(0,209,255,0.11)'
-              e.currentTarget.style.borderColor   = 'rgba(0,209,255,0.55)'
-              e.currentTarget.style.boxShadow     = '0 0 18px rgba(0,209,255,0.1)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background    = 'rgba(0,209,255,0.05)'
-              e.currentTarget.style.borderColor   = 'rgba(0,209,255,0.28)'
-              e.currentTarget.style.boxShadow     = 'none'
-            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-neon-blue animate-pulse shrink-0" />
             Contact
           </a>
         </nav>
 
-        {/* Hamburger */}
+        {/* Bouton menu mobile */}
         <button
           aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
           aria-expanded={open}
-          onClick={() => setOpen(v => !v)}
-          className="md:hidden flex flex-col justify-center gap-[5px] w-10 h-10 -mr-1 rounded-lg transition-colors duration-200"
-          style={{ background: open ? 'rgba(0,209,255,0.06)' : 'transparent' }}
+          onClick={() => setOpen((v) => !v)}
+          className="-mr-1 flex h-11 w-11 flex-col justify-center gap-[5px] rounded-xl transition-colors duration-300 md:hidden"
+          style={{ background: open ? 'rgba(255,255,255,0.07)' : 'transparent' }}
         >
           {[0, 1, 2].map((i) => (
             <motion.span
               key={i}
               animate={
                 open
-                  ? i === 0 ? { rotate: 45,  y: 10, width: '100%' }
-                  : i === 1 ? { opacity: 0,  scaleX: 0 }
-                  :           { rotate: -45, y: -10, width: '100%' }
-                  : { rotate: 0, y: 0, opacity: 1, scaleX: 1 }
+                  ? i === 0
+                    ? { rotate: 45, y: 7, width: '48%' }
+                    : i === 1
+                      ? { opacity: 0, scaleX: 0 }
+                      : { rotate: -45, y: -7, width: '48%' }
+                  : { rotate: 0, y: 0, opacity: 1, scaleX: 1, width: i === 2 ? '32%' : '48%' }
               }
-              transition={{ duration: 0.22 }}
-              className="block h-[1.5px] rounded-full bg-neon-blue origin-center mx-auto"
-              style={{ width: i === 2 ? '55%' : '70%' }}
+              transition={{ duration: 0.24, ease: EASE }}
+              className="mx-auto block h-[1.5px] origin-center rounded-full"
+              style={{ background: 'var(--c9-text)' }}
             />
           ))}
         </button>
       </div>
 
-      {/* Mobile menu */}
+      {/* Menu mobile */}
       <AnimatePresence>
         {open && (
           <motion.nav
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
-            className="md:hidden overflow-hidden"
+            transition={{ duration: 0.28, ease: EASE }}
+            className="overflow-hidden md:hidden"
             style={{
-              background: 'rgba(5,8,22,0.97)',
-              backdropFilter: 'blur(28px)',
-              borderTop: '1px solid rgba(0,209,255,0.07)',
+              background: 'rgba(15,25,41,0.96)',
+              backdropFilter: 'blur(24px) saturate(160%)',
+              WebkitBackdropFilter: 'blur(24px) saturate(160%)',
+              borderTop: '1px solid var(--c9-hairline-soft)',
             }}
           >
-            <div className="px-5 py-4 flex flex-col gap-0.5">
-              {[...links, { href: '/#contact', label: 'Contact' }].map((l, i) => (
-                <motion.a
-                  key={l.href}
-                  href={l.href}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2, delay: i * 0.04 }}
-                  onClick={(e) => handleMobileNav(e, l.href)}
-                  className="flex items-center gap-3 py-4 font-mono text-[11px] tracking-[0.24em] uppercase transition-colors duration-200"
-                  style={{
-                    color: 'rgba(234,251,255,0.78)',
-                    borderBottom: i < links.length ? '1px solid rgba(0,209,255,0.07)' : 'none',
-                    minHeight: '48px',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#00d1ff'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(234,251,255,0.78)'}
-                >
-                  <span className="w-4 h-px shrink-0 transition-all duration-200"
-                    style={{ background: 'rgba(0,209,255,0.32)' }} />
-                  {l.label}
-                  {l.href === '#contact' && (
-                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-neon-blue animate-pulse" />
-                  )}
-                </motion.a>
-              ))}
+            <div className="flex flex-col px-5 py-3">
+              {[...links, { href: '/#contact', label: 'Contact' }, { href: '/login', label: 'Connexion' }].map(
+                (l, i, arr) => (
+                  <motion.a
+                    key={l.href}
+                    href={l.href}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.24, delay: i * 0.035, ease: EASE }}
+                    onClick={(e) => handleMobileNav(e, l.href)}
+                    className="flex items-center font-space text-[0.9375rem] transition-colors duration-300"
+                    style={{
+                      color: l.label === 'Connexion' ? 'var(--c9-text-3)' : 'var(--c9-text-2)',
+                      borderBottom:
+                        i < arr.length - 1 ? '1px solid var(--c9-hairline-soft)' : 'none',
+                      minHeight: '54px',
+                    }}
+                  >
+                    {l.label}
+                  </motion.a>
+                ),
+              )}
             </div>
           </motion.nav>
         )}

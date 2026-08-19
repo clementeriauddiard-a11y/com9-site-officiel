@@ -5,8 +5,8 @@ import { LINKS } from '@/lib/links'
 
 const navLinks = [
   { href: '/#tarifs',     label: 'Tarifs'      },
-  { href: '/#diagnostic', label: 'Diagnostic'  },
   { href: '/marketplace', label: 'Marketplace' },
+  { href: '/#diagnostic', label: 'Diagnostic'  },
   { href: '/#contact',    label: 'Contact'     },
 ]
 
@@ -45,17 +45,13 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer className="relative overflow-hidden">
-      <div className="absolute top-0 inset-x-0 h-px"
-        style={{ background: 'linear-gradient(to right, transparent, rgba(0,209,255,0.14), transparent)' }} />
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none"
-        style={{ width: '500px', height: '200px', background: 'radial-gradient(ellipse, rgba(0,102,255,0.04) 0%, transparent 70%)' }} />
+    <footer className="relative overflow-hidden" style={{ borderTop: '1px solid var(--c9-hairline-soft)' }}>
 
       <div className="max-w-6xl mx-auto px-5 md:px-10">
 
         {/* Main grid */}
         <div className="py-12 md:py-14 grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-6"
-          style={{ borderBottom: '1px solid rgba(0,209,255,0.06)' }}>
+          style={{ borderBottom: '1px solid var(--c9-hairline-soft)' }}>
 
           {/* Brand */}
           <motion.div
@@ -65,17 +61,17 @@ export default function Footer() {
             transition={{ duration: 0.6 }}
           >
             <div className="mb-3">
-              <span className="text-xl font-black font-space text-cold-white tracking-tight">
+              <span className="text-xl font-semibold font-space tracking-tight" style={{ color: 'var(--c9-text)' }}>
                 COM<span className="gradient-text">&apos;9</span>
               </span>
             </div>
             <p className="font-mono text-[8.5px] tracking-[0.28em] uppercase mb-4"
-              style={{ color: 'rgba(0,209,255,0.88)' }}>
+              style={{ color: 'var(--c9-accent)' }}>
               Next Generation Mobile Systems
             </p>
-            <p className="font-space text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.88)' }}>
+            <p className="font-space text-xs leading-relaxed" style={{ color: 'var(--c9-text-2)' }}>
               Réparation & reconditionnement<br />de smartphones.
-              <span style={{ color: 'rgba(255,255,255,0.72)' }}> Nogent-le-Rotrou · 28.</span>
+              <span style={{ color: 'var(--c9-text-3)' }}> Nogent-le-Rotrou · 28.</span>
             </p>
 
             {/* Social icons */}
@@ -91,8 +87,8 @@ export default function Footer() {
                   whileTap={{ scale: 0.93 }}
                   className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-250"
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.07)',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid var(--c9-hairline-soft)',
                     color: s.color,
                   }}
                 >
@@ -111,22 +107,31 @@ export default function Footer() {
             className="md:mx-auto"
           >
             <p className="font-mono text-[8.5px] tracking-[0.28em] uppercase mb-5"
-              style={{ color: 'rgba(0,209,255,0.85)' }}>Navigation</p>
+              style={{ color: 'var(--c9-text-3)' }}>Navigation</p>
             <nav className="flex flex-col gap-2.5">
               {navLinks.map((l) => (
                 <a
                   key={l.href}
                   href={l.href}
-                  className="group flex items-center gap-2.5 font-mono text-[10px] tracking-[0.2em] uppercase transition-colors duration-250"
-                  style={{ color: 'rgba(255,255,255,0.88)', minHeight: '36px' }}
-                  onMouseEnter={e => e.currentTarget.style.color = '#00d1ff'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.88)'}
+                  className="group flex items-center gap-2.5 font-space text-[0.875rem] transition-colors duration-300"
+                  style={{ color: 'var(--c9-text-2)', minHeight: '38px' }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--c9-text)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--c9-text-2)'}
                 >
-                  <span className="w-3.5 h-px transition-all duration-250 group-hover:w-5"
-                    style={{ background: 'rgba(0,209,255,0.38)' }} />
                   {l.label}
                 </a>
               ))}
+
+              {/* Accès espace responsable — discret */}
+              <a
+                href="/login"
+                className="flex items-center font-space text-[0.875rem] transition-colors duration-300"
+                style={{ color: 'var(--c9-text-3)', minHeight: '38px' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--c9-text)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--c9-text-3)'}
+              >
+                Connexion
+              </a>
             </nav>
           </motion.div>
 
@@ -139,7 +144,7 @@ export default function Footer() {
             className="md:ml-auto"
           >
             <p className="font-mono text-[8.5px] tracking-[0.28em] uppercase mb-5"
-              style={{ color: 'rgba(0,209,255,0.85)' }}>Informations</p>
+              style={{ color: 'var(--c9-text-3)' }}>Informations</p>
             <div className="space-y-4">
               {[
                 { icon: '◎', label: 'Zone',    value: 'Nogent-le-Rotrou · 28400'  },
@@ -147,13 +152,13 @@ export default function Footer() {
                 { icon: '◈', label: 'Contact', value: 'WhatsApp prioritaire'       },
               ].map((info) => (
                 <div key={info.label} className="flex items-start gap-3">
-                  <span className="font-mono text-xs mt-0.5 shrink-0" style={{ color: 'rgba(0,209,255,0.88)' }}>
+                  <span className="font-mono text-xs mt-0.5 shrink-0" style={{ color: 'var(--c9-accent)' }}>
                     {info.icon}
                   </span>
                   <div>
                     <span className="block font-mono text-[8.5px] tracking-[0.2em] uppercase mb-0.5"
-                      style={{ color: 'rgba(255,255,255,0.60)' }}>{info.label}</span>
-                    <span className="font-space text-[12px]" style={{ color: 'rgba(255,255,255,0.92)' }}>
+                      style={{ color: 'var(--c9-text-3)' }}>{info.label}</span>
+                    <span className="font-space text-[12px]" style={{ color: 'var(--c9-text-2)' }}>
                       {info.value}
                     </span>
                   </div>
@@ -172,21 +177,13 @@ export default function Footer() {
           className="py-5 flex flex-col sm:flex-row items-center justify-between gap-3"
         >
           <p className="font-mono text-[8.5px] tracking-[0.2em] uppercase"
-            style={{ color: 'rgba(255,255,255,0.52)' }}>
+            style={{ color: 'var(--c9-text-3)' }}>
             © {new Date().getFullYear()} COM&apos;9 — Tous droits réservés
           </p>
-          <div className="flex items-center gap-2">
-            <motion.span
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2.5, repeat: Infinity }}
-              className="w-1 h-1 rounded-full"
-              style={{ background: 'rgba(0,209,255,0.55)' }}
-            />
-            <span className="font-mono text-[8.5px] tracking-[0.2em] uppercase"
-              style={{ color: 'rgba(0,209,255,0.78)' }}>
-              Système opérationnel
-            </span>
-          </div>
+          <span className="font-mono text-[8.5px] tracking-[0.2em] uppercase"
+            style={{ color: 'var(--c9-text-3)' }}>
+            Nogent-le-Rotrou · Eure-et-Loir
+          </span>
         </motion.div>
       </div>
     </footer>

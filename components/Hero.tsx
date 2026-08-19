@@ -3,69 +3,76 @@
 import { motion } from 'framer-motion'
 import { waLink } from '@/lib/links'
 
+const EASE = [0.22, 1, 0.36, 1] as const
+
 const stagger = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.18, delayChildren: 0.15 } },
+  show: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
 }
+
 const item = {
-  hidden: { opacity: 0, y: 18 },
-  show:   { opacity: 1, y: 0, transition: { duration: 1, ease: [0.23, 1, 0.32, 1] } },
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.9, ease: EASE } },
 }
 
 export default function Hero() {
   return (
     <section
       id="home"
-      className="relative min-h-screen flex items-center justify-center overflow-x-hidden"
+      className="relative flex min-h-[100svh] items-center justify-center overflow-x-hidden"
     >
-      {/* ── Halo unique, statique, très subtil ── */}
+      {/* Halo unique, statique, très diffus */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 62% 44% at 50% 40%, rgba(0,102,255,0.10) 0%, rgba(0,209,255,0.03) 45%, transparent 68%)',
+            'radial-gradient(ellipse 58% 42% at 50% 38%, rgba(58,217,255,0.14) 0%, rgba(26,169,255,0.05) 46%, transparent 70%)',
         }}
       />
 
-      {/* ── Content ── */}
-      <div className="relative z-10 text-center px-6 max-w-4xl mx-auto pt-24 pb-28">
+      <div className="relative z-10 mx-auto w-full max-w-4xl px-6 pb-28 pt-28 text-center">
         <motion.div
           variants={stagger}
           initial="hidden"
           animate="show"
           className="flex flex-col items-center"
         >
-          {/* Logo — mascotte mise en scène sobrement */}
+          {/* Logo */}
           <motion.div
             variants={item}
-            className="relative mb-10 flex items-center justify-center"
-            style={{ width: 'clamp(180px, 36vmin, 320px)', height: 'clamp(180px, 36vmin, 320px)' }}
+            className="relative mb-9 flex items-center justify-center"
+            style={{
+              width: 'clamp(150px, 30vmin, 260px)',
+              height: 'clamp(150px, 30vmin, 260px)',
+            }}
           >
             <div
-              className="absolute inset-0 rounded-full pointer-events-none"
+              className="pointer-events-none absolute inset-0 rounded-full"
               style={{
-                background: 'radial-gradient(circle at 50% 55%, rgba(0,102,255,0.22) 0%, rgba(0,209,255,0.07) 50%, transparent 72%)',
-                filter: 'blur(20px)',
+                background:
+                  'radial-gradient(circle at 50% 52%, rgba(58,217,255,0.22) 0%, rgba(26,169,255,0.07) 52%, transparent 72%)',
+                filter: 'blur(26px)',
               }}
             />
-            <motion.img
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/logo.png"
               alt="Com'9"
               draggable={false}
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-              className="w-full h-full object-contain select-none relative"
+              className="relative h-full w-full select-none object-contain"
             />
           </motion.div>
 
-          {/* Slogan monumental */}
+          {/* Titre */}
           <motion.h1
             variants={item}
-            className="font-black font-space text-cold-white mb-5"
+            className="mb-6 font-space"
             style={{
-              fontSize: 'clamp(1.9rem, 5.5vw, 3.6rem)',
-              letterSpacing: '-0.03em',
-              lineHeight: 1.08,
+              color: 'var(--c9-text)',
+              fontSize: 'clamp(2rem, 6.6vw, 4.25rem)',
+              fontWeight: 700,
+              letterSpacing: '-0.042em',
+              lineHeight: 1.04,
             }}
           >
             Réparation premium.
@@ -73,11 +80,26 @@ export default function Hero() {
             <span className="gradient-text">Appareils certifiés.</span>
           </motion.h1>
 
+          {/* Accroche */}
+          <motion.p
+            variants={item}
+            className="mb-3 font-space"
+            style={{
+              color: 'var(--c9-text-2)',
+              fontSize: 'clamp(1rem, 2.2vw, 1.1875rem)',
+              lineHeight: 1.55,
+              maxWidth: '30ch',
+            }}
+          >
+            Écran, batterie, vitre arrière — un tarif clair avant même de nous
+            écrire.
+          </motion.p>
+
           {/* Localisation */}
           <motion.p
             variants={item}
-            className="font-mono uppercase tracking-[0.26em] mb-12"
-            style={{ fontSize: 'clamp(0.6rem, 1.6vw, 0.7rem)', color: 'rgba(255,255,255,0.55)' }}
+            className="mb-11 font-mono uppercase tracking-[0.26em]"
+            style={{ fontSize: 'clamp(0.6rem, 1.6vw, 0.6875rem)', color: 'var(--c9-text-3)' }}
           >
             Nogent-le-Rotrou · Eure-et-Loir
           </motion.p>
@@ -85,68 +107,58 @@ export default function Hero() {
           {/* CTA */}
           <motion.div
             variants={item}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto"
+            className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row"
           >
-            {/* Primaire */}
-            <motion.a
-              href={waLink("Bonjour Com'9, je souhaite prendre rendez-vous.")}
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              className="flex items-center justify-center gap-2.5 px-9 rounded-full font-space font-semibold text-[0.95rem] transition-all duration-500 w-full sm:w-auto"
-              style={{
-                minHeight: '54px',
-                background: 'linear-gradient(120deg, #00d1ff 0%, #0080ff 100%)',
-                color: '#041018',
-                boxShadow: '0 8px 40px rgba(0,140,255,0.28)',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 10px 52px rgba(0,160,255,0.4)' }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 8px 40px rgba(0,140,255,0.28)' }}
-            >
-              Prendre rendez-vous
-            </motion.a>
-
-            {/* Secondaire */}
             <motion.a
               href="/#tarifs"
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              className="flex items-center justify-center gap-2 px-9 rounded-full font-space text-[0.95rem] transition-all duration-500 w-full sm:w-auto"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.985 }}
+              transition={{ duration: 0.25, ease: EASE }}
+              className="flex w-full items-center justify-center rounded-full px-9 font-space text-[0.9375rem] font-semibold sm:w-auto"
               style={{
                 minHeight: '54px',
-                border: '1px solid rgba(255,255,255,0.16)',
-                color: 'rgba(255,255,255,0.92)',
-                background: 'rgba(255,255,255,0.02)',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.34)'
-                e.currentTarget.style.background  = 'rgba(255,255,255,0.05)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.16)'
-                e.currentTarget.style.background  = 'rgba(255,255,255,0.02)'
+                background: 'linear-gradient(118deg, #6fe6ff 0%, #3ad9ff 42%, #1aa9ff 100%)',
+                color: '#06131f',
+                boxShadow: '0 16px 44px -20px rgba(26,169,255,0.85)',
               }}
             >
               Voir les tarifs
+            </motion.a>
+
+            <motion.a
+              href={waLink("Bonjour, je viens du site Com'9. Je souhaite prendre rendez-vous.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.985 }}
+              transition={{ duration: 0.25, ease: EASE }}
+              className="flex w-full items-center justify-center rounded-full px-9 font-space text-[0.9375rem] font-medium transition-colors duration-300 sm:w-auto"
+              style={{
+                minHeight: '54px',
+                border: '1px solid var(--c9-hairline-lit)',
+                background: 'rgba(255,255,255,0.04)',
+                color: 'var(--c9-text)',
+              }}
+            >
+              Prendre rendez-vous
             </motion.a>
           </motion.div>
         </motion.div>
       </div>
 
-      {/* ── Scroll indicator ── */}
+      {/* Indicateur de défilement — statique, discret */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 2.2, duration: 1.2 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 pointer-events-none z-10"
+        transition={{ delay: 1.6, duration: 1 }}
+        className="pointer-events-none absolute bottom-8 left-1/2 z-10 -translate-x-1/2"
       >
-        <motion.div
-          animate={{ scaleY: [1, 0.25, 1], opacity: [0.25, 0.55, 0.25] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        <div
           style={{
-            width: '1px', height: '36px',
-            background: 'linear-gradient(to bottom, rgba(0,209,255,0.5), transparent)',
+            width: '1px',
+            height: '38px',
+            background:
+              'linear-gradient(to bottom, rgba(255,255,255,0.32), transparent)',
           }}
         />
       </motion.div>

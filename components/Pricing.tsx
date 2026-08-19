@@ -1,485 +1,470 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
-import { tarifsRepair, diagnostic, type RepairCategory } from '@/data/tarifs'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useMemo, useState } from 'react'
+import {
+  MODELS,
+  REPAIRS,
+  buildRepairMessage,
+  getOptions,
+  priceFrom,
+  type ModelTarif,
+  type PriceOption,
+  type RepairId,
+} from '@/data/tarifs'
+import { WaCta } from '@/components/ui/Wa'
 import { waLink } from '@/lib/links'
 
-// ─── Génère le message WhatsApp contextuel ────────────────────────────────────
+const EASE = [0.22, 1, 0.36, 1] as const
 
-function buildWaMessage(serviceId: string, model?: string): string {
-  const base = "Bonjour, je viens du site Com'9. Je souhaite prendre rendez-vous pour"
-  if (!model) {
-    if (serviceId === 'ecrans')     return `${base} un changement d'écran.`
-    if (serviceId === 'batteries')  return `${base} un changement de batterie.`
-    return `${base} un diagnostic.`
-  }
-  if (serviceId === 'ecrans')    return `${base} un changement d'écran sur ${model}.`
-  if (serviceId === 'batteries') return `${base} un changement de batterie sur ${model}.`
-  return `${base} un diagnostic sur ${model}.`
-}
+// ─── Sur-titre d'étape ───────────────────────────────────────────────────────
 
-// ─── WhatsApp icon ─────────────────────────────────────────────────────────────
-
-function WaIcon({ size = 'md' }: { size?: 'sm' | 'md' }) {
-  const cls = size === 'sm' ? 'w-3.5 h-3.5 shrink-0' : 'w-4 h-4 shrink-0'
+function StepLabel({ n, children }: { n: string; children: React.ReactNode }) {
   return (
-    <svg viewBox="0 0 24 24" className={cls} fill="currentColor">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-    </svg>
-  )
-}
-
-// ─── Bouton WhatsApp principal (bas d'onglet) ─────────────────────────────────
-
-function WaButton({ message, label = 'Prendre rendez-vous' }: { message: string; label?: string }) {
-  return (
-    <motion.a
-      href={waLink(message)}
-      target="_blank"
-      rel="noopener noreferrer"
-      whileHover={{ scale: 1.02, y: -2 }}
-      whileTap={{ scale: 0.97 }}
-      className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl font-mono text-[11px] tracking-[0.18em] uppercase transition-all duration-300"
-      style={{
-        border:     '1px solid rgba(34,197,94,0.35)',
-        background: 'rgba(34,197,94,0.07)',
-        color:      '#4ade80',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.background  = 'rgba(34,197,94,0.14)'
-        e.currentTarget.style.borderColor = 'rgba(34,197,94,0.55)'
-        e.currentTarget.style.boxShadow   = '0 0 24px rgba(34,197,94,0.12)'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.background  = 'rgba(34,197,94,0.07)'
-        e.currentTarget.style.borderColor = 'rgba(34,197,94,0.35)'
-        e.currentTarget.style.boxShadow   = 'none'
-      }}
-    >
-      <WaIcon />
-      {label}
-    </motion.a>
-  )
-}
-
-// ─── Tab icons ────────────────────────────────────────────────────────────────
-
-const TabIcons = {
-  ecrans: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" className="w-4 h-4 shrink-0">
-      <rect x="1" y="3" width="18" height="12" rx="2"/>
-      <path d="M7 19h6M10 15v4"/>
-    </svg>
-  ),
-  batteries: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" className="w-4 h-4 shrink-0">
-      <rect x="1" y="6" width="15" height="8" rx="1.5"/>
-      <path d="M19 9v2M5 10h5M10 8v4"/>
-    </svg>
-  ),
-  diagnostic: (
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4" className="w-4 h-4 shrink-0">
-      <circle cx="9" cy="9" r="6"/>
-      <path d="M17 17l-3.5-3.5M9 7v2l1.5 1.5"/>
-    </svg>
-  ),
-}
-
-// ─── Tabs config ──────────────────────────────────────────────────────────────
-
-const TABS = [
-  { id: 'ecrans',     label: 'Écrans'     },
-  { id: 'batteries',  label: 'Batteries'  },
-  { id: 'diagnostic', label: 'Diagnostic' },
-] as const
-
-type TabId = typeof TABS[number]['id']
-
-// ─── Quality spec cards ───────────────────────────────────────────────────────
-
-function QualityCards({ cat }: { cat: RepairCategory }) {
-  return (
-    <div className="grid grid-cols-2 gap-3 mb-7">
-      {/* Compatible */}
-      <div className="rounded-xl px-4 py-3.5 flex flex-col gap-1.5"
-        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full shrink-0" style={{ background: 'rgba(255,255,255,0.55)' }} />
-          <span className="font-mono text-[10px] tracking-[0.15em] uppercase font-semibold"
-            style={{ color: 'rgba(255,255,255,0.90)' }}>
-            {cat.tierLabels.compatible}
-          </span>
-        </div>
-        <span className="font-space text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>
-          {cat.tierDesc.compatible}
-        </span>
-      </div>
-
-      {/* Premium */}
-      <div className="rounded-xl px-4 py-3.5 flex flex-col gap-1.5"
-        style={{ background: 'rgba(0,209,255,0.05)', border: '1px solid rgba(0,209,255,0.22)' }}>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full shrink-0" style={{ background: '#00d1ff' }} />
-          <span className="font-mono text-[10px] tracking-[0.15em] uppercase font-semibold"
-            style={{ color: '#00d1ff' }}>
-            {cat.tierLabels.premium}
-          </span>
-        </div>
-        <span className="font-space text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.75)' }}>
-          {cat.tierDesc.premium}
-        </span>
-      </div>
+    <div className="mb-4 flex items-baseline gap-3">
+      <span
+        className="font-mono text-[10px] tracking-[0.28em]"
+        style={{ color: 'var(--c9-accent)' }}
+      >
+        {n}
+      </span>
+      <span
+        className="font-mono text-[10px] uppercase tracking-[0.24em]"
+        style={{ color: 'var(--c9-text-3)' }}
+      >
+        {children}
+      </span>
     </div>
   )
 }
 
-// ─── Série accordion ──────────────────────────────────────────────────────────
+// ─── Étape 1 — prestation ────────────────────────────────────────────────────
 
-function SerieBlock({
-  serie,
-  tierLabels,
-  serviceId,
+function RepairSwitch({
+  value,
+  onChange,
 }: {
-  serie: RepairCategory['series'][number]
-  tierLabels: RepairCategory['tierLabels']
-  serviceId: string
+  value: RepairId
+  onChange: (id: RepairId) => void
 }) {
-  const [open, setOpen] = useState(false)
+  return (
+    <div
+      className="grid grid-cols-3 gap-1.5 rounded-[20px] p-1.5"
+      role="tablist"
+      aria-label="Choix de la prestation"
+      style={{
+        background: 'rgba(255,255,255,0.045)',
+        border: '1px solid var(--c9-hairline-soft)',
+      }}
+    >
+      {REPAIRS.map((r) => {
+        const active = r.id === value
+        return (
+          <button
+            key={r.id}
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(r.id)}
+            className="relative flex items-center justify-center rounded-2xl px-1.5 transition-colors duration-300"
+            style={{ minHeight: '54px' }}
+          >
+            {active && (
+              <motion.span
+                layoutId="c9-repair-pill"
+                className="absolute inset-0 rounded-2xl"
+                transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+                style={{
+                  background: 'rgba(255,255,255,0.10)',
+                  border: '1px solid var(--c9-hairline-lit)',
+                  boxShadow: '0 8px 26px -16px rgba(0,0,0,0.7)',
+                }}
+              />
+            )}
+            <span
+              className="relative z-10 text-balance px-0.5 text-center font-space text-[0.8125rem] leading-tight transition-colors duration-300 sm:text-[0.9375rem]"
+              style={{
+                color: active ? 'var(--c9-text)' : 'var(--c9-text-3)',
+                fontWeight: active ? 600 : 500,
+              }}
+            >
+              {r.label}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Étape 2 — modèle ────────────────────────────────────────────────────────
+
+function ModelPicker({
+  models,
+  value,
+  onChange,
+}: {
+  models: ModelTarif[]
+  value: string | null
+  onChange: (model: string) => void
+}) {
+  // Regroupement par série, dans l'ordre de la grille officielle.
+  const groups = useMemo(() => {
+    const out: { serie: string; models: ModelTarif[] }[] = []
+    for (const m of models) {
+      const last = out[out.length - 1]
+      if (last && last.serie === m.serie) last.models.push(m)
+      else out.push({ serie: m.serie, models: [m] })
+    }
+    return out
+  }, [models])
 
   return (
-    <div className="rounded-xl overflow-hidden transition-all duration-300"
-      style={{
-        border:     open ? '1px solid rgba(0,209,255,0.18)' : '1px solid rgba(0,209,255,0.08)',
-        background: open ? 'rgba(0,209,255,0.025)'          : 'transparent',
-      }}>
-
-      {/* Header accordion */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-3.5 text-left transition-colors duration-200"
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="text-base leading-none shrink-0">{serie.icon}</span>
-          <span className="font-space text-sm font-semibold truncate"
-            style={{ color: open ? '#ffffff' : 'rgba(255,255,255,0.94)' }}>
-            {serie.serie}
-          </span>
-          <span className="font-mono text-[8.5px] tracking-[0.14em] uppercase px-2 py-0.5 rounded-full shrink-0"
-            style={{ background: 'rgba(0,209,255,0.07)', color: 'rgba(0,209,255,0.88)', border: '1px solid rgba(0,209,255,0.16)' }}>
-            {serie.rows.length}
-          </span>
-        </div>
-        <motion.span
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.25 }}
-          className="flex items-center justify-center w-6 h-6 rounded-full shrink-0 ml-2"
-          style={{ background: 'rgba(0,209,255,0.06)', border: '1px solid rgba(0,209,255,0.12)', color: 'rgba(0,209,255,0.7)' }}
-        >
-          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3">
-            <path d="M2 4l4 4 4-4"/>
-          </svg>
-        </motion.span>
-      </button>
-
-      {/* Rows */}
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            key="content"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-            style={{ overflow: 'hidden' }}
+    <div className="space-y-7">
+      {groups.map((g) => (
+        <div key={g.serie}>
+          <p
+            className="mb-3 font-mono text-[9.5px] uppercase tracking-[0.26em]"
+            style={{ color: 'var(--c9-text-3)' }}
           >
-            {/* Column headers */}
-            <div className="grid grid-cols-3 px-4 py-2 font-mono text-[9px] tracking-[0.16em] uppercase"
-              style={{ borderTop: '1px solid rgba(0,209,255,0.08)', background: 'rgba(0,0,0,0.2)' }}>
-              <span style={{ color: 'rgba(255,255,255,0.65)' }}>Modèle</span>
-              <span className="text-center" style={{ color: 'rgba(255,255,255,0.72)' }}>{tierLabels.compatible}</span>
-              <span className="text-right"  style={{ color: '#00d1ff' }}>{tierLabels.premium}</span>
-            </div>
+            {g.serie}
+          </p>
 
-            {/* Model rows — cliquables WhatsApp */}
-            <div className="divide-y" style={{ borderColor: 'rgba(0,209,255,0.04)' }}>
-              {serie.rows.map((row, idx) => (
-                <motion.a
-                  key={row.model}
-                  href={waLink(buildWaMessage(serviceId, row.model))}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileTap={{ scale: 0.985, backgroundColor: 'rgba(0,209,255,0.07)' }}
-                  className="grid grid-cols-3 items-center px-4 py-3.5 cursor-pointer transition-all duration-200 group"
-                  style={{ background: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.08)', minHeight: '48px' }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = 'rgba(0,209,255,0.06)'
-                    e.currentTarget.style.borderLeft = '2px solid rgba(34,197,94,0.5)'
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background  = idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.08)'
-                    e.currentTarget.style.borderLeft  = 'none'
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {g.models.map((m) => {
+              const active = m.model === value
+              return (
+                <button
+                  key={m.model}
+                  onClick={() => onChange(m.model)}
+                  aria-pressed={active}
+                  className="flex items-center justify-center rounded-2xl px-2.5 text-center transition-all duration-300"
+                  style={{
+                    minHeight: '50px',
+                    background: active
+                      ? 'rgba(58,217,255,0.13)'
+                      : 'rgba(255,255,255,0.04)',
+                    border: active
+                      ? '1px solid var(--c9-accent-line)'
+                      : '1px solid var(--c9-hairline-soft)',
+                    boxShadow: active
+                      ? '0 12px 34px -22px rgba(58,217,255,0.9)'
+                      : 'none',
                   }}
                 >
-                  {/* Modèle + icône WA au hover */}
-                  <div className="flex items-center gap-1.5 min-w-0 pr-2">
-                    <span className="font-space text-xs leading-snug" style={{ color: 'rgba(255,255,255,0.96)' }}>
-                      {row.model}
-                    </span>
-                    <span className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                      style={{ color: '#4ade80' }}>
-                      <WaIcon size="sm" />
-                    </span>
-                  </div>
-                  {/* Prix Compatible */}
-                  <span className="text-center font-mono text-xs font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                    {row.compatible} €
+                  <span
+                    className="font-space text-[0.8125rem] leading-tight sm:text-sm"
+                    style={{
+                      color: active ? 'var(--c9-text)' : 'var(--c9-text-2)',
+                      fontWeight: active ? 600 : 400,
+                    }}
+                  >
+                    {m.model}
                   </span>
-                  {/* Prix Premium */}
-                  <div className="flex justify-end">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md"
-                      style={{ color: '#00d1ff', background: 'rgba(0,209,255,0.08)', border: '1px solid rgba(0,209,255,0.18)' }}>
-                      {row.premium} €
-                    </span>
-                  </div>
-                </motion.a>
-              ))}
-            </div>
-
-            {/* Hint tap mobile */}
-            <div className="px-4 py-2.5 flex items-center gap-2"
-              style={{ borderTop: '1px solid rgba(0,209,255,0.04)', background: 'rgba(0,0,0,0.12)' }}>
-              <WaIcon size="sm" />
-              <span className="font-mono text-[9.5px] tracking-[0.14em] uppercase"
-                style={{ color: 'rgba(34,197,94,0.75)' }}>
-                Appuyez sur un modèle pour contacter via WhatsApp
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
-
-// ─── Repair tab (Écrans / Batteries) ─────────────────────────────────────────
-
-function RepairTab({ cat }: { cat: RepairCategory }) {
-  return (
-    <div className="space-y-2.5">
-      <QualityCards cat={cat} />
-
-      {cat.series.map((serie) => (
-        <SerieBlock key={serie.serie} serie={serie} tierLabels={cat.tierLabels} serviceId={cat.id} />
+                </button>
+              )
+            })}
+          </div>
+        </div>
       ))}
-
-      <div className="pt-6 mt-2" style={{ borderTop: '1px solid rgba(0,209,255,0.08)' }}>
-        <WaButton message={buildWaMessage(cat.id)} label="Prendre rendez-vous sur WhatsApp" />
-      </div>
     </div>
   )
 }
 
-// ─── Diagnostic tab ───────────────────────────────────────────────────────────
+// ─── Étape 3 — carte d'offre ─────────────────────────────────────────────────
 
-function DiagnosticTab() {
+function OptionCard({
+  option,
+  emphasis,
+  index,
+  reserveBadge,
+}: {
+  option: PriceOption
+  emphasis: boolean
+  index: number
+  /** Réserve la hauteur du badge pour aligner les cartes côte à côte */
+  reserveBadge: boolean
+}) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="max-w-md mx-auto"
+      transition={{ duration: 0.5, delay: index * 0.07, ease: EASE }}
+      className={`flex flex-col rounded-[26px] p-6 sm:p-7 ${
+        emphasis ? 'c9-surface-accent' : 'c9-surface'
+      }`}
     >
-      <div className="glass-card rounded-2xl overflow-hidden">
+      {/* Badge — sur sa propre ligne pour ne jamais compresser le libellé.
+          Quand une carte voisine porte un badge, on réserve la même hauteur
+          afin que les deux titres restent parfaitement alignés. */}
+      {(option.recommended || reserveBadge) && (
+        <span
+          aria-hidden={!option.recommended}
+          className="mb-3 inline-flex w-fit items-center whitespace-nowrap rounded-full px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.18em]"
+          style={{
+            color: option.recommended ? 'var(--c9-accent)' : 'transparent',
+            background: option.recommended ? 'rgba(58,217,255,0.10)' : 'transparent',
+            border: '1px solid transparent',
+            borderColor: option.recommended ? 'var(--c9-accent-line)' : 'transparent',
+          }}
+        >
+          Recommandé
+        </span>
+      )}
 
-        {/* Header */}
-        <div className="px-7 py-7 text-center"
-          style={{ background: 'linear-gradient(135deg, rgba(0,102,255,0.1) 0%, rgba(0,209,255,0.04) 100%)', borderBottom: '1px solid rgba(0,209,255,0.1)' }}>
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: 'rgba(0,209,255,0.08)', border: '1px solid rgba(0,209,255,0.18)' }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" className="w-7 h-7" style={{ color: '#00d1ff' }}>
-              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v3l2 2"/>
-            </svg>
-          </div>
-          <h3 className="font-black font-space text-cold-white text-xl mb-2">{diagnostic.label}</h3>
-          <div className="font-black font-space text-neon-blue mb-1" style={{ fontSize: 'clamp(2.5rem, 7vw, 3.5rem)', lineHeight: 1 }}>
-            Gratuit
-          </div>
-          <p className="font-mono text-[9px] tracking-[0.25em] uppercase mt-2" style={{ color: 'rgba(0,209,255,0.88)' }}>
-            {diagnostic.note}
-          </p>
-        </div>
+      <h4
+        className="mb-5 font-space text-[1.0625rem] font-semibold leading-snug"
+        style={{ color: 'var(--c9-text)' }}
+      >
+        {option.label}
+      </h4>
 
-        {/* Inclus */}
-        <div className="px-7 py-6">
-          <p className="font-mono text-[9px] tracking-[0.25em] uppercase mb-4" style={{ color: 'rgba(255,255,255,0.68)' }}>
-            Ce qui est inclus
-          </p>
-          <ul className="space-y-3">
-            {diagnostic.inclus.map((item) => (
-              <li key={item} className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                  style={{ background: 'rgba(0,209,255,0.08)', border: '1px solid rgba(0,209,255,0.22)' }}>
-                  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" className="w-2.5 h-2.5" style={{ color: '#00d1ff' }}>
-                    <path d="M2 6l3 3 5-5"/>
-                  </svg>
-                </div>
-                <span className="font-space text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.92)' }}>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {/* Prix */}
+      <div className="mb-1.5 flex items-baseline gap-1.5">
+        <span
+          className="font-space font-semibold leading-none"
+          style={{
+            color: 'var(--c9-text)',
+            fontSize: 'clamp(2.25rem, 8vw, 2.75rem)',
+            letterSpacing: '-0.04em',
+          }}
+        >
+          {option.price}
+        </span>
+        <span
+          className="font-space text-xl font-medium leading-none"
+          style={{ color: 'var(--c9-text-2)' }}
+        >
+          €
+        </span>
+      </div>
 
-        {/* CTA WhatsApp */}
-        <div className="px-7 pb-7">
-          <WaButton message={buildWaMessage('diagnostic')} label="Réserver sur WhatsApp" />
-        </div>
+      <p
+        className="mb-7 font-space text-[0.8125rem] leading-relaxed"
+        style={{ color: 'var(--c9-text-3)' }}
+      >
+        {option.note}
+      </p>
+
+      <div className="mt-auto">
+        <WaCta
+          message={option.waMessage}
+          variant={emphasis ? 'primary' : 'secondary'}
+        />
       </div>
     </motion.div>
   )
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Étape 3 — panneau résultat ──────────────────────────────────────────────
 
-export default function Pricing() {
-  const [activeTab, setActiveTab] = useState<TabId>('ecrans')
-  const activeCat = tarifsRepair.find(c => c.id === activeTab)
+function ResultPanel({
+  repair,
+  model,
+  options,
+}: {
+  repair: RepairId
+  model: string
+  options: PriceOption[]
+}) {
+  const repairLabel = REPAIRS.find((r) => r.id === repair)?.label ?? ''
+  const two = options.length === 2
 
   return (
-    <section id="tarifs" className="relative overflow-hidden" style={{ paddingTop: 'var(--section-py)', paddingBottom: 'var(--section-py)' }}>
+    <div>
+      {/* Récapitulatif */}
+      <div className="mb-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h3
+          className="font-space text-[1.375rem] font-semibold leading-tight sm:text-2xl"
+          style={{ color: 'var(--c9-text)', letterSpacing: '-0.025em' }}
+        >
+          {model}
+        </h3>
+        <span
+          className="font-mono text-[10px] uppercase tracking-[0.24em]"
+          style={{ color: 'var(--c9-accent)' }}
+        >
+          {repairLabel}
+        </span>
+      </div>
 
-      {/* Ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-        style={{ width: '700px', height: '500px', background: 'radial-gradient(ellipse, rgba(0,102,255,0.04) 0%, transparent 70%)' }} />
-      <div className="absolute top-0 inset-x-0 h-px"
-        style={{ background: 'linear-gradient(to right, transparent, rgba(0,209,255,0.1), transparent)' }} />
+      <div className={`grid gap-3.5 ${two ? 'sm:grid-cols-2' : 'sm:max-w-sm'}`}>
+        {options.map((o, i) => (
+          <OptionCard
+            key={o.id}
+            option={o}
+            index={i}
+            reserveBadge={two && options.some((x) => x.recommended)}
+            // Sur écran : l'OLED est mise en avant dès qu'un choix existe.
+            // Sur une offre unique : elle porte naturellement l'action principale.
+            emphasis={two ? o.recommended : true}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
 
-      <div className="max-w-3xl mx-auto px-5 md:px-8">
+// ─── Placeholder — invite calme, pas de vide ─────────────────────────────────
 
-        {/* ── Header ── */}
+function EmptyHint({ repair }: { repair: RepairId }) {
+  const from = priceFrom(repair)
+  const label = REPAIRS.find((r) => r.id === repair)?.label.toLowerCase() ?? ''
+
+  return (
+    <div
+      className="flex flex-col items-center justify-center rounded-[26px] px-6 py-11 text-center"
+      style={{
+        border: '1px dashed var(--c9-hairline)',
+        background: 'rgba(255,255,255,0.018)',
+      }}
+    >
+      <p
+        className="font-space text-[0.9375rem] leading-relaxed"
+        style={{ color: 'var(--c9-text-2)' }}
+      >
+        Sélectionnez votre modèle pour afficher le tarif.
+      </p>
+      <p
+        className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em]"
+        style={{ color: 'var(--c9-text-3)' }}
+      >
+        {label} · à partir de {from} €
+      </p>
+    </div>
+  )
+}
+
+// ─── Section ─────────────────────────────────────────────────────────────────
+
+export default function Pricing() {
+  const [repair, setRepair] = useState<RepairId>('ecran')
+  const [model, setModel] = useState<string | null>(null)
+
+  // Tous les modèles de la grille proposent les trois prestations,
+  // mais on filtre malgré tout : aucune offre indisponible n'est affichée.
+  const models = useMemo(
+    () => MODELS.filter((m) => getOptions(repair, m).length > 0),
+    [repair],
+  )
+
+  const current = model ? models.find((m) => m.model === model) ?? null : null
+  const options = current ? getOptions(repair, current) : []
+
+  function handleRepair(id: RepairId) {
+    setRepair(id)
+    // On conserve le modèle sélectionné si la nouvelle prestation existe pour lui.
+    if (!model) return
+    const m = MODELS.find((x) => x.model === model)
+    if (!m || getOptions(id, m).length === 0) setModel(null)
+  }
+
+  return (
+    <section
+      id="tarifs"
+      className="relative"
+      style={{ paddingTop: 'var(--section-py)', paddingBottom: 'var(--section-py)' }}
+    >
+      <div className="mx-auto w-full max-w-3xl px-5 sm:px-8">
+        {/* ── En-tête ── */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.9, ease: [0.23, 1, 0.32, 1] }}
-          className="text-center mb-16"
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.8, ease: EASE }}
+          className="mb-14 text-center sm:mb-16"
         >
           <p className="section-label mb-5">Tarifs</p>
-          <h2 className="font-black font-space text-cold-white mb-5"
-            style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', letterSpacing: '-0.03em' }}>
-            Tarification <span className="gradient-text">Transparente</span>
+          <h2 className="c9-title mb-5">
+            Un prix clair,
+            <br />
+            <span className="gradient-text">en trois gestes.</span>
           </h2>
-          <p className="font-space text-[15px] max-w-sm mx-auto leading-relaxed"
-            style={{ color: 'rgba(255,255,255,0.65)' }}>
-            Prix réels, sans surprise. iPhone uniquement pour le moment.
+          <p className="c9-subtitle mx-auto max-w-md">
+            Choisissez la réparation, puis votre iPhone. Le tarif s&apos;affiche
+            immédiatement — sans surprise.
           </p>
         </motion.div>
 
-        {/* ── Tab bar — 3 colonnes équilibrées ── */}
+        {/* ── Étape 1 ── */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-10"
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.7, ease: EASE }}
+          className="mb-12"
         >
-          <div className="grid grid-cols-3 p-1.5 rounded-2xl gap-1.5 w-full max-w-lg mx-auto"
-            style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(0,209,255,0.1)' }}>
-            {TABS.map((tab) => {
-              const isActive = activeTab === tab.id
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="relative flex items-center justify-center gap-2 py-3 px-3 rounded-xl font-mono text-[10px] sm:text-[11px] tracking-[0.12em] uppercase transition-all duration-300 whitespace-nowrap"
-                  style={{
-                    color:      isActive ? '#00d1ff' : 'rgba(255,255,255,0.72)',
-                    background: isActive ? 'rgba(0,209,255,0.1)' : 'transparent',
-                    border:     isActive ? '1px solid rgba(0,209,255,0.28)' : '1px solid transparent',
-                    boxShadow:  isActive ? '0 0 18px rgba(0,209,255,0.08)' : 'none',
-                    fontWeight: isActive ? 600 : 400,
-                  }}
-                >
-                  <span className="shrink-0" style={{ color: isActive ? '#00d1ff' : 'rgba(255,255,255,0.58)' }}>
-                    {TabIcons[tab.id]}
-                  </span>
-                  <span>{tab.label}</span>
-                </button>
-              )
-            })}
-          </div>
+          <StepLabel n="01">Prestation</StepLabel>
+          <RepairSwitch value={repair} onChange={handleRepair} />
         </motion.div>
 
-        {/* ── Tab content ── */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.22 }}
-          >
-            {activeTab === 'diagnostic' ? (
-              <DiagnosticTab />
-            ) : activeCat ? (
-              <RepairTab cat={activeCat} />
-            ) : null}
-          </motion.div>
-        </AnimatePresence>
+        {/* ── Étape 2 ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.7, delay: 0.05, ease: EASE }}
+          className="mb-12"
+        >
+          <StepLabel n="02">Votre iPhone</StepLabel>
+          <ModelPicker models={models} value={model} onChange={setModel} />
+        </motion.div>
 
-        {/* ── Footer note — mobile-safe ── */}
+        {/* ── Étape 3 ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.7, delay: 0.1, ease: EASE }}
+        >
+          <StepLabel n="03">Tarif</StepLabel>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${repair}-${model ?? 'none'}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.3, ease: EASE }}
+            >
+              {current && options.length > 0 ? (
+                <ResultPanel repair={repair} model={current.model} options={options} />
+              ) : (
+                <EmptyHint repair={repair} />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
+
+        {/* ── Mentions ── */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="mt-12"
+          transition={{ duration: 0.8, delay: 0.15 }}
+          className="mt-14"
         >
-          {/* Bloc garantie + paiement — 2 lignes stackées, aucun overflow */}
-          <div className="flex flex-col items-center gap-1.5 px-5 py-4 rounded-2xl mb-8 max-w-xs mx-auto"
-            style={{ background: 'rgba(0,0,0,0.28)', border: '1px solid rgba(0,209,255,0.1)' }}>
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'rgba(0,209,255,0.65)' }} />
-              <p className="font-mono text-[9px] tracking-[0.18em] uppercase text-center"
-                style={{ color: 'rgba(255,255,255,0.82)' }}>
-                Garantie pièces &amp; main d&apos;œuvre
-              </p>
-            </div>
-            <p className="font-mono text-[9.5px] tracking-[0.14em] uppercase text-center"
-              style={{ color: 'rgba(255,255,255,0.6)' }}>
-              CB &nbsp;·&nbsp; Espèces &nbsp;·&nbsp; Virement
-            </p>
-          </div>
+          <div className="c9-divider mb-7" />
 
-          {/* CTA devis */}
-          <div className="flex justify-center">
-            <motion.a
-              href="/#contact"
-              whileHover={{ scale: 1.04, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center gap-3 px-8 py-3.5 rounded-full font-mono text-[11px] tracking-[0.2em] uppercase transition-all duration-300"
-              style={{
-                border:     '1px solid rgba(0,209,255,0.25)',
-                background: 'rgba(0,209,255,0.05)',
-                color:      '#00d1ff',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background  = 'rgba(0,209,255,0.1)'
-                e.currentTarget.style.borderColor = 'rgba(0,209,255,0.5)'
-                e.currentTarget.style.boxShadow   = '0 0 24px rgba(0,209,255,0.1)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background  = 'rgba(0,209,255,0.05)'
-                e.currentTarget.style.borderColor = 'rgba(0,209,255,0.25)'
-                e.currentTarget.style.boxShadow   = 'none'
-              }}
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div
+              className="flex flex-col items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.2em]"
+              style={{ color: 'var(--c9-text-3)' }}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-neon-blue animate-pulse shrink-0" />
-              Demander un devis
-            </motion.a>
+              <p>Garantie pièces &amp; main d&apos;œuvre</p>
+              <p>CB · Espèces · Virement</p>
+            </div>
+
+            <a
+              href={waLink(buildRepairMessage('ecran'))}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center px-4 font-space text-sm underline-offset-4 transition-colors duration-300 hover:underline"
+              style={{ color: 'var(--c9-accent)', minHeight: '44px' }}
+            >
+              Votre modèle n&apos;est pas listé ? Écrivez-nous
+            </a>
           </div>
         </motion.div>
-
       </div>
     </section>
   )
