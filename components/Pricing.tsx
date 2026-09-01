@@ -12,7 +12,7 @@ import {
   type PriceOption,
   type RepairId,
 } from '@/data/tarifs'
-import { WaCta } from '@/components/ui/Wa'
+import { WaCta, WaIcon } from '@/components/ui/Wa'
 import { waLink } from '@/lib/links'
 import { scrollToElement } from '@/lib/scroll'
 
@@ -335,36 +335,170 @@ function EmptyHint({ repair }: { repair: RepairId }) {
   )
 }
 
+// ─── Barre de prix — toujours sous les yeux, la page ne bouge jamais ─────────
+//
+//  Principe : c'est le prix qui vient à l'utilisateur, pas l'inverse.
+//  On peut enchaîner les modèles et les prestations sans jamais perdre sa
+//  place dans la liste. Le seul déplacement possible est explicite : le
+//  bouton de droite.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PriceBar({
+  model,
+  repair,
+  options,
+  onDetail,
+}: {
+  model: string
+  repair: RepairId
+  options: PriceOption[]
+  onDetail: () => void
+}) {
+  const repairLabel = REPAIRS.find((r) => r.id === repair)?.label ?? ''
+  const single = options.length === 1 ? options[0] : null
+
+  return (
+    <motion.div
+      initial={{ y: '110%' }}
+      animate={{ y: 0 }}
+      exit={{ y: '110%' }}
+      transition={{ duration: 0.34, ease: EASE }}
+      className="fixed inset-x-0 bottom-0 z-40"
+      style={{
+        background: 'rgba(17,31,53,0.82)',
+        backdropFilter: 'blur(28px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(150%)',
+        borderTop: '1px solid var(--c9-hairline)',
+        // Barre d'accueil iPhone / barre de navigation Android
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
+    >
+      <div className="mx-auto flex w-full max-w-3xl items-center gap-3 px-5 py-3 sm:px-8">
+        {/* Récapitulatif */}
+        <div className="min-w-0 flex-1">
+          <p
+            className="mb-1 truncate font-mono text-[9.5px] uppercase tracking-[0.2em]"
+            style={{ color: 'var(--c9-text-3)' }}
+          >
+            {model} · {repairLabel}
+          </p>
+
+          {single ? (
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className="font-space text-[1.375rem] font-semibold leading-none"
+                style={{ color: 'var(--c9-text)', letterSpacing: '-0.03em' }}
+              >
+                {single.price} €
+              </span>
+              <span
+                className="truncate font-space text-[0.75rem] leading-none"
+                style={{ color: 'var(--c9-text-3)' }}
+              >
+                {single.label}
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+              {options.map((o) => (
+                <span key={o.id} className="flex items-baseline gap-1 leading-none">
+                  <span
+                    className="font-space text-[1.125rem] font-semibold"
+                    style={{
+                      color: o.recommended ? 'var(--c9-accent)' : 'var(--c9-text)',
+                      letterSpacing: '-0.03em',
+                    }}
+                  >
+                    {o.price} €
+                  </span>
+                  <span
+                    className="font-mono text-[8.5px] uppercase tracking-[0.14em]"
+                    style={{ color: 'var(--c9-text-3)' }}
+                  >
+                    {o.id === 'lcd' ? 'LCD' : 'OLED'}
+                  </span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Action — contextuelle : réserver s'il n'y a qu'une offre,
+            aller choisir s'il y en a deux. */}
+        {single ? (
+          <a
+            href={waLink(single.waMessage)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="c9-back flex shrink-0 items-center justify-center gap-2 rounded-full px-5 font-space text-[0.875rem] font-semibold"
+            style={{
+              minHeight: '48px',
+              background: 'linear-gradient(118deg, #6fe6ff 0%, #3ad9ff 42%, #1aa9ff 100%)',
+              color: '#06131f',
+              boxShadow: '0 12px 32px -18px rgba(26,169,255,0.9)',
+            }}
+          >
+            <WaIcon className="h-4 w-4" />
+            <span className="hidden xs:inline">Rendez-vous</span>
+            <span className="xs:hidden">RDV</span>
+          </a>
+        ) : (
+          <button
+            onClick={onDetail}
+            className="c9-back flex shrink-0 items-center justify-center gap-2 rounded-full px-5 font-space text-[0.875rem] font-semibold"
+            style={{
+              minHeight: '48px',
+              border: '1px solid var(--c9-hairline-lit)',
+              background: 'rgba(255,255,255,0.07)',
+              color: 'var(--c9-text)',
+            }}
+          >
+            Choisir
+            <svg
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-3.5 w-3.5"
+              aria-hidden="true"
+            >
+              <path d="M3.5 6L8 10.5 12.5 6" />
+            </svg>
+          </button>
+        )}
+      </div>
+    </motion.div>
+  )
+}
+
 // ─── Section ─────────────────────────────────────────────────────────────────
 
 export default function Pricing() {
   const [repair, setRepair] = useState<RepairId>('ecran')
   const [model, setModel] = useState<string | null>(null)
 
-  // Bloc « 03 · Tarif » — cible du défilement automatique.
+  // Bloc « 03 · Tarif » — cible du bouton « Détail » de la barre.
   const resultRef = useRef<HTMLDivElement>(null)
-  // N'entre en jeu que sur une action volontaire de l'utilisateur :
-  // jamais au premier rendu, jamais sur un simple re-render.
-  const pendingScroll = useRef(false)
+  const sectionRef = useRef<HTMLElement>(null)
+
+  // La barre de prix n'existe que tant qu'on est dans la section Tarifs :
+  // elle ne doit pas flotter au-dessus de la Marketplace ou du Diagnostic.
+  const [inSection, setInSection] = useState(false)
 
   useEffect(() => {
-    if (!pendingScroll.current) return
-    pendingScroll.current = false
-    if (!model) return
-
-    // Deux frames d'attente : le temps que la carte d'offre soit montée
-    // et mesurable (AnimatePresence + layout), sinon on viserait l'ancienne
-    // hauteur du bloc.
-    const raf = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        // Sur grand écran le tarif est souvent déjà à l'écran : on ne
-        // déplace la page que si c'est réellement utile.
-        const onlyIfHidden = window.innerWidth >= 1024
-        scrollToElement(resultRef.current, 88, onlyIfHidden)
-      })
-    })
-    return () => cancelAnimationFrame(raf)
-  }, [model, repair])
+    const el = sectionRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      ([entry]) => setInSection(entry.isIntersecting),
+      // -10% en bas : la barre s'efface juste avant de quitter la section.
+      { rootMargin: '-80px 0px -10% 0px', threshold: 0 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
   // Tous les modèles de la grille proposent les trois prestations,
   // mais on filtre malgré tout : aucune offre indisponible n'est affichée.
@@ -381,21 +515,22 @@ export default function Pricing() {
     // On conserve le modèle sélectionné si la nouvelle prestation existe pour lui.
     if (!model) return
     const m = MODELS.find((x) => x.model === model)
-    if (!m || getOptions(id, m).length === 0) {
-      setModel(null)
-      return
-    }
-    // Un modèle est déjà choisi : le tarif change, on y emmène l'utilisateur.
-    pendingScroll.current = true
+    if (!m || getOptions(id, m).length === 0) setModel(null)
+    // Aucun défilement : le prix est déjà sous les yeux, dans la barre.
   }
 
+  // La barre n'apparaît qu'avec un tarif réel et tant qu'on est dans la section.
+  const showBar = inSection && !!current && options.length > 0
+
   function handleModel(next: string) {
-    pendingScroll.current = true
+    // Un appui = un prix mis à jour. La page, elle, ne bouge jamais :
+    // l'utilisateur reste libre de comparer modèles et prestations.
     setModel(next)
   }
 
   return (
     <section
+      ref={sectionRef}
       id="tarifs"
       className="relative"
       style={{ paddingTop: 'var(--section-py)', paddingBottom: 'var(--section-py)' }}
@@ -497,7 +632,23 @@ export default function Pricing() {
             </a>
           </div>
         </motion.div>
+
+        {/* Réserve la place de la barre pour ne rien masquer en bas de section */}
+        {showBar && <div aria-hidden style={{ height: '84px' }} />}
       </div>
+
+      {/* ── Barre de prix ── */}
+      <AnimatePresence>
+        {showBar && current && (
+          <PriceBar
+            key="c9-price-bar"
+            model={current.model}
+            repair={repair}
+            options={options}
+            onDetail={() => scrollToElement(resultRef.current, 88)}
+          />
+        )}
+      </AnimatePresence>
     </section>
   )
 }

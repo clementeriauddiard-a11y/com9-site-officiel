@@ -7,6 +7,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // Palier supplémentaire pour les très petits téléphones (iPhone SE, 360px)
+      screens: {
+        xs: '380px',
+      },
       colors: {
         // ── Base ardoise lumineuse ──
         'space-black':   '#0f1929',   // fond principal
