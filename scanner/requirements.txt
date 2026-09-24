@@ -1,0 +1,11 @@
+# COM9 Scanner — dépendances Python
+# Testé avec Python 3.11+
+
+# Discord
+discord.py>=2.3.2
+
+# HTTP / scraping
+requests>=2.31.0
+
+# Variables d'environnement (local uniquement)
+python-dotenv>=1.0.0
