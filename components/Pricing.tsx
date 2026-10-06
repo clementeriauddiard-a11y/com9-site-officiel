@@ -4,13 +4,21 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   MODELS,
+  PRICE_NOTE,
   REPAIRS,
+  TRAVEL_RULE,
+  ZONES,
+  buildQuote,
+  buildQuoteMessage,
   buildRepairMessage,
+  findZone,
   getOptions,
   priceFrom,
   type ModelTarif,
   type PriceOption,
   type RepairId,
+  type Zone,
+  type ZoneId,
 } from '@/data/tarifs'
 import { WaCta, WaIcon } from '@/components/ui/Wa'
 import { waLink } from '@/lib/links'
@@ -23,10 +31,7 @@ const EASE = [0.22, 1, 0.36, 1] as const
 function StepLabel({ n, children }: { n: string; children: React.ReactNode }) {
   return (
     <div className="mb-4 flex items-baseline gap-3">
-      <span
-        className="font-mono text-[10px] tracking-[0.28em]"
-        style={{ color: 'var(--c9-accent)' }}
-      >
+      <span className="font-mono text-[10px] tracking-[0.28em]" style={{ color: 'var(--c9-accent)' }}>
         {n}
       </span>
       <span
@@ -53,10 +58,7 @@ function RepairSwitch({
       className="grid grid-cols-3 gap-1.5 rounded-[20px] p-1.5"
       role="tablist"
       aria-label="Choix de la prestation"
-      style={{
-        background: 'rgba(255,255,255,0.045)',
-        border: '1px solid var(--c9-hairline-soft)',
-      }}
+      style={{ background: 'rgba(255,255,255,0.045)', border: '1px solid var(--c9-hairline-soft)' }}
     >
       {REPAIRS.map((r) => {
         const active = r.id === value
@@ -108,7 +110,6 @@ function ModelPicker({
   value: string | null
   onChange: (model: string) => void
 }) {
-  // Regroupement par série, dans l'ordre de la grille officielle.
   const groups = useMemo(() => {
     const out: { serie: string; models: ModelTarif[] }[] = []
     for (const m of models) {
@@ -141,15 +142,11 @@ function ModelPicker({
                   className="flex items-center justify-center rounded-2xl px-2.5 text-center transition-all duration-300"
                   style={{
                     minHeight: '50px',
-                    background: active
-                      ? 'rgba(58,217,255,0.13)'
-                      : 'rgba(255,255,255,0.04)',
+                    background: active ? 'rgba(58,217,255,0.13)' : 'rgba(255,255,255,0.04)',
                     border: active
                       ? '1px solid var(--c9-accent-line)'
                       : '1px solid var(--c9-hairline-soft)',
-                    boxShadow: active
-                      ? '0 12px 34px -22px rgba(58,217,255,0.9)'
-                      : 'none',
+                    boxShadow: active ? '0 12px 34px -22px rgba(58,217,255,0.9)' : 'none',
                   }}
                 >
                   <span
@@ -171,32 +168,28 @@ function ModelPicker({
   )
 }
 
-// ─── Étape 3 — carte d'offre ─────────────────────────────────────────────────
+// ─── Étape 3 — carte d'offre, sélectionnable ─────────────────────────────────
 
 function OptionCard({
   option,
-  emphasis,
-  index,
+  selected,
+  selectable,
   reserveBadge,
+  index,
+  onSelect,
 }: {
   option: PriceOption
-  emphasis: boolean
-  index: number
-  /** Réserve la hauteur du badge pour aligner les cartes côte à côte */
+  selected: boolean
+  /** true quand plusieurs qualités coexistent : la carte devient un choix */
+  selectable: boolean
   reserveBadge: boolean
+  index: number
+  onSelect: () => void
 }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.07, ease: EASE }}
-      className={`flex flex-col rounded-[26px] p-6 sm:p-7 ${
-        emphasis ? 'c9-surface-accent' : 'c9-surface'
-      }`}
-    >
-      {/* Badge — sur sa propre ligne pour ne jamais compresser le libellé.
-          Quand une carte voisine porte un badge, on réserve la même hauteur
-          afin que les deux titres restent parfaitement alignés. */}
+  const emphasis = selected
+
+  const inner = (
+    <>
       {(option.recommended || reserveBadge) && (
         <span
           aria-hidden={!option.recommended}
@@ -219,7 +212,6 @@ function OptionCard({
         {option.label}
       </h4>
 
-      {/* Prix */}
       <div className="mb-1.5 flex items-baseline gap-1.5">
         <span
           className="font-space font-semibold leading-none"
@@ -239,124 +231,263 @@ function OptionCard({
         </span>
       </div>
 
+      {/* Tant qu'aucune zone n'est choisie, le prix reste celui de la seule réparation */}
       <p
-        className="mb-7 font-space text-[0.8125rem] leading-relaxed"
+        className="mb-1 font-mono text-[9.5px] uppercase tracking-[0.18em]"
+        style={{ color: 'var(--c9-text-3)' }}
+      >
+        Hors déplacement
+      </p>
+
+      <p
+        className="font-space text-[0.8125rem] leading-relaxed"
         style={{ color: 'var(--c9-text-3)' }}
       >
         {option.note}
       </p>
 
-      <div className="mt-auto">
-        <WaCta
-          message={option.waMessage}
-          variant={emphasis ? 'primary' : 'secondary'}
-        />
-      </div>
+      {selectable && (
+        <div className="mt-6 flex items-center gap-2">
+          <span
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-all duration-300"
+            style={{
+              border: selected
+                ? '1px solid var(--c9-accent)'
+                : '1px solid var(--c9-hairline-lit)',
+              background: selected ? 'var(--c9-accent)' : 'transparent',
+            }}
+          >
+            {selected && (
+              <svg viewBox="0 0 12 12" fill="none" stroke="#06131f" strokeWidth="2.2"
+                strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5">
+                <path d="M2 6.2l2.6 2.6L10 3.4" />
+              </svg>
+            )}
+          </span>
+          <span
+            className="font-space text-[0.8125rem]"
+            style={{ color: selected ? 'var(--c9-text)' : 'var(--c9-text-3)' }}
+          >
+            {selected ? 'Qualité choisie' : 'Choisir cette qualité'}
+          </span>
+        </div>
+      )}
+    </>
+  )
+
+  const className = `flex flex-col rounded-[26px] p-6 text-left transition-all duration-300 sm:p-7 ${
+    emphasis ? 'c9-surface-accent' : 'c9-surface'
+  }`
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, delay: index * 0.06, ease: EASE }}
+    >
+      {selectable ? (
+        <button
+          type="button"
+          onClick={onSelect}
+          aria-pressed={selected}
+          className={`w-full ${className}`}
+        >
+          {inner}
+        </button>
+      ) : (
+        <div className={className}>{inner}</div>
+      )}
     </motion.div>
   )
 }
 
-// ─── Étape 3 — panneau résultat ──────────────────────────────────────────────
+// ─── Étape 4 — zone de déplacement ───────────────────────────────────────────
 
-function ResultPanel({
-  repair,
-  model,
-  options,
+function ZonePicker({
+  value,
+  onChange,
 }: {
-  repair: RepairId
-  model: string
-  options: PriceOption[]
+  value: ZoneId | null
+  onChange: (id: ZoneId) => void
 }) {
-  const repairLabel = REPAIRS.find((r) => r.id === repair)?.label ?? ''
-  const two = options.length === 2
-
   return (
-    <div>
-      {/* Récapitulatif */}
-      <div className="mb-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h3
-          className="font-space text-[1.375rem] font-semibold leading-tight sm:text-2xl"
-          style={{ color: 'var(--c9-text)', letterSpacing: '-0.025em' }}
-        >
-          {model}
-        </h3>
-        <span
-          className="font-mono text-[10px] uppercase tracking-[0.24em]"
-          style={{ color: 'var(--c9-accent)' }}
-        >
-          {repairLabel}
-        </span>
-      </div>
-
-      <div className={`grid gap-3.5 ${two ? 'sm:grid-cols-2' : 'sm:max-w-sm'}`}>
-        {options.map((o, i) => (
-          <OptionCard
-            key={o.id}
-            option={o}
-            index={i}
-            reserveBadge={two && options.some((x) => x.recommended)}
-            // Sur écran : l'OLED est mise en avant dès qu'un choix existe.
-            // Sur une offre unique : elle porte naturellement l'action principale.
-            emphasis={two ? o.recommended : true}
-          />
-        ))}
-      </div>
+    <div
+      className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+      role="group"
+      aria-label="Zone de déplacement"
+    >
+      {ZONES.map((z) => {
+        const active = z.id === value
+        return (
+          <button
+            key={z.id}
+            onClick={() => onChange(z.id)}
+            aria-pressed={active}
+            className="flex flex-col items-center justify-center gap-1 rounded-2xl px-2.5 py-3 text-center transition-all duration-300"
+            style={{
+              minHeight: '68px',
+              background: active ? 'rgba(58,217,255,0.13)' : 'rgba(255,255,255,0.04)',
+              border: active
+                ? '1px solid var(--c9-accent-line)'
+                : '1px solid var(--c9-hairline-soft)',
+              boxShadow: active ? '0 12px 34px -22px rgba(58,217,255,0.9)' : 'none',
+            }}
+          >
+            <span
+              className="font-space text-[0.8125rem] leading-tight"
+              style={{
+                color: active ? 'var(--c9-text)' : 'var(--c9-text-2)',
+                fontWeight: active ? 600 : 400,
+              }}
+            >
+              {z.label}
+            </span>
+            <span
+              className="font-space text-[0.8125rem] font-semibold leading-none"
+              style={{ color: active ? 'var(--c9-accent)' : 'var(--c9-text-3)' }}
+            >
+              {z.fee === null ? 'Sur devis' : `${z.fee} €`}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }
 
-// ─── Placeholder — invite calme, pas de vide ─────────────────────────────────
+// ─── Récapitulatif chiffré ───────────────────────────────────────────────────
 
-function EmptyHint({ repair }: { repair: RepairId }) {
-  const from = priceFrom(repair)
-  const label = REPAIRS.find((r) => r.id === repair)?.label.toLowerCase() ?? ''
+function QuoteRecap({
+  repair,
+  model,
+  option,
+  zone,
+}: {
+  repair: RepairId
+  model: string
+  option: PriceOption
+  zone: Zone | null
+}) {
+  const q = buildQuote(option, zone)
+
+  const Line = ({
+    label,
+    value,
+    strong = false,
+  }: {
+    label: string
+    value: string
+    strong?: boolean
+  }) => (
+    <div className="flex items-baseline justify-between gap-4">
+      <span
+        className="font-space"
+        style={{
+          color: strong ? 'var(--c9-text)' : 'var(--c9-text-2)',
+          fontSize: strong ? '1rem' : '0.9375rem',
+          fontWeight: strong ? 600 : 400,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        className="font-space tabular-nums"
+        style={{
+          color: strong ? 'var(--c9-text)' : 'var(--c9-text-2)',
+          fontSize: strong ? '1.5rem' : '0.9375rem',
+          fontWeight: strong ? 600 : 500,
+          letterSpacing: strong ? '-0.03em' : undefined,
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  )
 
   return (
-    <div
-      className="flex flex-col items-center justify-center rounded-[26px] px-6 py-11 text-center"
-      style={{
-        border: '1px dashed var(--c9-hairline)',
-        background: 'rgba(255,255,255,0.018)',
-      }}
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: EASE }}
+      className="c9-surface rounded-[26px] p-6 sm:p-7"
     >
       <p
-        className="font-space text-[0.9375rem] leading-relaxed"
-        style={{ color: 'var(--c9-text-2)' }}
-      >
-        Sélectionnez votre modèle pour afficher le tarif.
-      </p>
-      <p
-        className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em]"
+        className="mb-5 font-mono text-[9.5px] uppercase tracking-[0.2em]"
         style={{ color: 'var(--c9-text-3)' }}
       >
-        {label} · à partir de {from} €
+        {model} · {option.label}
       </p>
-    </div>
+
+      <div className="space-y-3">
+        <Line label="Réparation" value={`${q.repairPrice} €`} />
+
+        {zone === null && (
+          <Line label="Déplacement" value="Selon votre zone" />
+        )}
+
+        {zone !== null && q.onQuote && (
+          <Line label="Déplacement" value="Sur devis" />
+        )}
+
+        {zone !== null && q.travelFee !== null && (
+          <Line label="Déplacement" value={`${q.travelFee} €`} />
+        )}
+      </div>
+
+      <div className="c9-divider my-5" />
+
+      {q.total !== null ? (
+        <Line label="Total" value={`${q.total} €`} strong />
+      ) : (
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="font-space text-base font-semibold" style={{ color: 'var(--c9-text)' }}>
+            Total
+          </span>
+          <span
+            className="text-right font-space text-[0.9375rem]"
+            style={{ color: 'var(--c9-text-3)' }}
+          >
+            {q.onQuote ? 'Sur devis' : 'Choisissez votre zone'}
+          </span>
+        </div>
+      )}
+
+      <div className="mt-6">
+        <WaCta
+          message={buildQuoteMessage(repair, model, option, zone)}
+          label={q.onQuote ? 'Demander un devis' : 'Prendre rendez-vous'}
+        />
+      </div>
+
+      <p
+        className="mt-4 text-center font-space text-[0.75rem] leading-relaxed"
+        style={{ color: 'var(--c9-text-3)' }}
+      >
+        {TRAVEL_RULE}
+      </p>
+    </motion.div>
   )
 }
 
 // ─── Barre de prix — toujours sous les yeux, la page ne bouge jamais ─────────
-//
-//  Principe : c'est le prix qui vient à l'utilisateur, pas l'inverse.
-//  On peut enchaîner les modèles et les prestations sans jamais perdre sa
-//  place dans la liste. Le seul déplacement possible est explicite : le
-//  bouton de droite.
-//
-// ─────────────────────────────────────────────────────────────────────────────
 
 function PriceBar({
   model,
   repair,
   options,
+  selected,
+  zone,
   onDetail,
 }: {
   model: string
   repair: RepairId
   options: PriceOption[]
+  selected: PriceOption | null
+  zone: Zone | null
   onDetail: () => void
 }) {
   const repairLabel = REPAIRS.find((r) => r.id === repair)?.label ?? ''
-  const single = options.length === 1 ? options[0] : null
+  const q = selected ? buildQuote(selected, zone) : null
 
   return (
     <motion.div
@@ -370,12 +501,10 @@ function PriceBar({
         backdropFilter: 'blur(28px) saturate(150%)',
         WebkitBackdropFilter: 'blur(28px) saturate(150%)',
         borderTop: '1px solid var(--c9-hairline)',
-        // Barre d'accueil iPhone / barre de navigation Android
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
       <div className="mx-auto flex w-full max-w-3xl items-center gap-3 px-5 py-3 sm:px-8">
-        {/* Récapitulatif */}
         <div className="min-w-0 flex-1">
           <p
             className="mb-1 truncate font-mono text-[9.5px] uppercase tracking-[0.2em]"
@@ -384,19 +513,24 @@ function PriceBar({
             {model} · {repairLabel}
           </p>
 
-          {single ? (
-            <div className="flex items-baseline gap-1.5">
+          {q && selected ? (
+            <div className="flex min-w-0 items-baseline gap-2">
               <span
-                className="font-space text-[1.375rem] font-semibold leading-none"
+                className="shrink-0 whitespace-nowrap font-space text-[1.375rem] font-semibold leading-none tabular-nums"
                 style={{ color: 'var(--c9-text)', letterSpacing: '-0.03em' }}
               >
-                {single.price} €
+                {q.total !== null ? `${q.total} €` : `${q.repairPrice} €`}
               </span>
+              {/* Mention courte : le détail chiffré vit dans le récapitulatif */}
               <span
-                className="truncate font-space text-[0.75rem] leading-none"
+                className="min-w-0 truncate font-mono text-[9px] uppercase leading-none tracking-[0.14em]"
                 style={{ color: 'var(--c9-text-3)' }}
               >
-                {single.label}
+                {q.total !== null
+                  ? 'déplacement inclus'
+                  : q.onQuote
+                    ? 'déplacement sur devis'
+                    : 'hors déplacement'}
               </span>
             </div>
           ) : (
@@ -404,7 +538,7 @@ function PriceBar({
               {options.map((o) => (
                 <span key={o.id} className="flex items-baseline gap-1 leading-none">
                   <span
-                    className="font-space text-[1.125rem] font-semibold"
+                    className="font-space text-[1.125rem] font-semibold tabular-nums"
                     style={{
                       color: o.recommended ? 'var(--c9-accent)' : 'var(--c9-text)',
                       letterSpacing: '-0.03em',
@@ -424,11 +558,11 @@ function PriceBar({
           )}
         </div>
 
-        {/* Action — contextuelle : réserver s'il n'y a qu'une offre,
-            aller choisir s'il y en a deux. */}
-        {single ? (
+        {/* Une offre prête et une zone chiffrée → réservation directe.
+            Sinon on renvoie vers le détail pour compléter le choix. */}
+        {q && selected && q.total !== null ? (
           <a
-            href={waLink(single.waMessage)}
+            href={waLink(buildQuoteMessage(repair, model, selected, zone))}
             target="_blank"
             rel="noopener noreferrer"
             className="c9-back flex shrink-0 items-center justify-center gap-2 rounded-full px-5 font-space text-[0.875rem] font-semibold"
@@ -454,17 +588,9 @@ function PriceBar({
               color: 'var(--c9-text)',
             }}
           >
-            Choisir
-            <svg
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-3.5 w-3.5"
-              aria-hidden="true"
-            >
+            {selected ? 'Ma zone' : 'Choisir'}
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"
+              strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true">
               <path d="M3.5 6L8 10.5 12.5 6" />
             </svg>
           </button>
@@ -474,18 +600,42 @@ function PriceBar({
   )
 }
 
+// ─── Invite calme avant sélection ────────────────────────────────────────────
+
+function EmptyHint({ repair }: { repair: RepairId }) {
+  const from = priceFrom(repair)
+  const label = REPAIRS.find((r) => r.id === repair)?.label.toLowerCase() ?? ''
+
+  return (
+    <div
+      className="flex flex-col items-center justify-center rounded-[26px] px-6 py-11 text-center"
+      style={{ border: '1px dashed var(--c9-hairline)', background: 'rgba(255,255,255,0.018)' }}
+    >
+      <p className="font-space text-[0.9375rem] leading-relaxed" style={{ color: 'var(--c9-text-2)' }}>
+        Sélectionnez votre modèle pour afficher le tarif.
+      </p>
+      <p
+        className="mt-2 font-mono text-[10px] uppercase tracking-[0.2em]"
+        style={{ color: 'var(--c9-text-3)' }}
+      >
+        {label} · à partir de {from} € hors déplacement
+      </p>
+    </div>
+  )
+}
+
 // ─── Section ─────────────────────────────────────────────────────────────────
 
 export default function Pricing() {
   const [repair, setRepair] = useState<RepairId>('ecran')
   const [model, setModel] = useState<string | null>(null)
+  const [optionId, setOptionId] = useState<string | null>(null)
+  const [zoneId, setZoneId] = useState<ZoneId | null>(null)
 
-  // Bloc « 03 · Tarif » — cible du bouton « Détail » de la barre.
   const resultRef = useRef<HTMLDivElement>(null)
+  const zoneRef = useRef<HTMLDivElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
 
-  // La barre de prix n'existe que tant qu'on est dans la section Tarifs :
-  // elle ne doit pas flotter au-dessus de la Marketplace ou du Diagnostic.
   const [inSection, setInSection] = useState(false)
 
   useEffect(() => {
@@ -493,15 +643,12 @@ export default function Pricing() {
     if (!el || typeof IntersectionObserver === 'undefined') return
     const io = new IntersectionObserver(
       ([entry]) => setInSection(entry.isIntersecting),
-      // -10% en bas : la barre s'efface juste avant de quitter la section.
       { rootMargin: '-80px 0px -10% 0px', threshold: 0 },
     )
     io.observe(el)
     return () => io.disconnect()
   }, [])
 
-  // Tous les modèles de la grille proposent les trois prestations,
-  // mais on filtre malgré tout : aucune offre indisponible n'est affichée.
   const models = useMemo(
     () => MODELS.filter((m) => getOptions(repair, m).length > 0),
     [repair],
@@ -510,23 +657,25 @@ export default function Pricing() {
   const current = model ? models.find((m) => m.model === model) ?? null : null
   const options = current ? getOptions(repair, current) : []
 
+  // Une seule qualité proposée → elle est retenue d'office.
+  // Plusieurs qualités → aucune présélection, le client choisit.
+  useEffect(() => {
+    if (options.length === 1) setOptionId(options[0].id)
+    else setOptionId(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model, repair, options.length])
+
+  const selected = options.find((o) => o.id === optionId) ?? null
+  const zone = findZone(zoneId)
+
   function handleRepair(id: RepairId) {
     setRepair(id)
-    // On conserve le modèle sélectionné si la nouvelle prestation existe pour lui.
     if (!model) return
     const m = MODELS.find((x) => x.model === model)
     if (!m || getOptions(id, m).length === 0) setModel(null)
-    // Aucun défilement : le prix est déjà sous les yeux, dans la barre.
   }
 
-  // La barre n'apparaît qu'avec un tarif réel et tant qu'on est dans la section.
   const showBar = inSection && !!current && options.length > 0
-
-  function handleModel(next: string) {
-    // Un appui = un prix mis à jour. La page, elle, ne bouge jamais :
-    // l'utilisateur reste libre de comparer modèles et prestations.
-    setModel(next)
-  }
 
   return (
     <section
@@ -571,13 +720,13 @@ export default function Pricing() {
           className="mb-12"
         >
           <StepLabel n="02">Votre iPhone</StepLabel>
-          <ModelPicker models={models} value={model} onChange={handleModel} />
+          <ModelPicker models={models} value={model} onChange={setModel} />
         </motion.div>
 
         {/* ── Étape 3 ── */}
         <motion.div
           ref={resultRef}
-          className="c9-scroll-target"
+          className="c9-scroll-target mb-12"
           initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
@@ -594,12 +743,78 @@ export default function Pricing() {
               transition={{ duration: 0.3, ease: EASE }}
             >
               {current && options.length > 0 ? (
-                <ResultPanel repair={repair} model={current.model} options={options} />
+                <>
+                  <div className="mb-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <h3
+                      className="font-space text-[1.375rem] font-semibold leading-tight sm:text-2xl"
+                      style={{ color: 'var(--c9-text)', letterSpacing: '-0.025em' }}
+                    >
+                      {current.model}
+                    </h3>
+                    <span
+                      className="font-mono text-[10px] uppercase tracking-[0.24em]"
+                      style={{ color: 'var(--c9-accent)' }}
+                    >
+                      {REPAIRS.find((r) => r.id === repair)?.label}
+                    </span>
+                  </div>
+
+                  <div
+                    className={`grid gap-3.5 ${
+                      options.length === 2 ? 'sm:grid-cols-2' : 'sm:max-w-sm'
+                    }`}
+                  >
+                    {options.map((o, i) => (
+                      <OptionCard
+                        key={o.id}
+                        option={o}
+                        index={i}
+                        selected={optionId === o.id}
+                        selectable={options.length > 1}
+                        reserveBadge={options.length === 2 && options.some((x) => x.recommended)}
+                        onSelect={() => setOptionId(o.id)}
+                      />
+                    ))}
+                  </div>
+                </>
               ) : (
                 <EmptyHint repair={repair} />
               )}
             </motion.div>
           </AnimatePresence>
+        </motion.div>
+
+        {/* ── Étape 4 — déplacement ── */}
+        <motion.div
+          ref={zoneRef}
+          className="c9-scroll-target mb-12"
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.7, delay: 0.12, ease: EASE }}
+        >
+          <StepLabel n="04">Déplacement</StepLabel>
+          <ZonePicker value={zoneId} onChange={setZoneId} />
+
+          {current && options.length > 1 && !selected && (
+            <p
+              className="mt-4 text-center font-space text-[0.8125rem]"
+              style={{ color: 'var(--c9-text-3)' }}
+            >
+              Choisissez une qualité d&apos;écran pour afficher le total.
+            </p>
+          )}
+
+          {current && selected && (
+            <div className="mt-5">
+              <QuoteRecap
+                repair={repair}
+                model={current.model}
+                option={selected}
+                zone={zone}
+              />
+            </div>
+          )}
         </motion.div>
 
         {/* ── Mentions ── */}
@@ -608,11 +823,17 @@ export default function Pricing() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.15 }}
-          className="mt-14"
         >
           <div className="c9-divider mb-7" />
 
           <div className="flex flex-col items-center gap-4 text-center">
+            <p
+              className="max-w-sm font-space text-[0.8125rem] leading-relaxed"
+              style={{ color: 'var(--c9-text-2)' }}
+            >
+              {PRICE_NOTE}
+            </p>
+
             <div
               className="flex flex-col items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.2em]"
               style={{ color: 'var(--c9-text-3)' }}
@@ -633,7 +854,6 @@ export default function Pricing() {
           </div>
         </motion.div>
 
-        {/* Réserve la place de la barre pour ne rien masquer en bas de section */}
         {showBar && <div aria-hidden style={{ height: '84px' }} />}
       </div>
 
@@ -645,7 +865,11 @@ export default function Pricing() {
             model={current.model}
             repair={repair}
             options={options}
-            onDetail={() => scrollToElement(resultRef.current, 88)}
+            selected={selected}
+            zone={zone}
+            onDetail={() =>
+              scrollToElement(selected ? zoneRef.current : resultRef.current, 88)
+            }
           />
         )}
       </AnimatePresence>
