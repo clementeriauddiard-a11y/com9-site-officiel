@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { LINKS } from '@/lib/links'
+import { LINKS, PHONE } from '@/lib/links'
 
 // ─── Icônes ────────────────────────────────────────────────────────────────────
 
@@ -72,6 +72,23 @@ export default function Contact() {
           >
             {WaSvg}
             Nous écrire sur WhatsApp
+          </motion.a>
+          <motion.a
+            href={LINKS.phone}
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            className="mt-3 flex items-center justify-center gap-3 w-full rounded-2xl font-space font-semibold text-base transition-all duration-500"
+            style={{
+              minHeight: '54px',
+              border: '1px solid var(--c9-hairline-lit)',
+              background: 'rgba(255,255,255,0.05)',
+              color: 'var(--c9-text)',
+            }}
+          >
+            <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2" />
+            </svg>
+            <span>Appeler · <span className="tabular-nums">{PHONE.display}</span></span>
           </motion.a>
           <p className="font-mono text-[10px] tracking-[0.2em] uppercase mt-3"
             style={{ color: 'var(--c9-text-3)' }}>

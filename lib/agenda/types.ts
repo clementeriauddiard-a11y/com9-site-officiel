@@ -207,6 +207,14 @@ export type Appointment = {
   clientMessage: string
   clientRequestAt: string | null
 
+  /** Commune de la liste COM'9 (null : hors liste ou non précisée) */
+  communeId: string | null
+  communeNom: string
+  /** Distance par la route depuis l'atelier (km), si calculée */
+  distanceKm: number | null
+  /** 'google' : calculée par Google Maps · 'liste' : zone d'après la liste des communes */
+  distanceSource: 'google' | 'liste' | null
+
   /** Messages WhatsApp notés comme envoyés (envoi manuel) */
   messagesLog: MessagesLog
 

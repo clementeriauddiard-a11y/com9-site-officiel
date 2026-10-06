@@ -7,9 +7,23 @@
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Numéro Com'9 — appels et WhatsApp (même numéro). */
+export const PHONE = {
+  /** Affichage */
+  display: '06 47 41 20 08',
+  /** Format international pour les liens d'appel */
+  e164: '+33647412008',
+  /** Format WhatsApp (sans « + ») */
+  wa: '33647412008',
+} as const
+
 export const LINKS = {
-  /** Lien WhatsApp principal (QR Com'9) */
-  whatsapp: 'https://wa.me/qr/7Z3I2DB3CWKVM1',
+  /** Lien WhatsApp principal : conversation directe avec le numéro Com'9.
+   *  Contrairement à l'ancien lien QR, il accepte un message pré-rempli. */
+  whatsapp: `https://wa.me/${PHONE.wa}`,
+
+  /** Appel téléphonique */
+  phone: `tel:${PHONE.e164}`,
 
   /** Page TikTok */
   tiktok: 'https://www.tiktok.com/@utu.electronics?_r=1&_t=ZN-96CBv2eSbgs',

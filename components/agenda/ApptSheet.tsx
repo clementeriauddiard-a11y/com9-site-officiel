@@ -338,6 +338,15 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
               {zone.full}{appt.zoneVerified ? '' : ' — zone provisoire, à vérifier'}
             </p>
           )}
+          {appt.distanceKm !== null && appt.distanceSource === 'google' ? (
+            <p className="-mt-1 text-right font-space text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }} data-distance>
+              {`${String(appt.distanceKm).replace('.', ',')} km par la route depuis l\u2019atelier (Google Maps)`}
+            </p>
+          ) : appt.distanceSource === 'liste' ? (
+            <p className="-mt-1 text-right font-space text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }} data-distance>
+              Zone d&apos;après la commune{appt.communeNom ? ` (${appt.communeNom})` : ''} — distance non calculée
+            </p>
+          ) : null}
           <div className="c9-divider my-1" />
           <div className="flex items-baseline justify-between">
             <span className="font-space font-semibold">Total</span>

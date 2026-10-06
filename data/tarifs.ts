@@ -145,6 +145,17 @@ export function findZone(id: ZoneId | null): Zone | null {
   return ZONES.find((z) => z.id === id) ?? null
 }
 
+/**
+ * Zone correspondant à une distance PAR LA ROUTE depuis l'atelier, en km.
+ * Bornes incluses : 5 km → « jusqu'à 5 km », 15 km → « 5 à 15 km »…
+ */
+export function zoneForDistance(km: number): ZoneId {
+  if (km <= 5) return 'z5'
+  if (km <= 15) return 'z15'
+  if (km <= 30) return 'z30'
+  return 'devis'
+}
+
 /** Mention affichée près des tarifs. */
 export const PRICE_NOTE =
   'Pièce et main-d\'œuvre comprises. Frais de déplacement selon votre zone.'

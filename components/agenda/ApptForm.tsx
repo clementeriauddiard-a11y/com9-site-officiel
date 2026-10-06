@@ -62,6 +62,32 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
   const [travelFee, setTravelFee] = useState(init?.travelFee === null || init?.travelFee === undefined ? '' : String(init.travelFee))
   const [travelTouched, setTravelTouched] = useState(Boolean(init))
   const [zoneVerified, setZoneVerified] = useState(init ? init.zoneVerified : true)
+  const [distInfo, setDistInfo] = useState<{ busy: boolean; text: string; warn: boolean }>({ busy: false, text: '', warn: false })
+
+  /** Distance par la route (Google Maps) → zone et déplacement pré-remplis. */
+  async function computeZone() {
+    setDistInfo({ busy: true, text: '', warn: false })
+    try {
+      const res = await fetch('/api/distance', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (res.ok && typeof d.km === 'number') {
+        setZone(d.zone as ZoneId)
+        setTravelTouched(false)
+        setZoneVerified(Boolean(d.precise))
+        setDistInfo({
+          busy: false, warn: !d.precise,
+          text: `${String(d.km).replace('.', ',')} km par la route (Google Maps)` +
+            (d.precise ? '' : ' — adresse approximative, à vérifier'),
+        })
+      } else {
+        setDistInfo({ busy: false, warn: true, text: d.error ?? 'Calcul indisponible.' })
+      }
+    } catch {
+      setDistInfo({ busy: false, warn: true, text: 'Calcul indisponible.' })
+    }
+  }
 
   const [date, setDate] = useState(initSlot?.date ?? init?.preferredDate ?? defaultDate ?? todayParis())
   const [time, setTime] = useState(initSlot?.time ?? '')
@@ -239,7 +265,18 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
             <input id="f-price" className={inputCls} style={inputStyle} inputMode="numeric" value={repairPrice}
               onChange={(e) => { setRepairPrice(e.target.value); setPriceTouched(true) }} />
           </Field>
-          <Field label="Zone de déplacement" htmlFor="f-zone" hint={zone ? ZONES.find((z) => z.id === zone)?.full : undefined}>
+          <Field label="Zone de déplacement" htmlFor="f-zone" hint={
+            <>
+              {distInfo.text
+                ? <span style={{ color: distInfo.warn ? '#f5b94a' : undefined }} data-distance-info>{distInfo.text}</span>
+                : zone ? ZONES.find((z) => z.id === zone)?.full : null}
+              {' '}
+              <button type="button" className="underline underline-offset-2" disabled={distInfo.busy || address.trim().length < 5}
+                onClick={() => void computeZone()}>
+                {distInfo.busy ? 'calcul…' : 'calculer depuis l\u2019adresse'}
+              </button>
+            </>
+          }>
             <select id="f-zone" className={inputCls} style={inputStyle} value={zone ?? ''}
               onChange={(e) => { setZone((e.target.value || null) as ZoneId | null); setTravelTouched(false) }}>
               <option value="">Non définie</option>

@@ -131,6 +131,9 @@ const DDL = [
   `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS client_request_at TIMESTAMPTZ`,
   // Étape 4 : messages WhatsApp notés comme envoyés.
   `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS messages_log JSONB NOT NULL DEFAULT '{}'::jsonb`,
+  // Commune de la liste COM'9 (zones par commune).
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS commune_id TEXT`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS commune_nom TEXT NOT NULL DEFAULT ''`,
   `CREATE INDEX IF NOT EXISTS rdv_appointments_start_idx  ON rdv_appointments (start_at)`,
   `CREATE INDEX IF NOT EXISTS rdv_appointments_status_idx ON rdv_appointments (status)`,
   `CREATE TABLE IF NOT EXISTS rdv_events (
@@ -160,6 +163,15 @@ const DDL = [
      outcome  TEXT        NOT NULL DEFAULT 'echec' CHECK (outcome IN ('echec','succes','bloque'))
    )`,
   `CREATE INDEX IF NOT EXISTS auth_attempts_idx ON auth_attempts (scope, at)`,
+  // Distances déjà calculées (Google Maps) : empreinte de l'adresse uniquement.
+  `CREATE TABLE IF NOT EXISTS distance_cache (
+     addr_hash TEXT        PRIMARY KEY,
+     meters    INTEGER     NOT NULL CHECK (meters >= 0),
+     precise   BOOLEAN     NOT NULL,
+     at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+   )`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS distance_km NUMERIC(6,1)`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS distance_source TEXT`,
   `CREATE TABLE IF NOT EXISTS rdv_settings (
      id    INTEGER PRIMARY KEY CHECK (id = 1),
      data  JSONB   NOT NULL
@@ -231,6 +243,10 @@ function rowToAppt(r: any): Appointment {
     clientMessage: String(r.client_message ?? ''),
     clientRequestAt: iso(r.client_request_at),
     messagesLog: (typeof r.messages_log === 'string' ? JSON.parse(r.messages_log) : r.messages_log) ?? {},
+    communeId: r.commune_id ?? null,
+    communeNom: String(r.commune_nom ?? ''),
+    distanceKm: r.distance_km === null || r.distance_km === undefined ? null : Number(r.distance_km),
+    distanceSource: r.distance_source ?? null,
   }
 }
 
@@ -244,12 +260,14 @@ const COLS = `id, track_token, created_at, updated_at, client_name, client_phone
   model, repair, quality, description, repair_price, zone, zone_verified, travel_fee,
   start_at, duration_min, proposed_start_at, proposed_reason, proposal_firm,
   origin, status, part_status, internal_notes, preferred_date, preferred_period, availability_note,
-  client_request, client_message, client_request_at, messages_log`
+  client_request, client_message, client_request_at, messages_log, commune_id, commune_nom,
+  distance_km, distance_source`
 
 // ─── Mémoire (développement local uniquement) ────────────────────────────────
 
 const mem = {
   requests: [] as { ipHash: string; at: number; kind: string }[],
+  distances: new Map<string, { meters: number; precise: boolean; at: number }>(),
   appts: [] as Appointment[],
   events: [] as ApptEvent[],
   settings: null as AgendaSettings | null,
@@ -269,7 +287,7 @@ export async function insertAppt(a: Appointment): Promise<void> {
   await ensureTables(db)
   await db.query(
     `INSERT INTO rdv_appointments (${COLS}) VALUES
-     ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31)`,
+     ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35)`,
     [
       a.id, a.trackToken, a.createdAt, a.updatedAt, a.clientName, a.clientPhone, a.address,
       a.model, a.repair, a.quality, a.description, a.repairPrice, a.zone, a.zoneVerified,
@@ -277,6 +295,7 @@ export async function insertAppt(a: Appointment): Promise<void> {
       a.proposalFirm, a.origin, a.status, a.partStatus, a.internalNotes,
       a.preferredDate, a.preferredPeriod, a.availabilityNote,
       a.clientRequest, a.clientMessage, a.clientRequestAt, JSON.stringify(a.messagesLog ?? {}),
+      a.communeId ?? null, a.communeNom ?? '', a.distanceKm ?? null, a.distanceSource ?? null,
     ],
   )
 }
@@ -295,7 +314,8 @@ export async function updateAppt(a: Appointment): Promise<void> {
        travel_fee=$13, start_at=$14, duration_min=$15, proposed_start_at=$16,
        proposed_reason=$17, proposal_firm=$18, origin=$19, status=$20, part_status=$21,
        internal_notes=$22, preferred_date=$23, preferred_period=$24, availability_note=$25,
-       client_request=$26, client_message=$27, client_request_at=$28, messages_log=$29
+       client_request=$26, client_message=$27, client_request_at=$28, messages_log=$29,
+       commune_id=$30, commune_nom=$31, distance_km=$32, distance_source=$33
      WHERE id=$1`,
     [
       a.id, a.updatedAt, a.clientName, a.clientPhone, a.address, a.model, a.repair,
@@ -304,6 +324,7 @@ export async function updateAppt(a: Appointment): Promise<void> {
       a.origin, a.status, a.partStatus, a.internalNotes,
       a.preferredDate, a.preferredPeriod, a.availabilityNote,
       a.clientRequest, a.clientMessage, a.clientRequestAt, JSON.stringify(a.messagesLog ?? {}),
+      a.communeId ?? null, a.communeNom ?? '', a.distanceKm ?? null, a.distanceSource ?? null,
     ],
   )
 }
@@ -482,7 +503,7 @@ export type RequestCounts = { sameSourceShort: number; sameSourceDay: number; al
  * shortMin : fenêtre courte (minutes) pour une même source.
  */
 export async function countAndLogRequest(
-  ipHash: string, shortMin: number, kind: 'reservation' | 'suivi' = 'reservation',
+  ipHash: string, shortMin: number, kind: 'reservation' | 'suivi' | 'distance' = 'reservation',
 ): Promise<RequestCounts> {
   const now = Date.now()
   const shortSince = now - shortMin * 60_000
@@ -687,4 +708,35 @@ export async function clearAuthFailures(scopes: readonly string[]): Promise<numb
     [scopes as unknown as string[]],
   )
   return Number(rows[0]?.n ?? 0)
+}
+
+// ─── Cache des distances (Google Maps) ───────────────────────────────────────
+
+export async function getCachedDistance(addrHash: string, maxAgeDays: number): Promise<{ meters: number; precise: boolean } | null> {
+  const since = Date.now() - maxAgeDays * 86_400_000
+  if (resolveMode() === 'memory') {
+    const h = mem.distances.get(addrHash)
+    return h && h.at >= since ? { meters: h.meters, precise: h.precise } : null
+  }
+  const db = await driver()
+  await ensureTables(db)
+  const { rows } = await db.query(
+    `SELECT meters, precise FROM distance_cache WHERE addr_hash=$1 AND at >= $2`,
+    [addrHash, new Date(since).toISOString()],
+  )
+  return rows[0] ? { meters: Number(rows[0].meters), precise: Boolean(rows[0].precise) } : null
+}
+
+export async function cacheDistance(addrHash: string, meters: number, precise: boolean): Promise<void> {
+  if (resolveMode() === 'memory') {
+    mem.distances.set(addrHash, { meters, precise, at: Date.now() })
+    return
+  }
+  const db = await driver()
+  await ensureTables(db)
+  await db.query(
+    `INSERT INTO distance_cache (addr_hash, meters, precise) VALUES ($1,$2,$3)
+     ON CONFLICT (addr_hash) DO UPDATE SET meters=EXCLUDED.meters, precise=EXCLUDED.precise, at=NOW()`,
+    [addrHash, Math.round(meters), precise],
+  )
 }

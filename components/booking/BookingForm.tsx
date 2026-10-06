@@ -16,7 +16,6 @@ import {
   REPAIRS,
   SERIES,
   TRAVEL_RULE,
-  ZONES,
   buildQuote,
   buildQuoteMessage,
   findModel,
@@ -38,6 +37,9 @@ import {
   type PreferredPeriod,
 } from '@/lib/agenda/types'
 import { WaCta } from '@/components/ui/Wa'
+import CommuneSearch, { NOT_LISTED, type CommuneValue } from './CommuneSearch'
+import { findCommune } from '@/lib/communes'
+import { LINKS, PHONE } from '@/lib/links'
 import { Choice, Label, Line, Step, inputCls, inputStyle } from './ui'
 
 type Recap = {
@@ -51,14 +53,27 @@ type Recap = {
   onQuote: boolean
   wish: string
   trackPath?: string
+  communeNom?: string
+  distanceKm?: number | null
+  zoneVerified?: boolean
 }
 
+/** Résultat du calcul Google Maps pour une adresse donnée. */
+type Dist = { km: number; zone: ZoneId; precise: boolean; forAddress: string }
+
 const isRepair = (v: string | null): v is RepairId => REPAIRS.some((r) => r.id === v)
-const isZone = (v: string | null): v is ZoneId => ZONES.some((z) => z.id === v)
+const fmtKm = (km: number) => `${String(km).replace('.', ',')} km`
+/** L'adresse contient-elle un code postal ? (calcul lancé automatiquement) */
+const looksComplete = (a: string) => /\b\d{5}\b/.test(a) && a.trim().length >= 10
 
 // ─── Formulaire ──────────────────────────────────────────────────────────────
 
-export default function BookingForm() {
+/**
+ * `distanceEnabled` : le serveur a une clé Google Maps. Le client saisit son
+ * adresse complète et le déplacement est calculé par la route. Sinon, ou si le
+ * calcul échoue, le client choisit sa commune dans la liste COM'9.
+ */
+export default function BookingForm({ distanceEnabled = false }: { distanceEnabled?: boolean }) {
   const params = useSearchParams()
   const startedAt = useRef(Date.now())
   const today = useMemo(() => todayInParis(), [])
@@ -70,8 +85,19 @@ export default function BookingForm() {
   const [model, setModel] = useState(pModel && findModel(pModel) ? pModel : '')
   const [repair, setRepair] = useState<RepairId>(isRepair(pRepair) ? pRepair : 'ecran')
   const [quality, setQuality] = useState(params.get('quality') ?? '')
-  const pZone = params.get('zone')
-  const [zone, setZone] = useState<ZoneId | 'inconnue' | null>(isZone(pZone) ? pZone : null)
+  // Zone : distance par la route (Google Maps) si activée, sinon commune de la
+  // liste COM'9. Jamais saisie à la main par le client.
+  const pCommune = params.get('commune')
+  const [commune, setCommune] = useState<CommuneValue>(pCommune && findCommune(pCommune) ? pCommune : null)
+  const [address, setAddress] = useState('')
+  const [dist, setDist] = useState<Dist | null>(null)
+  const [distBusy, setDistBusy] = useState(false)
+  const [distError, setDistError] = useState('')
+  const [useList, setUseList] = useState(!distanceEnabled) // liste des communes affichée
+  const distOk = dist && dist.forAddress === address.trim() ? dist : null
+  const communeObj = useList && commune && commune !== NOT_LISTED ? findCommune(commune) : null
+  const zone: ZoneId | 'inconnue' | null =
+    distOk ? distOk.zone : communeObj ? communeObj.zone : useList && commune === NOT_LISTED ? 'inconnue' : null
 
   const [date, setDate] = useState('')
   const [period, setPeriod] = useState<PreferredPeriod | 'indifferent' | null>(null)
@@ -79,7 +105,6 @@ export default function BookingForm() {
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
-  const [address, setAddress] = useState('')
   const [description, setDescription] = useState('')
   const [website, setWebsite] = useState('') // piège à robots, invisible
 
@@ -103,6 +128,7 @@ export default function BookingForm() {
   const option = options.find((o) => o.label === quality) ?? null
   const zoneObj = zone && zone !== 'inconnue' ? findZone(zone) : null
   const quote = option ? buildQuote(option, zoneObj) : null
+  const pendingLabel = useList ? 'Selon votre commune' : 'Selon votre adresse'
 
   useEffect(() => {
     if (errors.length) errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -117,6 +143,7 @@ export default function BookingForm() {
       repair,
       quality,
       zone: zone && zone !== 'inconnue' ? zone : null,
+      commune: useList ? commune ?? '' : '',
       description,
       preferredDate: date,
       preferredPeriod: period && period !== 'indifferent' ? period : null,
@@ -124,13 +151,51 @@ export default function BookingForm() {
     }
   }
 
+  /** Calcul par la route (Google Maps, côté serveur). En cas d'échec : liste des communes. */
+  async function computeDistance(): Promise<Dist | null> {
+    const a = address.trim()
+    if (distOk) return distOk
+    if (a.length < 5) { setDistError("Indiquez l'adresse complète : n°, rue, code postal et ville."); return null }
+    setDistBusy(true)
+    setDistError('')
+    try {
+      const res = await fetch('/api/distance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: a }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && typeof data.km === 'number') {
+        const d: Dist = { km: data.km, zone: data.zone, precise: Boolean(data.precise), forAddress: a }
+        setDist(d)
+        return d
+      }
+      setDist(null)
+      setDistError(data.error ?? 'Calcul momentanément indisponible.')
+      if (data.fallback !== false) setUseList(true)
+      return null
+    } catch {
+      setDist(null)
+      setDistError('Calcul momentanément indisponible.')
+      setUseList(true)
+      return null
+    } finally {
+      setDistBusy(false)
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setFallback(false)
+    // Adresse pas encore calculée : on calcule avant d'envoyer.
+    if (distanceEnabled && !useList && !distOk && address.trim().length >= 5) {
+      const d = await computeDistance()
+      if (!d) return
+    }
     const body = payload()
     const local = parsePublicRequest(body, todayInParis())
     const extra: string[] = []
-    if (zone === null) extra.push('Indiquez votre zone, ou « Je ne sais pas ».')
+    if (useList && !distOk && commune === null) extra.push('Indiquez votre commune, ou « Ma commune n’est pas dans la liste ».')
     if (period === null) extra.push('Indiquez le moment souhaité, ou « Indifférent ».')
     if (!local.ok || extra.length) {
       setErrors([...(local.ok ? [] : local.errors), ...extra])
@@ -193,7 +258,10 @@ export default function BookingForm() {
             <Line label="Déplacement" value={r.onQuote ? 'Sur devis' : r.travelFee === null ? 'Selon votre zone' : `${r.travelFee} €`} />
             {r.zoneLabel && (
               <p className="text-right font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>
-                {r.zoneLabel} · zone vérifiée par COM&apos;9 avant confirmation
+                {typeof r.distanceKm === 'number'
+                  ? `${fmtKm(r.distanceKm)} par la route · ${r.zoneLabel}` +
+                    (r.zoneVerified ? ' · calculé avec Google Maps' : ' · confirmée par COM\u20199 avec votre adresse')
+                  : `${r.communeNom ? `${r.communeNom} · ` : ''}${r.zoneLabel} · confirmée par COM\u20199 avec votre adresse`}
               </p>
             )}
             <div className="c9-divider my-2" />
@@ -218,6 +286,13 @@ export default function BookingForm() {
             </Link>
           </div>
         )}
+
+        <p className="font-space text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>
+          Une question ? Appelez COM&apos;9 au{' '}
+          <a href={LINKS.phone} className="underline tabular-nums" style={{ color: 'var(--c9-text-2)' }}>{PHONE.display}</a>
+          {' '}ou écrivez sur{' '}
+          <a href={LINKS.whatsapp} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--c9-text-2)' }}>WhatsApp</a>.
+        </p>
 
         <Link href="/" className="c9-back self-start rounded-xl px-3 py-3 font-space text-[0.9375rem] font-medium" style={{ color: 'var(--c9-text)' }}>
           Retour à l&apos;accueil
@@ -260,29 +335,85 @@ export default function BookingForm() {
 
       {/* 02 — Adresse et zone */}
       <Step n="02" title="Lieu de l'intervention"
-        hint="Choisissez votre zone de déplacement. Elle reste indicative : COM'9 la vérifie avant de confirmer. La distance n'est pas calculée automatiquement.">
+        hint={distanceEnabled && !useList
+          ? "Le déplacement est calculé par la route depuis l'atelier COM'9 (place Saint-Pol, Nogent-le-Rotrou)."
+          : "Indiquez votre commune : la zone de déplacement s'affiche d'après la liste établie par COM'9 depuis son atelier (place Saint-Pol, Nogent-le-Rotrou). COM'9 la confirme avec votre adresse."}>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="b-address">Adresse</Label>
+          <Label htmlFor="b-address">{distanceEnabled ? 'Adresse complète' : 'Adresse'}</Label>
           <input id="b-address" className={inputCls} style={inputStyle} autoComplete="street-address"
-            placeholder="N°, rue, code postal, ville" value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} />
+            placeholder={distanceEnabled ? 'N°, rue, code postal, ville' : 'N°, rue'} value={address} maxLength={200}
+            onChange={(e) => { setAddress(e.target.value); setDistError('') }}
+            onBlur={() => { if (distanceEnabled && !useList && !distOk && looksComplete(address)) void computeDistance() }} />
+          {distanceEnabled && !useList && (
+            <div className="flex flex-col gap-2">
+              {!distOk && (
+                <button type="button" onClick={() => void computeDistance()} disabled={distBusy}
+                  className="self-start rounded-2xl px-4 font-space text-[0.9375rem] font-semibold disabled:opacity-60"
+                  style={{ minHeight: '48px', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--c9-hairline-lit)', color: 'var(--c9-text)' }}>
+                  {distBusy ? 'Calcul en cours…' : 'Calculer le déplacement'}
+                </button>
+              )}
+              {distOk && zoneObj && (
+                <p className="font-space text-[0.875rem]" style={{ color: 'var(--c9-text-2)' }} data-zone-result aria-live="polite">
+                  <b style={{ color: 'var(--c9-text)' }}>{fmtKm(distOk.km)}</b> par la route depuis l&apos;atelier · {zoneObj.full} —{' '}
+                  {zoneObj.fee === null ? 'déplacement sur devis' : `déplacement ${zoneObj.fee} €`}
+                  {!distOk.precise && (
+                    <span className="block" style={{ color: '#f5b94a' }}>
+                      Adresse reconnue approximativement : COM&apos;9 confirmera la zone avec votre adresse exacte.
+                    </span>
+                  )}
+                </p>
+              )}
+              {distError && (
+                <p className="font-space text-[0.875rem]" style={{ color: '#f5b94a' }} role="alert">{distError}</p>
+              )}
+              <p className="font-space text-[0.75rem] leading-relaxed" style={{ color: 'var(--c9-text-3)' }}>
+                Pour calculer le trajet, votre adresse est envoyée à Google Maps.{' '}
+                <button type="button" className="underline" onClick={() => { setUseList(true); setDist(null); setDistError('') }}>
+                  Choisir plutôt ma commune dans la liste
+                </button>
+              </p>
+            </div>
+          )}
         </div>
-        <div className="flex flex-col gap-1.5">
-          <Label>Zone de déplacement</Label>
-          <Choice name="Zone de déplacement" columns={2} value={zone} onChange={setZone}
-            options={[
-              ...ZONES.map((z) => ({ id: z.id as ZoneId | 'inconnue', label: z.label, sub: z.fee === null ? 'Sur devis' : `${z.fee} €` })),
-              { id: 'inconnue' as const, label: 'Je ne sais pas', sub: 'COM\'9 vous l\'indiquera' },
-            ]} />
-        </div>
+
+        {useList && (
+          <div className="flex flex-col gap-1.5">
+            {distanceEnabled && distError && (
+              <p className="font-space text-[0.875rem]" style={{ color: '#f5b94a' }} role="alert">
+                {`${distError} Choisissez votre commune : COM\u20199 confirmera le déplacement avec votre adresse.`}
+              </p>
+            )}
+            <Label htmlFor="b-commune">Commune</Label>
+            <CommuneSearch id="b-commune" value={commune} onChange={(v) => setCommune(v)}
+              inputClassName={inputCls} inputStyle={inputStyle} />
+            {communeObj && zoneObj && (
+              <p className="font-space text-[0.875rem]" style={{ color: 'var(--c9-text-2)' }} data-zone-result>
+                Zone : <b style={{ color: 'var(--c9-text)' }}>{zoneObj.full}</b> — {zoneObj.fee === null ? 'déplacement sur devis' : `déplacement ${zoneObj.fee} €`}
+              </p>
+            )}
+            {commune === NOT_LISTED && (
+              <p className="font-space text-[0.875rem]" style={{ color: 'var(--c9-text-2)' }} data-zone-result>
+                COM&apos;9 vous indiquera le déplacement après avoir vu votre adresse.
+              </p>
+            )}
+            {distanceEnabled && (
+              <button type="button" className="self-start font-space text-[0.8125rem] underline" style={{ color: 'var(--c9-text-3)' }}
+                onClick={() => { setUseList(false); setDistError('') }}>
+                Calculer plutôt avec mon adresse
+              </button>
+            )}
+          </div>
+        )}
 
         {quote && (
           <div className="c9-surface flex flex-col gap-3 rounded-[22px] p-5" aria-live="polite">
             <Line label="Réparation" value={`${quote.repairPrice} €`} />
-            <Line label="Déplacement" value={quote.onQuote ? 'Sur devis' : quote.travelFee === null ? 'Selon votre zone' : `${quote.travelFee} €`} />
+            <Line label="Déplacement" value={quote.onQuote ? 'Sur devis' : quote.travelFee === null ? (zone === 'inconnue' ? 'À confirmer' : pendingLabel) : `${quote.travelFee} €`} />
             <div className="c9-divider my-1" />
             {quote.total !== null
               ? <Line label="Total indicatif" value={`${quote.total} €`} strong />
-              : <Line label="Total" value={quote.onQuote ? 'Sur devis' : 'Selon votre zone'} />}
+              : <Line label="Total" value={quote.onQuote ? 'Sur devis' : zone === 'inconnue' ? 'À confirmer' : pendingLabel} />}
             <p className="font-space text-[0.75rem] leading-relaxed" style={{ color: 'var(--c9-text-3)' }}>
               {PRICE_NOTE} {TRAVEL_RULE}
             </p>
@@ -348,6 +479,11 @@ export default function BookingForm() {
           {fallback && (
             <WaCta variant="secondary" label="Écrire à COM'9 sur WhatsApp"
               message={m && option ? buildQuoteMessage(repair, model, option, zoneObj) : "Bonjour, je souhaite prendre rendez-vous avec COM'9."} />
+          )}
+          {fallback && (
+            <a href={LINKS.phone} className="text-center font-space text-[0.9375rem] underline tabular-nums" style={{ color: '#fecaca' }}>
+              Ou appeler COM&apos;9 : {PHONE.display}
+            </a>
           )}
         </div>
       )}

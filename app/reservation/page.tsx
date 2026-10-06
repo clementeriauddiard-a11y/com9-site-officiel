@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import BackLink from '@/components/ui/BackLink'
 import BookingForm from '@/components/booking/BookingForm'
+import { distanceConfigured } from '@/lib/distance'
 
 export const metadata: Metadata = {
   title: "Demander un rendez-vous — Com'9",
@@ -39,7 +40,8 @@ export default function ReservationPage() {
         </header>
 
         <Suspense fallback={null}>
-          <BookingForm />
+          {/* Calcul par la route seulement si la clé Google Maps est configurée sur Vercel */}
+          <BookingForm distanceEnabled={distanceConfigured()} />
         </Suspense>
       </div>
 

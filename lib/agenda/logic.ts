@@ -30,6 +30,7 @@ import {
   type PartStatus,
   type PreferredPeriod,
 } from './types'
+import { findCommune } from '@/lib/communes'
 
 // ─── Transitions de statut ───────────────────────────────────────────────────
 
@@ -216,6 +217,7 @@ export type ApptInput = {
   preferredDate?: string | null
   preferredPeriod?: PreferredPeriod | null
   availabilityNote?: string
+  communeId?: string | null
 }
 
 const isRepair = (v: unknown): v is RepairId =>
@@ -270,6 +272,8 @@ export function validateInput(i: Partial<ApptInput>): string[] {
     e.push('Le moment souhaité est invalide.')
   if (i.availabilityNote !== undefined && (typeof i.availabilityNote !== 'string' || i.availabilityNote.length > 300))
     e.push('Les autres disponibilités sont trop longues.')
+  if (i.communeId !== undefined && i.communeId !== null && !findCommune(i.communeId))
+    e.push('La commune est inconnue.')
 
   return e
 }
@@ -309,10 +313,16 @@ export type PublicRequestInput = {
   preferredDate: string
   preferredPeriod: PreferredPeriod | null
   availabilityNote: string
+  /** Commune choisie dans la liste COM'9 (null : hors liste ou non précisée) */
+  communeId: string | null
+  communeNom: string
+  /** Le client a indiqué que sa commune n'est pas dans la liste */
+  horsListe: boolean
 }
 
 /**
  * Valide et nettoie une demande venant du site public.
+ * Si une commune de la liste est fournie, SA zone s'impose (la zone envoyée est ignorée).
  * Tout champ inconnu est ignoré ; le prix est toujours recalculé depuis la grille.
  */
 export function parsePublicRequest(
@@ -336,6 +346,8 @@ export function parsePublicRequest(
   const periodRaw = r.preferredPeriod === null || r.preferredPeriod === '' || r.preferredPeriod === undefined
     ? null : txt('preferredPeriod')
   const availabilityNote = longTxt('availabilityNote')
+  const communeRaw = txt('commune')
+  const commune = communeRaw && communeRaw !== 'hors-liste' ? findCommune(communeRaw) : null
 
   if (clientName.length < 2 || clientName.length > 80) e.push('Indiquez votre nom (2 à 80 caractères).')
   if (!phoneDigits(clientPhone) || clientPhone.length > 30) e.push('Indiquez un numéro de téléphone valide.')
@@ -344,7 +356,8 @@ export function parsePublicRequest(
   if (!isRepair(repair)) e.push('Choisissez la réparation.')
   else if (MODELS.some((m) => m.model === model) && !qualitiesFor(model, repair).some((o) => o.label === quality))
     e.push('Choisissez la qualité de la pièce.')
-  if (zoneRaw !== null && !isZone(zoneRaw)) e.push('La zone choisie est invalide.')
+  if (communeRaw && communeRaw !== 'hors-liste' && !commune) e.push('La commune choisie est inconnue.')
+  if (!commune && zoneRaw !== null && !isZone(zoneRaw)) e.push('La zone choisie est invalide.')
   if (description.length > 1000) e.push('La description dépasse 1 000 caractères.')
   if (!isDay(preferredDate)) e.push('Choisissez le jour souhaité.')
   else if (preferredDate < today) e.push('Le jour souhaité est déjà passé.')
@@ -358,7 +371,10 @@ export function parsePublicRequest(
     ok: true,
     value: {
       clientName, clientPhone, address, model, repair, quality,
-      zone: zoneRaw as ZoneId | null,
+      zone: commune ? commune.zone : communeRaw === 'hors-liste' ? null : (zoneRaw as ZoneId | null),
+      communeId: commune ? commune.id : null,
+      communeNom: commune ? commune.nom : '',
+      horsListe: communeRaw === 'hors-liste',
       description, preferredDate,
       preferredPeriod: periodRaw as PreferredPeriod | null,
       availabilityNote,

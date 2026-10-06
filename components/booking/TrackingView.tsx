@@ -13,7 +13,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import type { ClientAction, ClientView } from '@/lib/agenda/service'
 import { BOOKING_HORIZON_DAYS, addDaysToDay, todayInParis } from '@/lib/agenda/logic'
 import { PREFERRED_PERIODS, PREFERRED_PERIOD_LABEL, type PreferredPeriod } from '@/lib/agenda/types'
-import { LINKS } from '@/lib/links'
+import { LINKS, PHONE } from '@/lib/links'
 import { Choice, Label, Line, inputCls, inputStyle } from './ui'
 
 const TONE: Record<ClientView['status'], string> = {
@@ -269,7 +269,11 @@ export default function TrackingView({ token, initial }: { token: string; initia
         <br />
         Une question ?{' '}
         <a href={LINKS.whatsapp} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--c9-text-2)' }}>
-          Écrire à COM&apos;9 sur WhatsApp
+          WhatsApp
+        </a>
+        {' · '}
+        <a href={LINKS.phone} className="underline tabular-nums" style={{ color: 'var(--c9-text-2)' }}>
+          {PHONE.display}
         </a>
       </p>
     </div>

@@ -1,5 +1,7 @@
 'use client'
 
+import { waLink } from '@/lib/links'
+
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import {
@@ -365,9 +367,9 @@ function ResultView({
   const overall = getOverallSeverity(answers)
   const result  = getFreeResult(overall)
 
-  const waLinkUrl = `https://wa.me/qr/7Z3I2DB3CWKVM1?text=${encodeURIComponent(
+  const waLinkUrl = waLink(
     `Bonjour Com'9, j'ai effectué le diagnostic gratuit sur mon téléphone.\n\nRésultat global : ${result.label}\n\nPouvez-vous me donner plus d'informations ?`
-  )}`
+  )
 
   return (
     <motion.div

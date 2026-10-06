@@ -10,8 +10,10 @@
 import { randomBytes, randomUUID } from 'crypto'
 import { sourceHash } from '@/lib/security/request'
 import { messagePending } from './messages-state'
+import { findCommune } from '@/lib/communes'
 export { messagePending } from './messages-state'
-import { REPAIRS, ZONES } from '@/data/tarifs'
+import { REPAIRS, ZONES, type ZoneId } from '@/data/tarifs'
+import { DistanceError, distanceConfigured, routeDistance } from '@/lib/distance'
 import {
   ACTIONS,
   findConflicts,
@@ -130,8 +132,37 @@ function clean(input: ApptInput) {
     preferredDate: input.preferredDate ?? null,
     preferredPeriod: input.preferredPeriod ?? null,
     availabilityNote: (input.availabilityNote ?? '').trim(),
+    communeId: input.communeId ?? null,
+    communeNom: input.communeId ? findCommune(input.communeId)?.nom ?? '' : '',
   }
 }
+
+// ─── Distance par la route (Google Maps, si configuré) ──────────────────────
+
+type Measured = { km: number; zone: ZoneId; precise: boolean }
+
+/**
+ * Distance atelier → adresse, sans jamais bloquer l'enregistrement :
+ * service non configuré, adresse introuvable ou Google indisponible → null.
+ */
+async function measureSafe(address: string): Promise<Measured | null> {
+  if (!distanceConfigured()) return null
+  try {
+    const r = await routeDistance(address)
+    return { km: r.km, zone: r.zone, precise: r.precise }
+  } catch (err) {
+    if (!(err instanceof DistanceError)) console.error("[COM'9 Distance]", err)
+    return null
+  }
+}
+
+/** Adresse envoyée au calcul : complétée par la commune de la liste si elle est connue. */
+function distanceQuery(address: string, communeId: string | null | undefined): string {
+  const c = communeId ? findCommune(communeId) : null
+  return c ? `${address}, ${c.cp[0] ?? ''} ${c.nom}`.replace(/\s+/g, ' ') : address
+}
+
+const fmtKm = (km: number) => `${String(km).replace('.', ',')} km`
 
 export async function createAppointment(
   input: ApptInput,
@@ -144,6 +175,8 @@ export async function createAppointment(
   if (errors.length) throw new AgendaError('invalid', 'La fiche est incomplète.', { errors })
 
   const c = clean(input)
+  // Mesurée à titre d'information : la zone reste celle choisie par COM'9.
+  const measured = await measureSafe(distanceQuery(c.address, c.communeId))
 
   const now = new Date().toISOString()
   const appt: Appointment = {
@@ -160,6 +193,8 @@ export async function createAppointment(
     clientMessage: '',
     clientRequestAt: null,
     messagesLog: {},
+    distanceKm: measured ? measured.km : null,
+    distanceSource: measured ? 'google' : null,
     status: initialStatus,
   }
 
@@ -206,6 +241,11 @@ export type PublicRecap = {
   wish: string
   /** Lien de suivi personnel (contient le jeton) — remis uniquement à l'auteur de la demande */
   trackPath: string
+  communeNom: string
+  /** Distance par la route calculée par Google Maps (null si non calculée) */
+  distanceKm: number | null
+  /** true : adresse reconnue précisément par Google, zone définitive */
+  zoneVerified: boolean
 }
 
 /**
@@ -228,7 +268,19 @@ export async function createPublicRequest(raw: unknown, ip: string): Promise<Pub
 
   const price = gridPrice(v.model, v.repair, v.quality) as number // validé par parsePublicRequest
   const settings = await store.getSettings()
-  const travelFee = zoneFee(v.zone) // null si sur devis ou zone inconnue
+
+  // Zone : distance par la route (Google Maps) si le service est configuré et
+  // trouve l'adresse ; sinon celle de la commune choisie dans la liste COM'9.
+  // La distance est TOUJOURS recalculée ici : celle du navigateur est ignorée.
+  // Liste des communes : l'adresse saisie n'est que « n°, rue » → on la complète
+  // avec la commune. Hors liste sans adresse complète : pas de calcul (risque
+  // de trouver une rue homonyme ailleurs en France).
+  const query = v.communeId ? distanceQuery(v.address, v.communeId) : v.horsListe ? null : v.address
+  const measured = query ? await measureSafe(query) : null
+  const zone: ZoneId | null = measured ? measured.zone : v.zone
+  const zoneVerified = measured ? measured.precise : false
+  const distanceSource: Appointment['distanceSource'] = measured ? 'google' : v.communeId ? 'liste' : null
+  const travelFee = zoneFee(zone) // null si sur devis ou zone inconnue
 
   const now = new Date().toISOString()
   const appt: Appointment = {
@@ -244,8 +296,8 @@ export async function createPublicRequest(raw: unknown, ip: string): Promise<Pub
     quality: v.quality,
     description: v.description,
     repairPrice: price,
-    zone: v.zone,
-    zoneVerified: false, // choisie par le client : provisoire
+    zone,
+    zoneVerified, // vrai seulement si Google a reconnu l'adresse précise
     travelFee,
     startAt: null, // aucun créneau tant que COM'9 n'a pas confirmé
     durationMin: settings.durations[v.repair],
@@ -259,6 +311,10 @@ export async function createPublicRequest(raw: unknown, ip: string): Promise<Pub
     clientMessage: '',
     clientRequestAt: null,
     messagesLog: {},
+    communeId: v.communeId,
+    communeNom: v.communeNom,
+    distanceKm: measured ? measured.km : null,
+    distanceSource,
     origin: 'site',
     status: 'demande_recue',
     partStatus: null,
@@ -266,20 +322,28 @@ export async function createPublicRequest(raw: unknown, ip: string): Promise<Pub
   }
   await store.insertAppt(appt)
   await store.addEvent(appt.id, 'creation',
-    `Demande reçue depuis le site — souhait : ${fmtWish(v.preferredDate, v.preferredPeriod)}. Zone indiquée par le client, à vérifier.`)
+    `Demande reçue depuis le site — souhait : ${fmtWish(v.preferredDate, v.preferredPeriod)}. ` +
+    (measured
+      ? `Distance calculée par Google Maps : ${fmtKm(measured.km)} par la route` +
+        (measured.precise ? '.' : ' (adresse reconnue approximativement : zone à vérifier).')
+      : v.communeNom ? `Commune : ${v.communeNom} (zone d'après la liste COM'9), adresse à vérifier.`
+      : 'Distance non calculée : zone à vérifier.'))
 
-  const zone = v.zone ? ZONES.find((z) => z.id === v.zone) ?? null : null
+  const zoneDef = zone ? ZONES.find((z) => z.id === zone) ?? null : null
   return {
     model: v.model,
     repairLabel: repairLabel(v.repair),
     quality: v.quality,
     repairPrice: price,
-    zoneLabel: zone ? zone.full : null,
+    zoneLabel: zoneDef ? zoneDef.full : null,
     travelFee,
     total: travelFee === null ? null : price + travelFee,
-    onQuote: v.zone === 'devis',
+    onQuote: zone === 'devis',
     wish: fmtWish(v.preferredDate, v.preferredPeriod),
     trackPath: `/suivi/${appt.trackToken}`,
+    communeNom: v.communeNom,
+    distanceKm: appt.distanceKm,
+    zoneVerified,
   }
 }
 
@@ -295,12 +359,17 @@ function describeChanges(before: Appointment, after: Appointment): string[] {
   }
   diff('Client', before.clientName, after.clientName)
   if (before.clientPhone !== after.clientPhone) out.push('Téléphone modifié')
-  if (before.address !== after.address) out.push('Adresse modifiée')
+  if (before.address !== after.address) {
+    out.push('Adresse modifiée' + (after.distanceKm !== null && after.distanceSource === 'google'
+      ? ` (${fmtKm(after.distanceKm)} par la route)` : ''))
+  }
   diff('Modèle', before.model, after.model)
   diff('Prestation', before.repair, after.repair, repairLabel)
   diff('Qualité', before.quality, after.quality)
   diff('Prix de réparation', before.repairPrice, after.repairPrice, (v: number) => `${v} €`)
   diff('Zone', before.zone, after.zone, zoneLabel)
+  if ((before.communeId ?? null) !== (after.communeId ?? null))
+    out.push(`Commune : ${before.communeNom || 'non précisée'} → ${after.communeNom || 'non précisée'}`)
   if (before.zoneVerified !== after.zoneVerified)
     out.push(after.zoneVerified ? 'Zone vérifiée par COM\'9' : 'Zone repassée à vérifier')
   diff('Déplacement', before.travelFee, after.travelFee, euros)
@@ -315,11 +384,20 @@ function describeChanges(before: Appointment, after: Appointment): string[] {
 }
 
 /** Modification par COM'9. Sous verrou : le contrôle des chevauchements reste exact. */
-export function updateAppointment(id: string, patch: Partial<ApptInput>): Promise<Appointment> {
-  return store.exclusive(() => updateInner(id, patch))
+export async function updateAppointment(id: string, patch: Partial<ApptInput>): Promise<Appointment> {
+  // Nouvelle adresse : distance remesurée AVANT le verrou (appel réseau).
+  const newAddress = typeof patch.address === 'string' ? patch.address.trim() : null
+  let measured: Measured | null = null
+  if (newAddress) {
+    const current = await store.getAppt(id)
+    if (current && current.address !== newAddress) {
+      measured = await measureSafe(distanceQuery(newAddress, patch.communeId !== undefined ? patch.communeId : current.communeId))
+    }
+  }
+  return store.exclusive(() => updateInner(id, patch, measured))
 }
 
-async function updateInner(id: string, patch: Partial<ApptInput>): Promise<Appointment> {
+async function updateInner(id: string, patch: Partial<ApptInput>, measured: Measured | null): Promise<Appointment> {
   const current = await store.getAppt(id)
   if (!current) throw new AgendaError('not_found', 'Rendez-vous introuvable.')
 
@@ -343,6 +421,7 @@ async function updateInner(id: string, patch: Partial<ApptInput>): Promise<Appoi
     preferredDate: current.preferredDate,
     preferredPeriod: current.preferredPeriod,
     availabilityNote: current.availabilityNote,
+    communeId: current.communeId,
     ...patch,
   }
 
@@ -355,6 +434,10 @@ async function updateInner(id: string, patch: Partial<ApptInput>): Promise<Appoi
 
   const c = clean(merged)
   const after: Appointment = { ...current, ...c, updatedAt: new Date().toISOString() }
+  if (after.address !== current.address) {
+    after.distanceKm = measured ? measured.km : null
+    after.distanceSource = measured ? 'google' : null
+  }
 
   const slotChanged = after.startAt !== current.startAt || after.durationMin !== current.durationMin
   if (blocking && slotChanged) {
