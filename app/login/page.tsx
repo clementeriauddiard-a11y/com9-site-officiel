@@ -22,6 +22,7 @@ function LoginForm() {
   const [error,    setError]    = useState(false)
   const [loading,  setLoading]  = useState(false)
   const [attempts, setAttempts] = useState(0)
+  const [errorText, setErrorText] = useState<string | null>(null)
   const [shaking,  setShaking]  = useState(false)
   const [phase,    setPhase]    = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -53,6 +54,9 @@ function LoginForm() {
       if (res.ok) {
         router.push(from)
       } else {
+        // 429 (trop d'essais) ou 503 : message du serveur ; sinon « Accès refusé »
+        const data = await res.json().catch(() => ({}))
+        setErrorText(res.status === 401 ? null : (data.error ?? 'Connexion impossible'))
         setError(true)
         setAttempts(a => a + 1)
         setShaking(true)
@@ -60,6 +64,7 @@ function LoginForm() {
         setTimeout(() => { setShaking(false); inputRef.current?.focus() }, 550)
       }
     } catch {
+      setErrorText(null)
       setError(true)
       setShaking(true)
       setTimeout(() => setShaking(false), 550)
@@ -329,7 +334,7 @@ function LoginForm() {
                       <circle cx="8" cy="11" r="0.5" fill="currentColor"/>
                     </svg>
                     <span className="font-mono text-[9px] tracking-[0.15em] uppercase" style={{ color: '#f87171' }}>
-                      Accès refusé{attempts > 1 ? ` — tentative ${attempts}` : ''}
+                      {errorText ?? `Accès refusé${attempts > 1 ? ` — tentative ${attempts}` : ''}`}
                     </span>
                   </motion.div>
                 )}

@@ -48,12 +48,20 @@ export async function proxy(req: NextRequest) {
   // Vérification cryptographique du token
   try {
     const expected = await computeExpectedToken(password)
-    if (token !== expected) return redirectToLogin(req, pathname)
+    if (!sameString(token, expected)) return redirectToLogin(req, pathname)
   } catch {
     return redirectToLogin(req, pathname)
   }
 
   return NextResponse.next()
+}
+
+/** Comparaison à temps constant (Edge Runtime : pas de module crypto Node). */
+function sameString(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
 }
 
 function redirectToLogin(req: NextRequest, from: string) {

@@ -8,7 +8,7 @@
 //  Le prix affiché vient de la grille ; le serveur le recalcule de son côté.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import {
@@ -38,6 +38,7 @@ import {
   type PreferredPeriod,
 } from '@/lib/agenda/types'
 import { WaCta } from '@/components/ui/Wa'
+import { Choice, Label, Line, Step, inputCls, inputStyle } from './ui'
 
 type Recap = {
   model: string
@@ -49,106 +50,11 @@ type Recap = {
   total: number | null
   onQuote: boolean
   wish: string
+  trackPath?: string
 }
 
 const isRepair = (v: string | null): v is RepairId => REPAIRS.some((r) => r.id === v)
 const isZone = (v: string | null): v is ZoneId => ZONES.some((z) => z.id === v)
-
-// ─── Petits éléments ─────────────────────────────────────────────────────────
-
-const inputCls =
-  'w-full rounded-2xl px-4 font-space text-[1rem] outline-none transition-colors duration-200 focus:border-[color:var(--c9-accent-line)]'
-const inputStyle: React.CSSProperties = {
-  minHeight: '52px',
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid var(--c9-hairline)',
-  color: 'var(--c9-text)',
-  colorScheme: 'dark',
-}
-
-function Step({ n, title, hint, children }: { n: string; title: string; hint?: ReactNode; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-4" aria-labelledby={`step-${n}`}>
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-baseline gap-3">
-          <span className="font-mono text-[10px] tracking-[0.28em]" style={{ color: 'var(--c9-accent)' }}>{n}</span>
-          <h2 id={`step-${n}`} className="font-space text-[1.1875rem] font-semibold" style={{ color: 'var(--c9-text)' }}>
-            {title}
-          </h2>
-        </div>
-        {hint && (
-          <p className="font-space text-[0.875rem] leading-relaxed" style={{ color: 'var(--c9-text-3)' }}>{hint}</p>
-        )}
-      </div>
-      {children}
-    </section>
-  )
-}
-
-function Label({ htmlFor, children, optional }: { htmlFor?: string; children: ReactNode; optional?: boolean }) {
-  return (
-    <label htmlFor={htmlFor} className="font-mono text-[10px] uppercase tracking-[0.18em]" style={{ color: 'var(--c9-text-3)' }}>
-      {children}
-      {optional && <span className="normal-case tracking-normal"> · facultatif</span>}
-    </label>
-  )
-}
-
-/** Choix exclusif en pastilles, accessible au clavier (radiogroup). */
-function Choice<T extends string>({
-  name, options, value, onChange, columns,
-}: {
-  name: string
-  options: { id: T; label: ReactNode; sub?: ReactNode }[]
-  value: T | null
-  onChange: (v: T) => void
-  columns: number
-}) {
-  return (
-    <div role="radiogroup" aria-label={name} className="grid gap-2"
-      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
-      {options.map((o) => {
-        const on = o.id === value
-        return (
-          <button
-            key={o.id}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            onClick={() => onChange(o.id)}
-            className="flex min-w-0 flex-col items-start justify-center gap-0.5 rounded-2xl px-4 py-3 text-left transition-all duration-200"
-            style={{
-              minHeight: '52px',
-              background: on ? 'rgba(58,217,255,0.10)' : 'rgba(255,255,255,0.04)',
-              border: on ? '1px solid var(--c9-accent-line)' : '1px solid var(--c9-hairline)',
-            }}
-          >
-            <span className="font-space text-[0.9375rem] font-semibold leading-tight" style={{ color: on ? 'var(--c9-text)' : 'var(--c9-text-2)' }}>
-              {o.label}
-            </span>
-            {o.sub && (
-              <span className="font-space text-[0.8125rem] leading-tight" style={{ color: 'var(--c9-text-3)' }}>{o.sub}</span>
-            )}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-function Line({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4">
-      <span className="font-space" style={{ color: strong ? 'var(--c9-text)' : 'var(--c9-text-2)', fontWeight: strong ? 600 : 400 }}>
-        {label}
-      </span>
-      <span className="whitespace-nowrap font-space tabular-nums"
-        style={{ color: strong ? 'var(--c9-text)' : 'var(--c9-text-2)', fontSize: strong ? '1.375rem' : '0.9375rem', fontWeight: strong ? 600 : 500 }}>
-        {value}
-      </span>
-    </div>
-  )
-}
 
 // ─── Formulaire ──────────────────────────────────────────────────────────────
 
@@ -296,6 +202,20 @@ export default function BookingForm() {
               : <Line label="Total" value={r.onQuote ? 'Sur devis' : 'Après vérification de la zone'} />}
             <div className="c9-divider my-2" />
             <Line label="Souhait" value={r.wish.charAt(0).toUpperCase() + r.wish.slice(1)} />
+          </div>
+        )}
+
+        {r?.trackPath && (
+          <div className="c9-surface flex flex-col gap-3 rounded-[26px] p-6 sm:p-7">
+            <p className="font-space text-[1rem] font-semibold" style={{ color: 'var(--c9-text)' }}>Suivre votre demande</p>
+            <p className="font-space text-[0.875rem] leading-relaxed" style={{ color: 'var(--c9-text-2)' }}>
+              Ce lien personnel vous permet de voir où en est votre demande et de répondre à COM&apos;9.
+              Gardez-le (ajoutez la page à vos favoris) et ne le partagez pas.
+            </p>
+            <Link href={r.trackPath} className="flex items-center justify-center rounded-2xl px-5 font-space text-[0.9375rem] font-semibold"
+              style={{ minHeight: '52px', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--c9-hairline-lit)', color: 'var(--c9-text)' }}>
+              Ouvrir mon suivi
+            </Link>
           </div>
         )}
 

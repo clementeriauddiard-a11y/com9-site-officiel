@@ -15,6 +15,8 @@ export default function robots(): MetadataRoute.Robots {
           '/responsable/',
           '/diagnostic-premium',
           '/diagnostic-premium/',
+          '/suivi/',
+          '/api/',
         ],
       },
     ],

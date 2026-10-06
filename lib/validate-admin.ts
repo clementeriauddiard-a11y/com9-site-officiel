@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { SESSION_COOKIE, generateSessionToken } from './auth'
+import { safeEqual } from './security/request'
 
 /**
  * Vérifie le cookie de session depuis un objet Request standard.
@@ -15,7 +16,7 @@ export function validateAdmin(req: Request): boolean {
     const token = cookies[SESSION_COOKIE]
     if (!token) return false
     const expected = generateSessionToken()
-    return token === expected
+    return safeEqual(token, expected)
   } catch {
     return false
   }

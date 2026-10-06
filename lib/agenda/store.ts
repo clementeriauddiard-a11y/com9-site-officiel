@@ -15,6 +15,7 @@
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { AsyncLocalStorage } from 'node:async_hooks'
 import {
   DEFAULT_SETTINGS,
   PENDING_STATUSES,
@@ -56,7 +57,12 @@ function resolveMode(): Mode {
   throw new StoreUnavailableError()
 }
 
+// Connexion de la transaction en cours (voir `exclusive`), propre à chaque requête.
+const txContext = new AsyncLocalStorage<SqlDriver>()
+
 async function driver(): Promise<SqlDriver> {
+  const tx = txContext.getStore()
+  if (tx) return tx
   if (injected) return injected
   const { sql } = await import('@vercel/postgres')
   return sql as unknown as SqlDriver
@@ -118,6 +124,11 @@ const DDL = [
   `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS preferred_period TEXT
      CHECK (preferred_period IS NULL OR preferred_period IN ('matin','apres_midi','fin_journee'))`,
   `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS availability_note TEXT NOT NULL DEFAULT ''`,
+  // Étape 3 : réponse du client via son lien de suivi.
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS client_request TEXT
+     CHECK (client_request IS NULL OR client_request IN ('acceptation','refus','autre_dispo','modification','annulation'))`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS client_message TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS client_request_at TIMESTAMPTZ`,
   `CREATE INDEX IF NOT EXISTS rdv_appointments_start_idx  ON rdv_appointments (start_at)`,
   `CREATE INDEX IF NOT EXISTS rdv_appointments_status_idx ON rdv_appointments (status)`,
   `CREATE TABLE IF NOT EXISTS rdv_events (
@@ -136,6 +147,17 @@ const DDL = [
      at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
    )`,
   `CREATE INDEX IF NOT EXISTS rdv_request_log_idx ON rdv_request_log (ip_hash, at)`,
+  `ALTER TABLE rdv_request_log ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'reservation'`,
+  // Tentatives de connexion (responsable, diagnostic premium). Partagé entre
+  // toutes les instances Vercel et conservé après un redémarrage.
+  `CREATE TABLE IF NOT EXISTS auth_attempts (
+     id       BIGSERIAL   PRIMARY KEY,
+     scope    TEXT        NOT NULL,
+     ip_hash  TEXT        NOT NULL,
+     at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+     outcome  TEXT        NOT NULL DEFAULT 'echec' CHECK (outcome IN ('echec','succes','bloque'))
+   )`,
+  `CREATE INDEX IF NOT EXISTS auth_attempts_idx ON auth_attempts (scope, at)`,
   `CREATE TABLE IF NOT EXISTS rdv_settings (
      id    INTEGER PRIMARY KEY CHECK (id = 1),
      data  JSONB   NOT NULL
@@ -203,6 +225,9 @@ function rowToAppt(r: any): Appointment {
       : null,
     preferredPeriod: r.preferred_period ?? null,
     availabilityNote: String(r.availability_note ?? ''),
+    clientRequest: r.client_request ?? null,
+    clientMessage: String(r.client_message ?? ''),
+    clientRequestAt: iso(r.client_request_at),
   }
 }
 
@@ -215,12 +240,13 @@ function dateOnly(d: Date): string {
 const COLS = `id, track_token, created_at, updated_at, client_name, client_phone, address,
   model, repair, quality, description, repair_price, zone, zone_verified, travel_fee,
   start_at, duration_min, proposed_start_at, proposed_reason, proposal_firm,
-  origin, status, part_status, internal_notes, preferred_date, preferred_period, availability_note`
+  origin, status, part_status, internal_notes, preferred_date, preferred_period, availability_note,
+  client_request, client_message, client_request_at`
 
 // ─── Mémoire (développement local uniquement) ────────────────────────────────
 
 const mem = {
-  requests: [] as { ipHash: string; at: number }[],
+  requests: [] as { ipHash: string; at: number; kind: string }[],
   appts: [] as Appointment[],
   events: [] as ApptEvent[],
   settings: null as AgendaSettings | null,
@@ -240,13 +266,14 @@ export async function insertAppt(a: Appointment): Promise<void> {
   await ensureTables(db)
   await db.query(
     `INSERT INTO rdv_appointments (${COLS}) VALUES
-     ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)`,
+     ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30)`,
     [
       a.id, a.trackToken, a.createdAt, a.updatedAt, a.clientName, a.clientPhone, a.address,
       a.model, a.repair, a.quality, a.description, a.repairPrice, a.zone, a.zoneVerified,
       a.travelFee, a.startAt, a.durationMin, a.proposedStartAt, a.proposedReason,
       a.proposalFirm, a.origin, a.status, a.partStatus, a.internalNotes,
       a.preferredDate, a.preferredPeriod, a.availabilityNote,
+      a.clientRequest, a.clientMessage, a.clientRequestAt,
     ],
   )
 }
@@ -264,7 +291,8 @@ export async function updateAppt(a: Appointment): Promise<void> {
        quality=$8, description=$9, repair_price=$10, zone=$11, zone_verified=$12,
        travel_fee=$13, start_at=$14, duration_min=$15, proposed_start_at=$16,
        proposed_reason=$17, proposal_firm=$18, origin=$19, status=$20, part_status=$21,
-       internal_notes=$22, preferred_date=$23, preferred_period=$24, availability_note=$25
+       internal_notes=$22, preferred_date=$23, preferred_period=$24, availability_note=$25,
+       client_request=$26, client_message=$27, client_request_at=$28
      WHERE id=$1`,
     [
       a.id, a.updatedAt, a.clientName, a.clientPhone, a.address, a.model, a.repair,
@@ -272,8 +300,20 @@ export async function updateAppt(a: Appointment): Promise<void> {
       a.startAt, a.durationMin, a.proposedStartAt, a.proposedReason, a.proposalFirm,
       a.origin, a.status, a.partStatus, a.internalNotes,
       a.preferredDate, a.preferredPeriod, a.availabilityNote,
+      a.clientRequest, a.clientMessage, a.clientRequestAt,
     ],
   )
+}
+
+/** Remplace le jeton du lien de suivi : l'ancien lien cesse aussitôt de fonctionner. */
+export async function setTrackToken(id: string, token: string): Promise<void> {
+  if (resolveMode() === 'memory') {
+    mem.appts = mem.appts.map((x) => (x.id === id ? { ...x, trackToken: token } : x))
+    return
+  }
+  const db = await driver()
+  await ensureTables(db)
+  await db.query(`UPDATE rdv_appointments SET track_token=$2 WHERE id=$1`, [id, token])
 }
 
 export async function getAppt(id: string): Promise<Appointment | null> {
@@ -327,14 +367,16 @@ export async function listPending(): Promise<Appointment[]> {
   if (resolveMode() === 'memory') {
     return clone(
       mem.appts
-        .filter((a) => PENDING_STATUSES.includes(a.status))
+        .filter((a) => PENDING_STATUSES.includes(a.status) || Boolean(a.clientRequest))
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     )
   }
   const db = await driver()
   await ensureTables(db)
   const { rows } = await db.query(
-    `SELECT ${COLS} FROM rdv_appointments WHERE status = ANY($1) ORDER BY created_at ASC`,
+    `SELECT ${COLS} FROM rdv_appointments
+     WHERE status = ANY($1) OR (client_request IS NOT NULL AND status NOT IN ('termine','annule'))
+     ORDER BY created_at ASC`,
     [PENDING_STATUSES as unknown as string[]],
   )
   return rows.map(rowToAppt)
@@ -436,18 +478,21 @@ export type RequestCounts = { sameSourceShort: number; sameSourceDay: number; al
  * Compte les demandes récentes, puis enregistre la nouvelle tentative.
  * shortMin : fenêtre courte (minutes) pour une même source.
  */
-export async function countAndLogRequest(ipHash: string, shortMin: number): Promise<RequestCounts> {
+export async function countAndLogRequest(
+  ipHash: string, shortMin: number, kind: 'reservation' | 'suivi' = 'reservation',
+): Promise<RequestCounts> {
   const now = Date.now()
   const shortSince = now - shortMin * 60_000
   const daySince = now - 24 * 3_600_000
   if (resolveMode() === 'memory') {
     mem.requests = mem.requests.filter((r) => r.at >= now - 48 * 3_600_000)
+    const mine = mem.requests.filter((r) => r.kind === kind)
     const counts = {
-      sameSourceShort: mem.requests.filter((r) => r.ipHash === ipHash && r.at >= shortSince).length,
-      sameSourceDay: mem.requests.filter((r) => r.ipHash === ipHash && r.at >= daySince).length,
-      allDay: mem.requests.filter((r) => r.at >= daySince).length,
+      sameSourceShort: mine.filter((r) => r.ipHash === ipHash && r.at >= shortSince).length,
+      sameSourceDay: mine.filter((r) => r.ipHash === ipHash && r.at >= daySince).length,
+      allDay: mine.filter((r) => r.at >= daySince).length,
     }
-    mem.requests.push({ ipHash, at: now })
+    mem.requests.push({ ipHash, at: now, kind })
     return counts
   }
   const db = await driver()
@@ -458,10 +503,124 @@ export async function countAndLogRequest(ipHash: string, shortMin: number): Prom
        COUNT(*) FILTER (WHERE ip_hash = $1 AND at >= $2)::int AS short,
        COUNT(*) FILTER (WHERE ip_hash = $1 AND at >= $3)::int AS day,
        COUNT(*) FILTER (WHERE at >= $3)::int                  AS all_day
-     FROM rdv_request_log`,
-    [ipHash, new Date(shortSince).toISOString(), new Date(daySince).toISOString()],
+     FROM rdv_request_log WHERE kind = $4`,
+    [ipHash, new Date(shortSince).toISOString(), new Date(daySince).toISOString(), kind],
   )
-  await db.query(`INSERT INTO rdv_request_log (ip_hash) VALUES ($1)`, [ipHash])
+  await db.query(`INSERT INTO rdv_request_log (ip_hash, kind) VALUES ($1, $2)`, [ipHash, kind])
   const r = rows[0] ?? {}
   return { sameSourceShort: Number(r.short ?? 0), sameSourceDay: Number(r.day ?? 0), allDay: Number(r.all_day ?? 0) }
+}
+
+// ─── Écritures exclusives sur le planning ────────────────────────────────────
+
+const PLANNING_LOCK_KEY = 0x0c09_a6e1 // distinct du verrou de création du schéma
+let memQueue: Promise<unknown> = Promise.resolve()
+
+type PoolLike = SqlDriver & { connect?: () => Promise<SqlDriver & { release: () => void }> }
+
+/**
+ * Exécute `fn` seul : une transaction Postgres tient un verrou consultatif
+ * jusqu'à la fin. Deux confirmations simultanées — sur deux instances Vercel
+ * différentes — passent donc l'une après l'autre : la seconde voit la première
+ * et le contrôle des chevauchements reste exact. En cas d'erreur, rien n'est
+ * enregistré (ROLLBACK).
+ */
+export async function exclusive<T>(fn: () => Promise<T>): Promise<T> {
+  if (resolveMode() === 'memory') {
+    const run = memQueue.then(fn, fn)
+    memQueue = run.catch(() => undefined)
+    return run
+  }
+  if (txContext.getStore()) return fn() // déjà dans la section exclusive
+  const pool = (await driver()) as PoolLike
+  await ensureTables(pool)
+  if (typeof pool.connect !== 'function') throw new Error('Transactions SQL indisponibles.')
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    await client.query('SELECT pg_advisory_xact_lock($1)', [PLANNING_LOCK_KEY])
+    const out = await txContext.run(client, fn)
+    await client.query('COMMIT')
+    return out
+  } catch (err) {
+    try { await client.query('ROLLBACK') } catch { /* connexion déjà fermée */ }
+    throw err
+  } finally {
+    client.release()
+  }
+}
+
+// ─── Tentatives de connexion ─────────────────────────────────────────────────
+
+const memAttempts: { scope: string; ipHash: string; at: number; outcome: string; id: number }[] = []
+let memAttemptSeq = 0
+
+export type AttemptCounts = { sourceFailures: number; allFailures: number; oldestSourceFailureAt: string | null }
+
+/**
+ * Enregistre une tentative AVANT la vérification du mot de passe, puis compte.
+ * Ainsi, des essais lancés en parallèle (même sur plusieurs instances) se voient
+ * mutuellement : impossible de dépasser la limite par rafale.
+ */
+export async function beginAuthAttempt(
+  scope: string, ipHash: string, windowMin: number,
+): Promise<{ id: number; counts: AttemptCounts }> {
+  const since = Date.now() - windowMin * 60_000
+  if (resolveMode() === 'memory') {
+    const id = ++memAttemptSeq
+    memAttempts.push({ scope, ipHash, at: Date.now(), outcome: 'echec', id })
+    const fails = memAttempts.filter((a) => a.scope === scope && a.outcome === 'echec' && a.at >= since)
+    const mine = fails.filter((a) => a.ipHash === ipHash)
+    return {
+      id,
+      counts: {
+        sourceFailures: mine.length,
+        allFailures: fails.length,
+        oldestSourceFailureAt: mine.length ? new Date(Math.min(...mine.map((a) => a.at))).toISOString() : null,
+      },
+    }
+  }
+  const db = await driver()
+  await ensureTables(db)
+  await db.query(`DELETE FROM auth_attempts WHERE at < NOW() - INTERVAL '2 days'`)
+  const ins = await db.query(
+    `INSERT INTO auth_attempts (scope, ip_hash) VALUES ($1, $2) RETURNING id`, [scope, ipHash],
+  )
+  const { rows } = await db.query(
+    `SELECT
+       COUNT(*) FILTER (WHERE ip_hash = $2)::int AS source,
+       COUNT(*)::int                             AS total,
+       MIN(at) FILTER (WHERE ip_hash = $2)       AS oldest
+     FROM auth_attempts
+     WHERE scope = $1 AND outcome = 'echec' AND at >= $3`,
+    [scope, ipHash, new Date(since).toISOString()],
+  )
+  const r = rows[0] ?? {}
+  return {
+    id: Number(ins.rows[0].id),
+    counts: { sourceFailures: Number(r.source ?? 0), allFailures: Number(r.total ?? 0), oldestSourceFailureAt: iso(r.oldest) },
+  }
+}
+
+/** Clôt une tentative : réussie (les échecs de cette source sont effacés) ou bloquée. */
+export async function endAuthAttempt(
+  id: number, scope: string, ipHash: string, outcome: 'succes' | 'bloque',
+): Promise<void> {
+  if (resolveMode() === 'memory') {
+    const a = memAttempts.find((x) => x.id === id)
+    if (a) a.outcome = outcome
+    if (outcome === 'succes') {
+      for (let i = memAttempts.length - 1; i >= 0; i--) {
+        const x = memAttempts[i]
+        if (x.scope === scope && x.ipHash === ipHash && x.outcome === 'echec') memAttempts.splice(i, 1)
+      }
+    }
+    return
+  }
+  const db = await driver()
+  await ensureTables(db)
+  await db.query(`UPDATE auth_attempts SET outcome=$2 WHERE id=$1`, [id, outcome])
+  if (outcome === 'succes') {
+    await db.query(`DELETE FROM auth_attempts WHERE scope=$1 AND ip_hash=$2 AND outcome='echec'`, [scope, ipHash])
+  }
 }

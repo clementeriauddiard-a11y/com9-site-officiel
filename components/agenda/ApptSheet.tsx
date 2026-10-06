@@ -15,6 +15,7 @@ import {
   type ActionId,
 } from '@/lib/agenda/logic'
 import {
+  CLIENT_REQUEST_LABEL,
   ORDER_DELAY_NOTE,
   ORIGIN_LABEL,
   PART_STATUSES,
@@ -26,6 +27,7 @@ import {
   type PartStatus,
 } from '@/lib/agenda/types'
 import ApptForm from './ApptForm'
+import { trackLinkMessage, trackUrl } from './messages'
 import { ApiError, api, type ConflictInfo } from './api'
 import { endIso, fmtDuration, fmtSlotFull, fmtTime, fmtWish, isoToParis, parisToIso } from './time'
 import { Btn, Chip, ErrorBox, Field, PartChip, StatusChip, copyText, inputCls, inputStyle } from './ui'
@@ -48,6 +50,12 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       </span>
     </div>
   )
+}
+
+/** « le mardi 13 octobre à 10 h 05 » */
+const lowerFirstSlot = (iso: string) => {
+  const t = fmtSlotFull(iso)
+  return 'le ' + t.charAt(0).toLowerCase() + t.slice(1)
 }
 
 function Block({ title, children, aside }: { title: string; children: React.ReactNode; aside?: React.ReactNode }) {
@@ -73,6 +81,7 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
   const [busy, setBusy] = useState<string | null>(null)
   const [actionError, setActionError] = useState<{ message: string; conflicts?: ConflictInfo[] } | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [confirmRelink, setConfirmRelink] = useState(false)
 
   // Proposition d'un autre créneau
   const [pDate, setPDate] = useState('')
@@ -113,6 +122,21 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
     } catch (e) {
       if (e instanceof ApiError) setActionError({ message: e.message, conflicts: e.conflicts })
       else setActionError({ message: 'Action impossible.' })
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function special(action: 'traiter_demande' | 'regenerer_lien') {
+    setBusy(action)
+    setActionError(null)
+    try {
+      await api.special(id, action)
+      setConfirmRelink(false)
+      await load()
+      onChanged()
+    } catch (e) {
+      setActionError({ message: e instanceof ApiError ? e.message : 'Action impossible.' })
     } finally {
       setBusy(null)
     }
@@ -203,6 +227,9 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
 
   const tel = telHref(appt.clientPhone)
   const wa = waHref(appt.clientPhone)
+  const link = trackUrl(typeof window !== 'undefined' ? window.location.origin : '', appt.trackToken)
+  const linkWa = waHref(appt.clientPhone, trackLinkMessage(appt, link))
+  const linkOpen = !['termine', 'annule'].includes(appt.status)
   const total = apptTotal(appt)
   const zone = ZONES.find((z) => z.id === appt.zone)
   const actions = availableActions(appt.status).filter((a) => a !== 'annuler')
@@ -232,6 +259,25 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
       </header>
 
       <div className="flex flex-col gap-4 px-5 py-5 sm:px-7">
+        {/* ── Demande du client (lien de suivi) ── */}
+        {appt.clientRequest && (
+          <div role="status" className="flex flex-col gap-2 rounded-[22px] p-4"
+            style={{ background: 'rgba(245,185,74,0.08)', border: '1px solid rgba(245,185,74,0.4)' }}>
+            <p className="font-space text-[0.9375rem] font-semibold" style={{ color: '#f5c46e' }}>
+              {CLIENT_REQUEST_LABEL[appt.clientRequest]}
+            </p>
+            {appt.clientMessage && (
+              <p className="font-space text-[0.875rem]" style={{ color: 'var(--c9-text-2)' }}>« {appt.clientMessage} »</p>
+            )}
+            {appt.clientRequestAt && (
+              <p className="font-space text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }}>Reçue {lowerFirstSlot(appt.clientRequestAt)}</p>
+            )}
+            <Btn variant="secondary" disabled={busy !== null} onClick={() => special('traiter_demande')}>
+              {busy === 'traiter_demande' ? '…' : 'Marquer comme traitée'}
+            </Btn>
+          </div>
+        )}
+
         {/* ── Contact ── */}
         <Block title="Contact">
           <p className="select-all font-space text-lg font-semibold tabular-nums">{appt.clientPhone}</p>
@@ -360,6 +406,37 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
           </p>
         </Block>
 
+        {/* ── Lien de suivi client ── */}
+        <Block title="Suivi client" aside={<span className="font-space text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }}>Envoi manuel</span>}>
+          <p className="break-all font-mono text-[0.75rem]" style={{ color: 'var(--c9-text-2)' }}>{link}</p>
+          <div className="grid grid-cols-3 gap-2">
+            <Btn className="text-[0.875rem]" onClick={() => doCopy(link, 'lien')}>{copied === 'lien' ? 'Copié ✓' : 'Copier'}</Btn>
+            {linkWa && linkOpen ? <Btn href={linkWa} external className="text-[0.875rem]">WhatsApp</Btn> : <Btn disabled>WhatsApp</Btn>}
+            <Btn href={link} external className="text-[0.875rem]">Ouvrir</Btn>
+          </div>
+          <p className="font-space text-[0.75rem] leading-snug" style={{ color: 'var(--c9-text-3)' }}>
+            Le bouton WhatsApp prépare un message avec ce lien ; c&apos;est vous qui l&apos;envoyez. Le client y voit son rendez-vous
+            (sans notes internes ni coordonnées) et peut répondre à une proposition.
+          </p>
+          {!confirmRelink ? (
+            <Btn variant="ghost" className="self-start !px-0 text-[0.8125rem]" onClick={() => setConfirmRelink(true)}>
+              Générer un nouveau lien…
+            </Btn>
+          ) : (
+            <div className="flex flex-col gap-2 rounded-2xl p-3" style={{ border: '1px solid var(--c9-hairline-lit)' }}>
+              <p className="font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-2)' }}>
+                L&apos;ancien lien cessera immédiatement de fonctionner. À utiliser si le lien a été envoyé à la mauvaise personne.
+              </p>
+              <div className="flex gap-2">
+                <Btn variant="ghost" className="flex-1" onClick={() => setConfirmRelink(false)}>Annuler</Btn>
+                <Btn variant="primary" className="flex-1" disabled={busy === 'regenerer_lien'} onClick={() => special('regenerer_lien')}>
+                  Nouveau lien
+                </Btn>
+              </div>
+            </div>
+          )}
+        </Block>
+
         {/* ── Actions ── */}
         <Block title="Actions">
           {actionError && (
@@ -385,7 +462,7 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
                     onChange={(e) => setPTime(e.target.value)} />
                 </Field>
               </div>
-              <Field label="Motif (facultatif)" htmlFor="p-reason">
+              <Field label="Motif (facultatif, visible par le client)" htmlFor="p-reason">
                 <input id="p-reason" className={inputCls} style={inputStyle} value={pReason} maxLength={500}
                   onChange={(e) => setPReason(e.target.value)} />
               </Field>
@@ -401,7 +478,7 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
                 </Btn>
               </div>
               <p className="font-space text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }}>
-                Le client n&apos;est pas prévenu automatiquement : envoyez-lui la proposition par WhatsApp ou par téléphone.
+                Le client n&apos;est pas prévenu automatiquement : envoyez-lui ensuite le lien de suivi (bouton WhatsApp du bloc « Suivi client »). Il pourra accepter, refuser ou demander une autre disponibilité.
               </p>
             </div>
           ) : (

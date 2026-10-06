@@ -72,6 +72,10 @@ export const api = {
       body: JSON.stringify({ action, payload: payload ?? {} }),
     }),
 
+  /** 'traiter_demande' : demande du client traitée · 'regenerer_lien' : nouveau lien de suivi */
+  special: (id: string, action: 'traiter_demande' | 'regenerer_lien') =>
+    call<{ appt: Appointment }>(`/api/agenda/${id}`, { method: 'POST', body: JSON.stringify({ action }) }),
+
   settings: () => call<{ settings: AgendaSettings; storage: Storage }>('/api/agenda/settings'),
 
   saveSettings: (settings: AgendaSettings) =>

@@ -129,6 +129,10 @@ export function ApptCard({ a, onOpen, showDate = false }: { a: ApptLite; onOpen:
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <StatusChip status={a.status} />
           {proposed && <span className="font-space text-[0.75rem]" style={{ color: '#d4c6ff' }}>créneau proposé</span>}
+          {a.clientRequest && (
+            <span className="rounded-full px-2 py-0.5 font-space text-[0.75rem] font-semibold"
+              style={{ color: '#06131f', background: '#f5b94a' }}>Réponse client</span>
+          )}
           {partNeedsAttention(a.partStatus) && <PartChip part={a.partStatus} />}
           <span className="ml-auto font-space text-[0.875rem] font-semibold tabular-nums" style={{ color: 'var(--c9-text-2)' }}>
             {total !== null ? `${total} €` : `${a.repairPrice} € + dépl.`}
@@ -358,8 +362,10 @@ export function WeekView({ monday, items, settings, onWeek, onOpen }: {
 // ─── Vue « Demandes à traiter » ──────────────────────────────────────────────
 
 export function PendingView({ items, onOpen }: { items: ApptLite[]; onOpen: (id: string) => void }) {
-  const received = items.filter((a) => a.status === 'demande_recue')
-  const waiting = items.filter((a) => a.status === 'creneau_propose')
+  // À traiter : nouvelles demandes, et toute réponse du client (refus, autre
+  // disponibilité, demande de changement ou d'annulation…).
+  const received = items.filter((a) => a.status === 'demande_recue' || Boolean(a.clientRequest))
+  const waiting = items.filter((a) => a.status === 'creneau_propose' && !a.clientRequest)
 
   return (
     <div className="flex flex-col gap-8">

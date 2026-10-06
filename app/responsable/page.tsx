@@ -1082,7 +1082,8 @@ function PendingBadge() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!alive || !d || !Array.isArray(d.items)) return
-        setCount(d.items.filter((a: { status: string }) => a.status === 'demande_recue').length)
+        setCount(d.items.filter((a: { status: string; clientRequest?: string | null }) =>
+          a.status === 'demande_recue' || Boolean(a.clientRequest)).length)
       })
       .catch(() => {})
     return () => { alive = false }

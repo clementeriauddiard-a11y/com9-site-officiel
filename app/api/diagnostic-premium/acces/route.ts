@@ -1,35 +1,34 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/auth/login
-// Vérifie le mot de passe responsable, pose le cookie de session httpOnly.
-// Les tentatives sont limitées (voir lib/security/login-guard.ts).
+// /api/diagnostic-premium/acces
+//   POST { password } → vérifie DIAGNOSTIC_PASSWORD (tentatives limitées)
+//   DELETE            → retire l'accès
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { NextRequest, NextResponse } from 'next/server'
-import { generateSessionToken, SESSION_COOKIE, SESSION_MAX_AGE } from '@/lib/auth'
+import { NextResponse } from 'next/server'
+import { DIAG_COOKIE, DIAG_MAX_AGE, diagnosticPassword, diagnosticToken } from '@/lib/diagnostic-access'
 import { guardedPasswordCheck } from '@/lib/security/login-guard'
 import { safeEqual } from '@/lib/security/request'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
+  const expected = diagnosticPassword()
+  if (!expected) {
+    console.error("[COM'9 Diagnostic] DIAGNOSTIC_PASSWORD non défini")
+    return NextResponse.json({ error: 'Accès non configuré' }, { status: 503 })
+  }
   let password: unknown
   try {
     password = ((await req.json()) as { password?: unknown }).password
   } catch {
     return NextResponse.json({ error: 'Requête invalide' }, { status: 400 })
   }
-
-  const adminPassword = process.env.ADMIN_PASSWORD
-  if (!adminPassword) {
-    console.error("[COM'9 Auth] ADMIN_PASSWORD non défini dans les variables d'environnement")
-    return NextResponse.json({ error: 'Configuration serveur manquante' }, { status: 500 })
-  }
-  if (typeof password !== 'string' || password.length === 0 || password.length > 200) {
+  if (typeof password !== 'string' || !password || password.length > 200) {
     return NextResponse.json({ error: 'Mot de passe incorrect' }, { status: 401 })
   }
 
-  const result = await guardedPasswordCheck(req, 'responsable', () => safeEqual(password, adminPassword))
+  const result = await guardedPasswordCheck(req, 'diagnostic', () => safeEqual(password, expected))
   if (!result.ok) {
     return NextResponse.json(
       { error: result.error },
@@ -38,12 +37,18 @@ export async function POST(req: NextRequest) {
   }
 
   const res = NextResponse.json({ success: true })
-  res.cookies.set(SESSION_COOKIE, generateSessionToken(), {
+  res.cookies.set(DIAG_COOKIE, diagnosticToken() as string, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: SESSION_MAX_AGE,
+    maxAge: DIAG_MAX_AGE,
     path: '/',
   })
+  return res
+}
+
+export function DELETE() {
+  const res = NextResponse.json({ success: true })
+  res.cookies.set(DIAG_COOKIE, '', { httpOnly: true, maxAge: 0, path: '/' })
   return res
 }

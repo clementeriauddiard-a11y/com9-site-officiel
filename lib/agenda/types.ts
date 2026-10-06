@@ -100,6 +100,24 @@ export const PREFERRED_PERIOD_LABEL: Record<PreferredPeriod, string> = {
 export const REQUEST_RECEIVED_MESSAGE =
   'Votre demande a bien été reçue. COM\'9 vous confirmera le créneau ou vous proposera une autre disponibilité.'
 
+// ─── Réponse du client (lien de suivi) ───────────────────────────────────────
+
+/**
+ * Ce que le client a demandé depuis son lien de suivi et que COM'9 doit traiter.
+ * null = rien en attente. Une demande de modification ou d'annulation ne change
+ * jamais le rendez-vous toute seule : COM'9 décide.
+ */
+export const CLIENT_REQUESTS = ['acceptation', 'refus', 'autre_dispo', 'modification', 'annulation'] as const
+export type ClientRequest = (typeof CLIENT_REQUESTS)[number]
+
+export const CLIENT_REQUEST_LABEL: Record<ClientRequest, string> = {
+  acceptation:  'Le client accepte le créneau indicatif — à confirmer',
+  refus:        'Le client refuse le créneau proposé',
+  autre_dispo:  'Le client demande une autre disponibilité',
+  modification: 'Le client demande à changer le rendez-vous',
+  annulation:   "Le client demande l'annulation",
+}
+
 // ─── Rendez-vous ─────────────────────────────────────────────────────────────
 
 export type Appointment = {
@@ -149,6 +167,12 @@ export type Appointment = {
   preferredPeriod: PreferredPeriod | null
   /** Autres disponibilités indiquées par le client */
   availabilityNote: string
+
+  /** Demande du client en attente de traitement par COM'9 */
+  clientRequest: ClientRequest | null
+  /** Message libre du client joint à sa demande */
+  clientMessage: string
+  clientRequestAt: string | null
 
   origin: Origin
   status: ApptStatus

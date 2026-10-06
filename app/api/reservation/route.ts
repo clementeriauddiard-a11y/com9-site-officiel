@@ -4,7 +4,8 @@
 //          description, preferredDate, preferredPeriod, availabilityNote }
 //
 //  Crée une DEMANDE (statut « demande reçue »), jamais un rendez-vous confirmé.
-//  Ne renvoie aucune donnée enregistrée : ni identifiant, ni jeton, ni fiche.
+//  Renvoie un récapitulatif et le lien de suivi personnel de la demande
+//  (remis à son seul auteur) ; jamais l'identifiant interne ni la fiche.
 //  Le prix est recalculé ici depuis la grille ; celui envoyé par le navigateur
 //  est ignoré.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -13,18 +14,13 @@ import { NextResponse } from 'next/server'
 import { createPublicRequest } from '@/lib/agenda/service'
 import { errorResponse } from '@/lib/agenda/http'
 import { REQUEST_RECEIVED_MESSAGE } from '@/lib/agenda/types'
+import { clientIp } from '@/lib/security/request'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const MAX_BODY = 8_000 // octets
 const MIN_FILL_MS = 2_500 // un humain met plus longtemps à remplir le formulaire
-
-function clientIp(req: Request): string {
-  const fwd = req.headers.get('x-forwarded-for')
-  if (fwd) return fwd.split(',')[0].trim()
-  return req.headers.get('x-real-ip')?.trim() || 'inconnue'
-}
 
 /** Refuse les envois provenant d'un autre site (le formulaire est sur ce domaine). */
 function sameOrigin(req: Request): boolean {
