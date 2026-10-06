@@ -4,8 +4,8 @@
 
 /* ─────────────────────────────────────────────────────────────────────────────
    COM'9 — Direction artistique « réparation à domicile »
-   Noir bleuté (bleu nuit) · blanc cassé · accent bleu (couleur du logo COM'9).
-   Premium, minimal, rassurant. Le bleu se réserve aux actions et aux
+   Charbon profond · blanc cassé · graphite · accent cuivre.
+   Premium, minimal, rassurant. Le cuivre se réserve aux actions et aux
    détails importants — jamais en aplat criard.
 
    Thème sombre par défaut. Une section claire se déclare avec .c9-light :
@@ -18,30 +18,30 @@
   --font-mono:        var(--font-geist-mono);
 
   /* Surfaces */
-  --c9-bg:            #0a1626;   /* noir bleuté (bleu nuit) */
-  --c9-bg-deep:       #07101d;   /* pied de page */
-  --c9-surface:       #112038;   /* carte opaque */
-  --c9-surface-2:     #182b48;   /* carte élevée */
-  --c9-elev-1:        rgba(150, 190, 255, 0.05);
-  --c9-elev-2:        rgba(150, 190, 255, 0.09);
+  --c9-bg:            #0f0f11;   /* charbon profond */
+  --c9-bg-deep:       #0a0a0b;   /* pied de page */
+  --c9-surface:       #17171a;   /* carte opaque */
+  --c9-surface-2:     #1f1f23;   /* carte élevée */
+  --c9-elev-1:        rgba(255, 255, 255, 0.035);
+  --c9-elev-2:        rgba(255, 255, 255, 0.065);
 
-  /* Traits — bleutés */
-  --c9-hairline:      rgba(150, 190, 255, 0.14);
-  --c9-hairline-soft: rgba(150, 190, 255, 0.08);
-  --c9-hairline-lit:  rgba(150, 190, 255, 0.28);
+  /* Traits — graphite */
+  --c9-hairline:      rgba(255, 255, 255, 0.10);
+  --c9-hairline-soft: rgba(255, 255, 255, 0.06);
+  --c9-hairline-lit:  rgba(255, 255, 255, 0.20);
 
   /* Texte — blanc cassé */
-  --c9-text:          #f2f5fa;
-  --c9-text-2:        #c2cbd9;
-  --c9-text-3:        #8e9bb0;
+  --c9-text:          #f5f2ec;
+  --c9-text-2:        #c6c1b8;
+  --c9-text-3:        #928d85;
 
-  /* Accent bleu — couleur de la mascotte COM'9 */
-  --c9-accent:        #0a74d6;   /* actions, détails importants */
-  --c9-accent-hi:     #1683e8;   /* survol */
-  --c9-accent-text:   #4db2ff;   /* texte bleu lisible sur fond sombre */
-  --c9-accent-ink:    #ffffff;   /* texte posé sur le bleu */
-  --c9-accent-soft:   rgba(0, 168, 248, 0.12);
-  --c9-accent-line:   rgba(0, 168, 248, 0.40);
+  /* Accent cuivre */
+  --c9-accent:        #c9895c;   /* actions, détails importants */
+  --c9-accent-hi:     #d99b6e;   /* survol */
+  --c9-accent-text:   #d9a27a;   /* texte cuivré lisible sur fond sombre */
+  --c9-accent-ink:    #1a120c;   /* texte posé sur le cuivre */
+  --c9-accent-soft:   rgba(201, 137, 92, 0.12);
+  --c9-accent-line:   rgba(201, 137, 92, 0.38);
 
   /* États */
   --c9-warn:          #e2b469;
@@ -55,13 +55,8 @@
   --c9-danger-line:   rgba(240, 149, 138, 0.38);
 
   /* Fond de calque (feuilles, menus) */
-  --c9-scrim:         rgba(3, 9, 18, 0.62);
-  --c9-header:        rgba(10, 22, 38, 0.84);
-
-  /* Dégradé des sections sombres : bleu nuit + halo bleu, comme l'accueil */
-  --c9-dark-gradient: radial-gradient(70% 55% at 100% 0%, rgba(0, 150, 255, 0.16) 0%, transparent 70%),
-                      radial-gradient(60% 50% at 0% 100%, rgba(0, 110, 230, 0.10) 0%, transparent 70%),
-                      linear-gradient(180deg, #0a1626 0%, #0c1b31 100%);
+  --c9-scrim:         rgba(5, 5, 6, 0.62);
+  --c9-header:        rgba(15, 15, 17, 0.82);
 
   /* Rythme */
   --section-py:       clamp(5rem, 9vw, 8.5rem);
@@ -85,9 +80,9 @@
   --c9-text:          #151517;
   --c9-text-2:        #47443f;
   --c9-text-3:        #6c6862;
-  --c9-accent-text:   #0063c4;
-  --c9-accent-soft:   rgba(0, 120, 220, 0.08);
-  --c9-accent-line:   rgba(10, 116, 214, 0.40);
+  --c9-accent-text:   #8f532a;
+  --c9-accent-soft:   rgba(201, 137, 92, 0.12);
+  --c9-accent-line:   rgba(160, 99, 58, 0.40);
   --c9-warn:          #8a5d10;
   --c9-warn-soft:     rgba(176, 124, 30, 0.10);
   --c9-warn-line:     rgba(176, 124, 30, 0.40);
@@ -130,14 +125,11 @@ body {
 /* ─── Ancres sous la barre fixe ───────────────────────────────────────────── */
 section[id] { scroll-margin-top: 80px; }
 
-/* Fond dégradé bleu nuit des sections sombres */
-.c9-dark { background: var(--c9-dark-gradient); }
-
 /* ─── Scrollbar, sélection, focus ─────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.35); border-radius: 6px; }
-::selection { background: rgba(0, 168, 248, 0.32); }
+::selection { background: rgba(201, 137, 92, 0.32); }
 
 :focus-visible {
   outline: 2px solid var(--c9-accent);
@@ -174,7 +166,7 @@ section[id] { scroll-margin-top: 80px; }
 .c9-btn-primary {
   background: var(--c9-accent);
   color: var(--c9-accent-ink);
-  box-shadow: 0 10px 30px -14px rgba(10, 116, 214, 0.65);
+  box-shadow: 0 10px 30px -14px rgba(201, 137, 92, 0.55);
 }
 @media (hover: hover) { .c9-btn-primary:hover { background: var(--c9-accent-hi); } }
 
@@ -205,7 +197,7 @@ section[id] { scroll-margin-top: 80px; }
   box-shadow: 0 1px 2px rgba(21, 21, 23, 0.04), 0 18px 44px -30px rgba(21, 21, 23, 0.25);
 }
 
-/* Variante mise en avant — liseré bleu, jamais d'aplat */
+/* Variante mise en avant — liseré cuivre, jamais d'aplat */
 .c9-surface-accent {
   background: linear-gradient(170deg, var(--c9-accent-soft) 0%, transparent 60%), var(--c9-surface);
   border: 1px solid var(--c9-accent-line);

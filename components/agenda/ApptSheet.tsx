@@ -315,7 +315,7 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
                   options={PAIEMENT_MODES.map((m) => ({ id: m, label: PAIEMENT_LABEL[m] }))} />
               </Field>
               <label className="flex items-center gap-3 font-space text-[0.9375rem]" style={{ color: 'var(--c9-text)' }}>
-                <input type="checkbox" checked={fPaid} onChange={(e) => setFPaid(e.target.checked)} className="h-5 w-5 accent-[#0a74d6]" />
+                <input type="checkbox" checked={fPaid} onChange={(e) => setFPaid(e.target.checked)} className="h-5 w-5 accent-[#c9895c]" />
                 Payé
               </label>
               <div className="flex gap-2">
@@ -661,7 +661,7 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
                   onChange={(e) => setPReason(e.target.value)} />
               </Field>
               <label className="flex items-start gap-3 font-space text-[0.875rem] leading-snug" style={{ color: 'var(--c9-text-2)' }}>
-                <input type="checkbox" checked={pFirm} onChange={(e) => setPFirm(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[#0a74d6]" />
+                <input type="checkbox" checked={pFirm} onChange={(e) => setPFirm(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[#c9895c]" />
                 Proposition ferme : si le client l&apos;accepte, le rendez-vous est confirmé.
               </label>
               <div className="flex gap-2">

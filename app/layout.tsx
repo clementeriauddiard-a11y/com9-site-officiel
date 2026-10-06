@@ -42,7 +42,6 @@ export const metadata: Metadata = {
     locale:      'fr_FR',
     url:         'https://com9.fr',
     siteName:    "COM'9",
-    images:      [{ url: '/logo-com9-512.png', width: 512, height: 512, alt: "Logo COM'9" }],
   },
 
   twitter: {
@@ -52,9 +51,9 @@ export const metadata: Metadata = {
   },
 
   icons: {
-    icon:     [{ url: '/logo-com9-192.png', type: 'image/png', sizes: '192x192' }],
-    apple:    [{ url: '/logo-com9-192.png', type: 'image/png', sizes: '192x192' }],
-    shortcut: '/logo-com9-192.png',
+    icon:     [{ url: '/logo.png', type: 'image/png' }],
+    apple:    [{ url: '/logo.png', type: 'image/png' }],
+    shortcut: '/logo.png',
   },
 
   robots: {
@@ -65,7 +64,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#0a1626',
+  themeColor: '#0f0f11',
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
