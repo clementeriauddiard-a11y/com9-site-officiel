@@ -2,11 +2,12 @@
 // COM'9 — API /api/agenda          (administrateur uniquement)
 //   GET  ?view=pending                    → demandes à traiter
 //   GET  ?view=range&from=ISO&to=ISO      → rendez-vous d'une période
+//   GET  ?view=followups                  → rappels et suivis WhatsApp à envoyer
 //   POST { input, status }                → création manuelle
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from 'next/server'
-import { createAppointment, listPending, listRange } from '@/lib/agenda/service'
+import { createAppointment, getFollowups, listPending, listRange } from '@/lib/agenda/service'
 import { errorResponse, requireAdmin, storageInfo, withoutToken } from '@/lib/agenda/http'
 import type { ApptInput } from '@/lib/agenda/logic'
 
@@ -20,6 +21,15 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url)
     const view = url.searchParams.get('view')
+
+    if (view === 'followups') {
+      const f = await getFollowups()
+      return NextResponse.json({
+        reminders: f.reminders.map(withoutToken),
+        aftercare: f.aftercare.map(withoutToken),
+        storage: storageInfo(),
+      })
+    }
 
     if (view === 'pending') {
       const items = await listPending()

@@ -16,6 +16,9 @@ import {
 } from '@/lib/agenda/logic'
 import {
   CLIENT_REQUEST_LABEL,
+  MESSAGES_FOR_STATUS,
+  MESSAGE_LABEL,
+  type MessageKind,
   ORDER_DELAY_NOTE,
   ORIGIN_LABEL,
   PART_STATUSES,
@@ -27,7 +30,8 @@ import {
   type PartStatus,
 } from '@/lib/agenda/types'
 import ApptForm from './ApptForm'
-import { trackLinkMessage, trackUrl } from './messages'
+import { buildMessage, trackUrl } from './messages'
+import { messagePending } from '@/lib/agenda/messages-state'
 import { ApiError, api, type ConflictInfo } from './api'
 import { endIso, fmtDuration, fmtSlotFull, fmtTime, fmtWish, isoToParis, parisToIso } from './time'
 import { Btn, Chip, ErrorBox, Field, PartChip, StatusChip, copyText, inputCls, inputStyle } from './ui'
@@ -142,6 +146,20 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
     }
   }
 
+  async function noteSent(k: MessageKind) {
+    setBusy('msg-' + k)
+    setActionError(null)
+    try {
+      await api.messageSent(id, k)
+      await load()
+      onChanged()
+    } catch (e) {
+      setActionError({ message: e instanceof ApiError ? e.message : 'Action impossible.' })
+    } finally {
+      setBusy(null)
+    }
+  }
+
   async function changePart(p: PartStatus | null) {
     if (!appt) return
     setBusy('piece')
@@ -228,8 +246,7 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
   const tel = telHref(appt.clientPhone)
   const wa = waHref(appt.clientPhone)
   const link = trackUrl(typeof window !== 'undefined' ? window.location.origin : '', appt.trackToken)
-  const linkWa = waHref(appt.clientPhone, trackLinkMessage(appt, link))
-  const linkOpen = !['termine', 'annule'].includes(appt.status)
+  const msgKinds = MESSAGES_FOR_STATUS[appt.status]
   const total = apptTotal(appt)
   const zone = ZONES.find((z) => z.id === appt.zone)
   const actions = availableActions(appt.status).filter((a) => a !== 'annuler')
@@ -406,17 +423,56 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
           </p>
         </Block>
 
-        {/* ── Lien de suivi client ── */}
-        <Block title="Suivi client" aside={<span className="font-space text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }}>Envoi manuel</span>}>
-          <p className="break-all font-mono text-[0.75rem]" style={{ color: 'var(--c9-text-2)' }}>{link}</p>
-          <div className="grid grid-cols-3 gap-2">
-            <Btn className="text-[0.875rem]" onClick={() => doCopy(link, 'lien')}>{copied === 'lien' ? 'Copié ✓' : 'Copier'}</Btn>
-            {linkWa && linkOpen ? <Btn href={linkWa} external className="text-[0.875rem]">WhatsApp</Btn> : <Btn disabled>WhatsApp</Btn>}
-            <Btn href={link} external className="text-[0.875rem]">Ouvrir</Btn>
+        {/* ── Messages WhatsApp (étape 4) et lien de suivi ── */}
+        <Block title="Messages WhatsApp" aside={<span className="font-space text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }}>Envoi manuel</span>}>
+          {msgKinds.length === 0 && (
+            <p className="font-space text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>Aucun message prévu pendant l&apos;intervention.</p>
+          )}
+          {msgKinds.map((k) => {
+            const text = buildMessage(k, appt, link)
+            const href = waHref(appt.clientPhone, text)
+            const log = appt.messagesLog?.[k]
+            const pending = messagePending(appt, k)
+            return (
+              <div key={k} className="flex flex-col gap-2 rounded-2xl p-3" data-message={k}
+                style={{ border: `1px solid ${pending ? 'var(--c9-hairline-lit)' : 'var(--c9-hairline-soft)'}`, background: 'rgba(255,255,255,0.03)' }}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="font-space text-[0.9375rem] font-semibold">{MESSAGE_LABEL[k]}</p>
+                  <span className="shrink-0 font-space text-[0.75rem]" style={{ color: pending ? '#f5c46e' : '#4ade80' }}>
+                    {pending ? (log ? 'À renvoyer (créneau changé)' : 'À envoyer') : `Envoyé ${lowerFirstSlot(log!.at)}`}
+                  </span>
+                </div>
+                <details>
+                  <summary className="cursor-pointer font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>Voir le texte</summary>
+                  <p className="mt-2 whitespace-pre-wrap font-space text-[0.8125rem] leading-relaxed [overflow-wrap:anywhere]" style={{ color: 'var(--c9-text-2)' }}>{text}</p>
+                </details>
+                <div className="grid grid-cols-2 gap-2">
+                  {href
+                    ? <Btn href={href} external className="text-[0.875rem]" title={`Ouvrir WhatsApp avec le message « ${MESSAGE_LABEL[k]} »`}>WhatsApp</Btn>
+                    : <Btn disabled className="text-[0.875rem]">WhatsApp</Btn>}
+                  <Btn className="text-[0.875rem]" onClick={() => doCopy(text, 'msg-' + k)}>{copied === 'msg-' + k ? 'Copié ✓' : 'Copier'}</Btn>
+                </div>
+                <Btn className="text-[0.875rem]" variant={pending ? 'primary' : 'ghost'} disabled={busy !== null}
+                  onClick={() => noteSent(k)}>
+                  {busy === 'msg-' + k ? '…' : pending ? 'Noter envoyé' : 'Noter un nouvel envoi'}
+                </Btn>
+              </div>
+            )
+          })}
+          <p className="font-space text-[0.75rem] leading-snug" style={{ color: 'var(--c9-text-3)' }}>
+            « WhatsApp » ouvre la conversation avec le client et le texte déjà rempli : c&apos;est vous qui relisez et envoyez.
+            « Noter envoyé » garde la trace dans l&apos;historique (le site ne peut pas vérifier l&apos;envoi).
+          </p>
+
+          <div className="c9-divider my-1" />
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em]" style={{ color: 'var(--c9-text-3)' }}>Lien de suivi du client</p>
+          <p className="break-all font-mono text-[0.75rem]" data-track-link style={{ color: 'var(--c9-text-2)' }}>{link}</p>
+          <div className="grid grid-cols-2 gap-2">
+            <Btn className="text-[0.8125rem]" onClick={() => doCopy(link, 'lien')}>{copied === 'lien' ? 'Copié ✓' : 'Copier le lien'}</Btn>
+            <Btn href={link} external className="text-[0.8125rem]">Ouvrir</Btn>
           </div>
           <p className="font-space text-[0.75rem] leading-snug" style={{ color: 'var(--c9-text-3)' }}>
-            Le bouton WhatsApp prépare un message avec ce lien ; c&apos;est vous qui l&apos;envoyez. Le client y voit son rendez-vous
-            (sans notes internes ni coordonnées) et peut répondre à une proposition.
+            Le client y voit son rendez-vous (sans notes internes ni coordonnées) et peut répondre à une proposition.
           </p>
           {!confirmRelink ? (
             <Btn variant="ghost" className="self-start !px-0 text-[0.8125rem]" onClick={() => setConfirmRelink(true)}>

@@ -361,14 +361,43 @@ export function WeekView({ monday, items, settings, onWeek, onOpen }: {
 
 // ─── Vue « Demandes à traiter » ──────────────────────────────────────────────
 
-export function PendingView({ items, onOpen }: { items: ApptLite[]; onOpen: (id: string) => void }) {
+export function PendingView({ items, followups, onOpen }: {
+  items: ApptLite[]
+  followups?: { reminders: ApptLite[]; aftercare: ApptLite[] }
+  onOpen: (id: string) => void
+}) {
   // À traiter : nouvelles demandes, et toute réponse du client (refus, autre
   // disponibilité, demande de changement ou d'annulation…).
   const received = items.filter((a) => a.status === 'demande_recue' || Boolean(a.clientRequest))
   const waiting = items.filter((a) => a.status === 'creneau_propose' && !a.clientRequest)
 
+  const reminders = followups?.reminders ?? []
+  const aftercare = followups?.aftercare ?? []
+
   return (
     <div className="flex flex-col gap-8">
+      {reminders.length > 0 && (
+        <section aria-labelledby="h-rappels">
+          <h3 id="h-rappels" className="mb-1 font-space text-[1.0625rem] font-semibold">Rappels à envoyer</h3>
+          <p className="mb-3 font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>
+            Rendez-vous confirmés d&apos;ici demain soir, sans rappel noté. Ouvrez la fiche, puis « Rappel » → WhatsApp.
+          </p>
+          <div className="flex flex-col gap-3">
+            {reminders.map((a) => <ApptCard key={a.id} a={a} onOpen={onOpen} showDate />)}
+          </div>
+        </section>
+      )}
+      {aftercare.length > 0 && (
+        <section aria-labelledby="h-suivis">
+          <h3 id="h-suivis" className="mb-1 font-space text-[1.0625rem] font-semibold">Suivi après intervention</h3>
+          <p className="mb-3 font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>
+            Interventions terminées depuis moins de 7 jours, sans message de suivi noté.
+          </p>
+          <div className="flex flex-col gap-3">
+            {aftercare.map((a) => <ApptCard key={a.id} a={a} onOpen={onOpen} showDate />)}
+          </div>
+        </section>
+      )}
       <section>
         <h3 className="mb-1 font-space text-[1.0625rem] font-semibold">À traiter</h3>
         <p className="mb-3 font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>

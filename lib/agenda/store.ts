@@ -129,6 +129,8 @@ const DDL = [
      CHECK (client_request IS NULL OR client_request IN ('acceptation','refus','autre_dispo','modification','annulation'))`,
   `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS client_message TEXT NOT NULL DEFAULT ''`,
   `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS client_request_at TIMESTAMPTZ`,
+  // Étape 4 : messages WhatsApp notés comme envoyés.
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS messages_log JSONB NOT NULL DEFAULT '{}'::jsonb`,
   `CREATE INDEX IF NOT EXISTS rdv_appointments_start_idx  ON rdv_appointments (start_at)`,
   `CREATE INDEX IF NOT EXISTS rdv_appointments_status_idx ON rdv_appointments (status)`,
   `CREATE TABLE IF NOT EXISTS rdv_events (
@@ -228,6 +230,7 @@ function rowToAppt(r: any): Appointment {
     clientRequest: r.client_request ?? null,
     clientMessage: String(r.client_message ?? ''),
     clientRequestAt: iso(r.client_request_at),
+    messagesLog: (typeof r.messages_log === 'string' ? JSON.parse(r.messages_log) : r.messages_log) ?? {},
   }
 }
 
@@ -241,7 +244,7 @@ const COLS = `id, track_token, created_at, updated_at, client_name, client_phone
   model, repair, quality, description, repair_price, zone, zone_verified, travel_fee,
   start_at, duration_min, proposed_start_at, proposed_reason, proposal_firm,
   origin, status, part_status, internal_notes, preferred_date, preferred_period, availability_note,
-  client_request, client_message, client_request_at`
+  client_request, client_message, client_request_at, messages_log`
 
 // ─── Mémoire (développement local uniquement) ────────────────────────────────
 
@@ -266,14 +269,14 @@ export async function insertAppt(a: Appointment): Promise<void> {
   await ensureTables(db)
   await db.query(
     `INSERT INTO rdv_appointments (${COLS}) VALUES
-     ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30)`,
+     ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31)`,
     [
       a.id, a.trackToken, a.createdAt, a.updatedAt, a.clientName, a.clientPhone, a.address,
       a.model, a.repair, a.quality, a.description, a.repairPrice, a.zone, a.zoneVerified,
       a.travelFee, a.startAt, a.durationMin, a.proposedStartAt, a.proposedReason,
       a.proposalFirm, a.origin, a.status, a.partStatus, a.internalNotes,
       a.preferredDate, a.preferredPeriod, a.availabilityNote,
-      a.clientRequest, a.clientMessage, a.clientRequestAt,
+      a.clientRequest, a.clientMessage, a.clientRequestAt, JSON.stringify(a.messagesLog ?? {}),
     ],
   )
 }
@@ -292,7 +295,7 @@ export async function updateAppt(a: Appointment): Promise<void> {
        travel_fee=$13, start_at=$14, duration_min=$15, proposed_start_at=$16,
        proposed_reason=$17, proposal_firm=$18, origin=$19, status=$20, part_status=$21,
        internal_notes=$22, preferred_date=$23, preferred_period=$24, availability_note=$25,
-       client_request=$26, client_message=$27, client_request_at=$28
+       client_request=$26, client_message=$27, client_request_at=$28, messages_log=$29
      WHERE id=$1`,
     [
       a.id, a.updatedAt, a.clientName, a.clientPhone, a.address, a.model, a.repair,
@@ -300,7 +303,7 @@ export async function updateAppt(a: Appointment): Promise<void> {
       a.startAt, a.durationMin, a.proposedStartAt, a.proposedReason, a.proposalFirm,
       a.origin, a.status, a.partStatus, a.internalNotes,
       a.preferredDate, a.preferredPeriod, a.availabilityNote,
-      a.clientRequest, a.clientMessage, a.clientRequestAt,
+      a.clientRequest, a.clientMessage, a.clientRequestAt, JSON.stringify(a.messagesLog ?? {}),
     ],
   )
 }
@@ -623,4 +626,65 @@ export async function endAuthAttempt(
   if (outcome === 'succes') {
     await db.query(`DELETE FROM auth_attempts WHERE scope=$1 AND ip_hash=$2 AND outcome='echec'`, [scope, ipHash])
   }
+}
+
+export type AuthScopeStatus = { scope: string; failures: number; sources: number; blockedSources: number; lastAt: string | null }
+
+/** État des compteurs sur la fenêtre (aucune adresse n'est renvoyée, seulement des nombres). */
+export async function authStatus(scopes: readonly string[], windowMin: number, perSource: number): Promise<AuthScopeStatus[]> {
+  const since = Date.now() - windowMin * 60_000
+  if (resolveMode() === 'memory') {
+    return scopes.map((scope) => {
+      const f = memAttempts.filter((a) => a.scope === scope && a.outcome === 'echec' && a.at >= since)
+      const by = new Map<string, number>()
+      f.forEach((a) => by.set(a.ipHash, (by.get(a.ipHash) ?? 0) + 1))
+      return {
+        scope, failures: f.length, sources: by.size,
+        blockedSources: [...by.values()].filter((n) => n >= perSource).length,
+        lastAt: f.length ? new Date(Math.max(...f.map((a) => a.at))).toISOString() : null,
+      }
+    })
+  }
+  const db = await driver()
+  await ensureTables(db)
+  const { rows } = await db.query(
+    `SELECT scope, COUNT(*)::int AS failures, COUNT(DISTINCT ip_hash)::int AS sources, MAX(at) AS last_at,
+            (SELECT COUNT(*)::int FROM (
+               SELECT ip_hash FROM auth_attempts b
+               WHERE b.scope = a.scope AND b.outcome = 'echec' AND b.at >= $2
+               GROUP BY ip_hash HAVING COUNT(*) >= $3) x) AS blocked
+     FROM auth_attempts a
+     WHERE scope = ANY($1) AND outcome = 'echec' AND at >= $2
+     GROUP BY scope`,
+    [scopes as unknown as string[], new Date(since).toISOString(), perSource],
+  )
+  return scopes.map((scope) => {
+    const r = rows.find((x) => x.scope === scope)
+    return {
+      scope,
+      failures: Number(r?.failures ?? 0),
+      sources: Number(r?.sources ?? 0),
+      blockedSources: Number(r?.blocked ?? 0),
+      lastAt: r ? iso(r.last_at) : null,
+    }
+  })
+}
+
+/** Efface les échecs enregistrés (déblocage). Les succès et l'historique « bloqué » sont conservés. */
+export async function clearAuthFailures(scopes: readonly string[]): Promise<number> {
+  if (resolveMode() === 'memory') {
+    let n = 0
+    for (let i = memAttempts.length - 1; i >= 0; i--) {
+      if (scopes.includes(memAttempts[i].scope) && memAttempts[i].outcome === 'echec') { memAttempts.splice(i, 1); n++ }
+    }
+    return n
+  }
+  const db = await driver()
+  await ensureTables(db)
+  const { rows } = await db.query(
+    `WITH d AS (DELETE FROM auth_attempts WHERE scope = ANY($1) AND outcome = 'echec' RETURNING 1)
+     SELECT COUNT(*)::int AS n FROM d`,
+    [scopes as unknown as string[]],
+  )
+  return Number(rows[0]?.n ?? 0)
 }

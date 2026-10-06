@@ -49,6 +49,7 @@ export default function AgendaPage() {
 
   const [items, setItems] = useState<ApptLite[]>([])
   const [pending, setPending] = useState<ApptLite[]>([])
+  const [followups, setFollowups] = useState<{ reminders: ApptLite[]; aftercare: ApptLite[] }>({ reminders: [], aftercare: [] })
   const [settings, setSettings] = useState<AgendaSettings>(DEFAULT_SETTINGS)
   const [storage, setStorage] = useState<Storage>('durable')
 
@@ -78,12 +79,14 @@ export default function AgendaPage() {
       const range = tab === 'semaine'
         ? { from: parisToIso(monday, '00:00'), to: parisToIso(addDays(monday, 7), '00:00') }
         : dayRange(date)
-      const [r, p] = await Promise.all([
+      const [r, p, f] = await Promise.all([
         tab === 'demandes' ? Promise.resolve(null) : api.range(range.from, range.to),
         api.pending(),
+        api.followups(),
       ])
       if (r) { setItems(r.items); setStorage(r.storage) }
       setPending(p.items)
+      setFollowups({ reminders: f.reminders, aftercare: f.aftercare })
       setStorage(p.storage)
       setError(null)
     } catch (e) {
@@ -183,6 +186,20 @@ export default function AgendaPage() {
 
         {error && <div className="mb-5"><ErrorBox message={error} /></div>}
 
+        {!loading && tab !== 'demandes' && (followups.reminders.length + followups.aftercare.length) > 0 && (
+          <button type="button" onClick={() => setTab('demandes')}
+            className="mb-5 flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left font-space text-[0.875rem]"
+            style={{ background: 'rgba(74,222,128,0.07)', border: '1px solid rgba(74,222,128,0.35)', color: 'var(--c9-text)' }}>
+            <span>
+              WhatsApp à envoyer :{' '}
+              {followups.reminders.length > 0 && <b>{followups.reminders.length} rappel{followups.reminders.length > 1 ? 's' : ''}</b>}
+              {followups.reminders.length > 0 && followups.aftercare.length > 0 && ' · '}
+              {followups.aftercare.length > 0 && <b>{followups.aftercare.length} suivi{followups.aftercare.length > 1 ? 's' : ''} après intervention</b>}
+            </span>
+            <span style={{ color: '#4ade80' }}>Voir</span>
+          </button>
+        )}
+
         {loading ? (
           <p className="font-space" style={{ color: 'var(--c9-text-3)' }}>Chargement…</p>
         ) : tab === 'jour' ? (
@@ -191,7 +208,7 @@ export default function AgendaPage() {
           <WeekView monday={monday} items={items} settings={settings}
             onWeek={(d) => setMonday(mondayOf(d))} onOpen={setOpenId} />
         ) : (
-          <PendingView items={pending} onOpen={setOpenId} />
+          <PendingView items={pending} followups={followups} onOpen={setOpenId} />
         )}
       </main>
 

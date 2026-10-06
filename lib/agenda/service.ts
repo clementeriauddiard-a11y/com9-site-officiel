@@ -9,6 +9,8 @@
 
 import { randomBytes, randomUUID } from 'crypto'
 import { sourceHash } from '@/lib/security/request'
+import { messagePending } from './messages-state'
+export { messagePending } from './messages-state'
 import { REPAIRS, ZONES } from '@/data/tarifs'
 import {
   ACTIONS,
@@ -30,6 +32,9 @@ import {
   PART_STATUS_LABEL,
   PREFERRED_PERIOD_LABEL,
   CLIENT_REQUEST_LABEL,
+  MESSAGE_KINDS,
+  MESSAGE_LABEL,
+  MESSAGES_FOR_STATUS,
   ORDER_DELAY_NOTE,
   partNeedsOrder,
   type AgendaSettings,
@@ -154,6 +159,7 @@ export async function createAppointment(
     clientRequest: null,
     clientMessage: '',
     clientRequestAt: null,
+    messagesLog: {},
     status: initialStatus,
   }
 
@@ -252,6 +258,7 @@ export async function createPublicRequest(raw: unknown, ip: string): Promise<Pub
     clientRequest: null,
     clientMessage: '',
     clientRequestAt: null,
+    messagesLog: {},
     origin: 'site',
     status: 'demande_recue',
     partStatus: null,
@@ -707,6 +714,55 @@ export async function clientRespond(token: string, raw: unknown, ip: string): Pr
     throw new AgendaError('conflict', 'Ce créneau vient d\'être pris. COM\'9 va vous proposer une autre disponibilité.')
   }
   return out.view
+}
+
+// ─── Messages WhatsApp (étape 4, envoi manuel) ───────────────────────────────
+
+/**
+ * COM'9 indique avoir envoyé un message depuis son WhatsApp. Le site n'envoie
+ * rien lui-même : il garde seulement la trace, pour savoir ce qui reste à faire.
+ */
+export async function noteMessageSent(id: string, kind: unknown): Promise<Appointment> {
+  if (typeof kind !== 'string' || !(MESSAGE_KINDS as readonly string[]).includes(kind)) {
+    throw new AgendaError('invalid', 'Type de message inconnu.')
+  }
+  const k = kind as (typeof MESSAGE_KINDS)[number]
+  return store.exclusive(async () => {
+    const a = await store.getAppt(id)
+    if (!a) throw new AgendaError('not_found', 'Rendez-vous introuvable.')
+    if (!MESSAGES_FOR_STATUS[a.status].includes(k)) {
+      throw new AgendaError('transition', `Le message « ${MESSAGE_LABEL[k]} » ne correspond pas à l'état du rendez-vous.`)
+    }
+    const now = new Date().toISOString()
+    const slot = k === 'proposition' ? a.proposedStartAt : a.startAt
+    const next: Appointment = { ...a, messagesLog: { ...a.messagesLog, [k]: { at: now, slot } }, updatedAt: now }
+    await store.updateAppt(next)
+    await store.addEvent(id, 'message', `WhatsApp « ${MESSAGE_LABEL[k]} » noté comme envoyé (envoi manuel).`)
+    return next
+  })
+}
+
+/**
+ * Ce qu'il reste à envoyer :
+ *  • rappels — rendez-vous confirmés d'ici la fin de demain (heure de Paris) ;
+ *  • suivis — interventions terminées depuis moins de 7 jours.
+ */
+export async function getFollowups(now = new Date()) {
+  const today = todayInParis(now)
+  const endTomorrow = new Date(new Date(`${today}T12:00:00Z`).getTime() + 2 * 86_400_000)
+  const parisMidnight = (day: string) => {
+    // minuit à Paris (UTC+1 ou +2) : on prend 00:00 local de façon sûre
+    const guess = new Date(`${day}T00:00:00+01:00`)
+    const h = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', hourCycle: 'h23' }).format(guess)
+    return h === '00' ? guess : new Date(`${day}T00:00:00+02:00`)
+  }
+  const dayAfterTomorrow = new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(endTomorrow)
+  const upcoming = await store.listRange(now.toISOString(), parisMidnight(dayAfterTomorrow).toISOString())
+  const recent = await store.listRange(new Date(now.getTime() - 7 * 86_400_000).toISOString(), now.toISOString())
+  return {
+    reminders: upcoming.filter((a) => a.status === 'confirme' && a.startAt && messagePending(a, 'rappel')),
+    aftercare: recent.filter((a) => a.status === 'termine' && messagePending(a, 'suivi')),
+  }
 }
 
 // ─── Lecture ─────────────────────────────────────────────────────────────────

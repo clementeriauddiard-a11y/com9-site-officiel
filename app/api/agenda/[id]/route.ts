@@ -5,11 +5,12 @@
 //   POST  { action, payload }        → changement de statut / proposition
 //   POST  { action: 'traiter_demande' } → demande du client marquée traitée
 //   POST  { action: 'regenerer_lien' }  → nouveau lien de suivi (l'ancien expire)
+//   POST  { action: 'message_envoye', payload: { kind } } → message WhatsApp noté comme envoyé
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from 'next/server'
 import {
-  applyAction, getDetail, markClientRequestHandled, regenerateTrackLink, updateAppointment, type ActionPayload,
+  applyAction, getDetail, markClientRequestHandled, noteMessageSent, regenerateTrackLink, updateAppointment, type ActionPayload,
 } from '@/lib/agenda/service'
 import { errorResponse, requireAdmin } from '@/lib/agenda/http'
 import { ACTIONS, type ActionId, type ApptInput } from '@/lib/agenda/logic'
@@ -52,6 +53,10 @@ export async function POST(req: Request, context: RouteContext) {
     const body = (await req.json()) as { action?: string; payload?: ActionPayload }
     if (body.action === 'traiter_demande') {
       return NextResponse.json({ appt: await markClientRequestHandled(id) })
+    }
+    if (body.action === 'message_envoye') {
+      const kind = (body.payload as { kind?: unknown } | undefined)?.kind
+      return NextResponse.json({ appt: await noteMessageSent(id, kind) })
     }
     if (body.action === 'regenerer_lien') {
       return NextResponse.json({ appt: await regenerateTrackLink(id) })

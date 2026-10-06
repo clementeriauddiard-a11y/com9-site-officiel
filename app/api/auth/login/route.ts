@@ -8,6 +8,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateSessionToken, SESSION_COOKIE, SESSION_MAX_AGE } from '@/lib/auth'
 import { guardedPasswordCheck } from '@/lib/security/login-guard'
 import { safeEqual } from '@/lib/security/request'
+import {
+  DEVICE_COOKIE, DEVICE_COOKIE_PATH, DEVICE_MAX_AGE, newDeviceCookie, verifiedDeviceId,
+} from '@/lib/security/device'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -29,7 +32,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Mot de passe incorrect' }, { status: 401 })
   }
 
-  const result = await guardedPasswordCheck(req, 'responsable', () => safeEqual(password, adminPassword))
+  // Appareil déjà utilisé avec succès → compteur à part, insensible aux attaques venues d'ailleurs.
+  const deviceId = verifiedDeviceId(req.cookies.get(DEVICE_COOKIE)?.value)
+  const result = await guardedPasswordCheck(req, 'responsable', () => safeEqual(password, adminPassword), {
+    trustedDeviceId: deviceId,
+  })
   if (!result.ok) {
     return NextResponse.json(
       { error: result.error },
@@ -45,5 +52,17 @@ export async function POST(req: NextRequest) {
     maxAge: SESSION_MAX_AGE,
     path: '/',
   })
+  if (!deviceId) {
+    const device = newDeviceCookie()
+    if (device) {
+      res.cookies.set(DEVICE_COOKIE, device, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: DEVICE_MAX_AGE,
+        path: DEVICE_COOKIE_PATH,
+      })
+    }
+  }
   return res
 }

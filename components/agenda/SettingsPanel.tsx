@@ -10,6 +10,7 @@ import { validateSettings } from '@/lib/agenda/logic'
 import type { AgendaSettings } from '@/lib/agenda/types'
 import { ApiError, api } from './api'
 import { Btn, ErrorBox, Field, inputCls, inputStyle } from './ui'
+import SecurityPanel from './SecurityPanel'
 
 export default function SettingsPanel({ settings, onSaved, onClose }: {
   settings: AgendaSettings
@@ -93,6 +94,9 @@ export default function SettingsPanel({ settings, onSaved, onClose }: {
           {busy ? 'Enregistrement…' : 'Enregistrer les réglages'}
         </Btn>
       </div>
+
+      <div className="c9-divider" />
+      <SecurityPanel />
     </div>
   )
 }

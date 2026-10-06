@@ -118,6 +118,39 @@ export const CLIENT_REQUEST_LABEL: Record<ClientRequest, string> = {
   annulation:   "Le client demande l'annulation",
 }
 
+// ─── Messages WhatsApp (envoi manuel) ────────────────────────────────────────
+
+export const MESSAGE_KINDS = ['reception', 'proposition', 'confirmation', 'rappel', 'en_route', 'suivi', 'annulation'] as const
+export type MessageKind = (typeof MESSAGE_KINDS)[number]
+
+export const MESSAGE_LABEL: Record<MessageKind, string> = {
+  reception:    'Accusé de réception',
+  proposition:  'Proposition de créneau',
+  confirmation: 'Confirmation',
+  rappel:       'Rappel',
+  en_route:     'En route',
+  suivi:        'Suivi après intervention',
+  annulation:   "Confirmation d'annulation",
+}
+
+/** Messages utiles selon l'état du rendez-vous, dans l'ordre d'affichage. */
+export const MESSAGES_FOR_STATUS: Record<ApptStatus, MessageKind[]> = {
+  demande_recue:   ['reception'],
+  creneau_propose: ['proposition'],
+  confirme:        ['confirmation', 'rappel'],
+  en_route:        ['en_route'],
+  en_cours:        [],
+  termine:         ['suivi'],
+  annule:          ['annulation'],
+}
+
+/**
+ * Trace des messages notés « envoyés » par COM'9. `slot` = créneau concerné au
+ * moment de l'envoi : si le rendez-vous est déplacé, confirmation et rappel
+ * redeviennent « à envoyer ».
+ */
+export type MessagesLog = Partial<Record<MessageKind, { at: string; slot: string | null }>>
+
 // ─── Rendez-vous ─────────────────────────────────────────────────────────────
 
 export type Appointment = {
@@ -174,6 +207,9 @@ export type Appointment = {
   clientMessage: string
   clientRequestAt: string | null
 
+  /** Messages WhatsApp notés comme envoyés (envoi manuel) */
+  messagesLog: MessagesLog
+
   origin: Origin
   status: ApptStatus
   /** null = pas encore vérifié */
@@ -187,7 +223,7 @@ export type ApptEvent = {
   id: number
   apptId: string
   at: string
-  kind: 'creation' | 'statut' | 'modification' | 'proposition' | 'piece'
+  kind: 'creation' | 'statut' | 'modification' | 'proposition' | 'piece' | 'message'
   /** Résumé lisible de ce qui a changé */
   summary: string
 }
