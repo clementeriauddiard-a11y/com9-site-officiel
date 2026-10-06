@@ -932,6 +932,16 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
               )}
             </AnimatePresence>
 
+            {/* Accès à l'agenda privé — visible sur téléphone comme sur ordinateur */}
+            <a href="/responsable/agenda"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl font-space text-[0.875rem] font-semibold transition-all duration-200"
+              style={{ minHeight: '40px', background: 'linear-gradient(118deg, #6fe6ff 0%, #3ad9ff 42%, #1aa9ff 100%)', color: '#06131f' }}>
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" className="w-3.5 h-3.5" aria-hidden="true">
+                <rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/>
+              </svg>
+              Agenda
+            </a>
+
             <a href="/marketplace" target="_blank"
               className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl font-mono text-[10px] tracking-[0.18em] uppercase transition-all duration-200"
               style={{ border: '1px solid rgba(0,209,255,0.15)', background: 'rgba(0,209,255,0.04)', color: 'rgba(0,209,255,0.55)' }}
