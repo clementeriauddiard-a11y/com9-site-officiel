@@ -30,37 +30,36 @@ export default async function SuiviPage({ params }: { params: Promise<{ token: s
   }
 
   return (
-    <main className="relative min-h-screen" style={{ background: 'var(--c9-bg)' }}>
-      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute left-1/2 top-0 -translate-x-1/2"
-          style={{ width: '900px', height: '500px', background: 'radial-gradient(ellipse, rgba(26,169,255,0.08) 0%, transparent 70%)' }} />
-      </div>
+    <>
+    <main className="c9-light relative min-h-screen">
       <Navbar />
-      <div className="relative z-10 mx-auto w-full max-w-2xl px-5 pb-24 pt-28 sm:px-8">
+      <div className="relative z-10 mx-auto w-full max-w-2xl px-5 pb-24 sm:px-8"
+        style={{ paddingTop: 'calc(64px + env(safe-area-inset-top, 0px) + 2.5rem)' }}>
         <header className="mb-8 flex flex-col gap-3">
           <span className="section-label">Votre rendez-vous</span>
-          <h1 className="c9-title font-space">Suivi</h1>
+          <h1 className="c9-title">Suivi</h1>
         </header>
 
         {view ? (
           <TrackingView token={token} initial={view} />
         ) : (
           <div className="c9-surface flex flex-col gap-3 rounded-[24px] p-6 sm:p-8">
-            <p className="font-space text-[1.125rem] font-semibold" style={{ color: 'var(--c9-text)' }}>
+            <p className="text-[1.125rem] font-semibold" style={{ color: 'var(--c9-text)' }}>
               {unavailable ? 'Suivi momentanément indisponible' : 'Ce lien de suivi n’est pas valide ou a expiré.'}
             </p>
-            <p className="font-space text-[0.9375rem]" style={{ color: 'var(--c9-text-2)' }}>
+            <p className="text-[0.9375rem]" style={{ color: 'var(--c9-text-2)' }}>
               {unavailable
                 ? 'Réessayez dans quelques instants.'
                 : 'Vérifiez le lien reçu de COM’9, ou demandez-lui un nouveau lien.'}
             </p>
-            <Link href="/" className="self-start font-space text-[0.9375rem] underline" style={{ color: 'var(--c9-text-2)' }}>
+            <Link href="/" className="self-start text-[0.9375rem] underline" style={{ color: 'var(--c9-text-2)' }}>
               Retour à l&apos;accueil
             </Link>
           </div>
         )}
       </div>
-      <Footer />
     </main>
+    <Footer />
+    </>
   )
 }

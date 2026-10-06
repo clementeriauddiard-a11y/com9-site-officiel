@@ -7,8 +7,11 @@ Ce document décrit comment les connexions sont protégées et comment débloque
 
 | Accès | Adresse | Mot de passe (variable Vercel) |
 |---|---|---|
-| Espace responsable (agenda, catalogue) | `/login` → `/responsable` | `ADMIN_PASSWORD` |
-| Diagnostic premium | `/diagnostic-premium` | `DIAGNOSTIC_PASSWORD` |
+| Espace COM'9 (agenda) | `/login` → `/responsable/agenda` | `ADMIN_PASSWORD` |
+
+Le diagnostic premium payant a été supprimé lors de la refonte (remplacé par le
+pré-diagnostic gratuit du parcours « Autre problème »). La variable `DIAGNOSTIC_PASSWORD`
+n'est plus lue par le site : elle peut être retirée de Vercel.
 
 Les mots de passe ne sont jamais dans le code. Ils sont vérifiés côté serveur.
 
@@ -18,18 +21,15 @@ Chaque essai est enregistré dans la base Postgres (table `auth_attempts`), part
 toutes les instances Vercel et conservée après un redémarrage. Seule une empreinte non
 réversible de l'adresse IP est stockée, effacée après 2 jours.
 
-Trois compteurs **indépendants** (fenêtre glissante de 15 minutes) :
+Deux compteurs **indépendants** (fenêtre glissante de 15 minutes) :
 
 | Compteur | Limite par source | Limite globale |
 |---|---|---|
-| `diagnostic` — page publique | 5 échecs par adresse | 50 échecs, toutes adresses |
 | `responsable` — appareil inconnu | 5 échecs par adresse | 50 échecs, toutes adresses |
 | `responsable-appareil` — vos appareils habituels | 5 échecs par appareil | **aucune** |
 
 Conséquences :
 
-- **Une attaque sur le diagnostic premium ne bloque jamais l'espace responsable** : les
-  compteurs sont séparés.
 - **Une attaque répartie sur l'espace responsable ne vous bloque pas sur vos appareils
   habituels** : après une connexion réussie, l'appareil reçoit un cookie signé
   (`com9_appareil`, 180 jours, envoyé uniquement aux routes de connexion). Il ne donne
@@ -50,7 +50,7 @@ n'est pas concerné par le blocage global. Puis :
 **Agenda → Réglages (icône) → Sécurité des connexions** :
 
 - l'état de chaque compteur (nombre d'échecs, sources bloquées, suspension globale) ;
-- **Débloquer le diagnostic** ou **Débloquer l'espace** : efface les échecs enregistrés.
+- **Débloquer l'espace responsable** : efface les échecs enregistrés.
 
 ### c) Sans appareil habituel, pendant une attaque (urgence)
 Seule une personne ayant accès au compte Vercel (protégé par sa double authentification)
@@ -65,15 +65,10 @@ peut le faire :
    WHERE outcome = 'echec' AND at > NOW() - INTERVAL '15 minutes'
    GROUP BY scope;
    ```
-3. Débloquer **uniquement** l'accès concerné :
+3. Débloquer l'espace :
    ```sql
-   -- espace responsable
    DELETE FROM auth_attempts
    WHERE scope IN ('responsable', 'responsable-appareil') AND outcome = 'echec';
-
-   -- ou diagnostic premium
-   DELETE FROM auth_attempts
-   WHERE scope = 'diagnostic' AND outcome = 'echec';
    ```
 4. Se connecter aussitôt : l'appareil devient « habituel » pour la suite.
 
@@ -91,5 +86,5 @@ et annule les appareils habituels ; reconnectez-vous ensuite depuis vos appareil
 ## 5. Protection supplémentaire possible (facultative)
 
 Vercel propose un pare-feu (Firewall) avec des règles de limitation de débit. Une règle
-sur `/api/auth/login` et `/api/diagnostic-premium/acces` arrêterait les rafales avant même
+sur `/api/auth/login` arrêterait les rafales avant même
 qu'elles n'atteignent le site. À configurer dans Vercel → Firewall, selon votre offre.

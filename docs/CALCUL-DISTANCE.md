@@ -2,23 +2,32 @@
 
 ## Ce que fait le site
 
-- Le client tape son adresse complète sur `/reservation`. Le serveur demande à Google Maps
-  (Routes API) la distance **par la route** entre l'atelier — place Saint-Pol, 28400
-  Nogent-le-Rotrou — et cette adresse (voiture, sans tenir compte du trafic).
-- La zone et le prix du déplacement en découlent : jusqu'à 5 km → 9 €, jusqu'à 15 km → 15 €,
-  jusqu'à 30 km → 25 €, au-delà → sur devis (bornes incluses).
+- Le client tape son adresse sur `/reservation` (étape « Votre adresse »). Pendant la
+  frappe, des propositions d'adresses s'affichent grâce à la **Base Adresse Nationale**
+  (service gratuit de l'État, sans clé, via `/api/adresse`). S'il ne trouve pas son adresse,
+  il peut « Utiliser l'adresse telle que tapée ».
+- Le serveur demande ensuite à Google Maps (Routes API) la distance **par la route** entre
+  l'atelier — place Saint-Pol, 28400 Nogent-le-Rotrou — et cette adresse (voiture, sans
+  tenir compte du trafic).
+- Frais de déplacement (bornes incluses, valeurs dans `config/com9.ts`) :
+  0 à 5 km → 8,90 € · 5 à 15 km → 14,90 € · 15 à 30 km → 24,90 €.
+  **Au-delà de 30 km, COM'9 n'intervient pas** : la demande est refusée par le serveur et
+  le client voit un message clair avec les moyens de contact.
 - La distance est **toujours recalculée par le serveur** au moment de la demande : une valeur
   envoyée par le navigateur est ignorée.
 - Adresse reconnue seulement approximativement (ville, code postal…) : la zone est affichée
   mais marquée « à vérifier » dans l'agenda.
-- Pas de clé, Google indisponible ou quota atteint : le formulaire repasse sur la liste des
-  communes validée par COM'9. Rien n'est présenté comme « calculé » dans ce cas.
+- Pas de clé, Google indisponible ou quota atteint : si l'adresse choisie dans les
+  propositions donne sa commune, le site affiche un **déplacement estimé** d'après la liste
+  indicative des communes, présenté comme une estimation que COM'9 confirmera. Sinon :
+  « Déplacement à confirmer ». Rien n'est présenté comme « calculé » dans ces cas.
 - Dans l'agenda, la fiche indique « X km par la route depuis l'atelier (Google Maps) ». Le
   formulaire de fiche propose « calculer depuis l'adresse ».
 
 ## Confidentialité
 
-- L'adresse est envoyée à Google pour le calcul (mention visible sous le champ).
+- L'adresse est envoyée à la Base Adresse Nationale (propositions) et à Google (calcul) ;
+  une mention est visible sous le champ.
 - Le cache `distance_cache` ne garde qu'une empreinte de l'adresse et la distance (90 jours),
   jamais l'adresse elle-même.
 - La clé reste côté serveur (en-tête `X-Goog-Api-Key`), jamais envoyée au navigateur.
@@ -46,6 +55,6 @@
 ## En cas de problème
 
 - Les erreurs Google (clé refusée, facturation inactive…) apparaissent dans les journaux
-  Vercel sous `[COM'9 Distance]`, sans la clé. Le client, lui, voit simplement la liste
-  des communes.
+  Vercel sous `[COM'9 Distance]`, sans la clé. Le client, lui, voit un déplacement
+  estimé ou « à confirmer ».
 - Pour couper le calcul : supprimer `GOOGLE_MAPS_API_KEY` dans Vercel puis redéployer.

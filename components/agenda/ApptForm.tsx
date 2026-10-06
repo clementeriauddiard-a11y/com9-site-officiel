@@ -5,25 +5,31 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useMemo, useState } from 'react'
-import { REPAIRS, SERIES, ZONES, type RepairId, type ZoneId } from '@/data/tarifs'
+import { ALL_REPAIRS, MODELS, REPAIR_LABEL, SERIES, ZONES, isGridRepair, type RepairId, type ZoneId } from '@/data/tarifs'
+import { DIAGNOSTIC } from '@/config/com9'
+import { centsToInput, euros, parseEuros } from '@/lib/money'
 import {
   apptTotal,
-  gridPrice,
+  gridPriceCents,
   qualitiesFor,
   validateInput,
   zoneFee,
   type ApptInput,
 } from '@/lib/agenda/logic'
+import { withinPublicHours } from '@/lib/agenda/slots'
 import {
   ORDER_DELAY_NOTE,
   ORIGIN_LABEL,
   PART_STATUSES,
   PART_STATUS_LABEL,
+  SYMPTOMS,
+  SYMPTOM_LABEL,
   partNeedsOrder,
   type AgendaSettings,
   type Appointment,
   type Origin,
   type PartStatus,
+  type Symptom,
 } from '@/lib/agenda/types'
 import { ApiError, type ConflictInfo } from './api'
 import { fmtSlotFull, isoToParis, parisToIso, todayParis } from './time'
@@ -48,18 +54,21 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
   const [origin, setOrigin] = useState<Origin>(init?.origin ?? 'telephone')
   const [clientName, setClientName] = useState(init?.clientName ?? '')
   const [clientPhone, setClientPhone] = useState(init?.clientPhone ?? '')
+  const [email, setEmail] = useState(init?.email ?? '')
   const [address, setAddress] = useState(init?.address ?? '')
 
   const [model, setModel] = useState(init?.model ?? '')
   const [repair, setRepair] = useState<RepairId>(init?.repair ?? 'ecran')
   const [quality, setQuality] = useState<string | null>(init?.quality ?? null)
+  const [symptom, setSymptom] = useState<Symptom | null>(init?.symptom ?? null)
+  const grid = isGridRepair(repair)
 
   // En modification, le prix convenu est conservé tel quel.
-  const [repairPrice, setRepairPrice] = useState(init ? String(init.repairPrice) : '')
+  const [repairPrice, setRepairPrice] = useState(init ? centsToInput(init.repairPriceCents) : '')
   const [priceTouched, setPriceTouched] = useState(Boolean(init))
 
   const [zone, setZone] = useState<ZoneId | null>(init?.zone ?? null)
-  const [travelFee, setTravelFee] = useState(init?.travelFee === null || init?.travelFee === undefined ? '' : String(init.travelFee))
+  const [travelFee, setTravelFee] = useState(init ? centsToInput(init.travelFeeCents) : '')
   const [travelTouched, setTravelTouched] = useState(Boolean(init))
   const [zoneVerified, setZoneVerified] = useState(init ? init.zoneVerified : true)
   const [distInfo, setDistInfo] = useState<{ busy: boolean; text: string; warn: boolean }>({ busy: false, text: '', warn: false })
@@ -103,25 +112,24 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
   const [error, setError] = useState<{ message: string; errors?: string[]; conflicts?: ConflictInfo[] } | null>(null)
 
   // ─── Qualités disponibles pour le couple modèle / prestation ───
-  const qualities = useMemo(() => (model ? qualitiesFor(model, repair) : []), [model, repair])
+  const qualities = useMemo(() => (model && grid ? qualitiesFor(model, repair) : []), [model, repair, grid])
 
   useEffect(() => {
-    if (!model) return
+    if (!grid || !model) return
     if (quality && qualities.some((q) => q.label === quality)) return
     setQuality(qualities.length === 1 ? qualities[0].label : null)
-  }, [model, repair, qualities, quality])
+  }, [model, repair, qualities, quality, grid])
 
   // ─── Prix de la grille ───
-  const grid = model && quality ? gridPrice(model, repair, quality) : null
+  const gridCents = grid && model && quality ? gridPriceCents(model, repair, quality) : null
   useEffect(() => {
-    if (!priceTouched && grid !== null) setRepairPrice(String(grid))
-  }, [grid, priceTouched])
+    if (!priceTouched && gridCents !== null) setRepairPrice(centsToInput(gridCents))
+  }, [gridCents, priceTouched])
 
   // ─── Déplacement selon la zone ───
   useEffect(() => {
     if (travelTouched) return
-    const fee = zoneFee(zone)
-    setTravelFee(fee === null ? '' : String(fee))
+    setTravelFee(centsToInput(zoneFee(zone)))
   }, [zone, travelTouched])
 
   // ─── Durée selon la prestation ───
@@ -129,24 +137,30 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
     if (!durationTouched) setDuration(String(settings.durations[repair]))
   }, [repair, durationTouched, settings.durations])
 
-  const priceN = toInt(repairPrice)
-  const travelN = travelFee.trim() === '' ? null : toInt(travelFee)
-  const total = priceN === null ? null : apptTotal({ repairPrice: priceN, travelFee: travelN })
+  const priceC = parseEuros(repairPrice)
+  const travelC = parseEuros(travelFee)
+  const okNum = (v: number | null) => v === null || Number.isFinite(v)
+  const total = okNum(priceC) && okNum(travelC) ? apptTotal({ repairPriceCents: priceC, travelFeeCents: travelC }) : null
+  const startIso = date && time ? parisToIso(date, time) : null
+  const durN = toInt(duration)
+  const offHours = startIso && durN ? !withinPublicHours(startIso, durN) : false
 
   function buildInput(): ApptInput {
     return {
       clientName,
       clientPhone,
+      email,
       address,
       model,
       repair,
       quality: quality ?? '',
       description,
-      repairPrice: priceN ?? -1,
+      symptom: repair === 'diagnostic' ? symptom : null,
+      repairPriceCents: priceC === null || Number.isNaN(priceC) ? (grid ? -1 : null) : priceC,
       zone,
       zoneVerified,
-      travelFee: travelN,
-      startAt: date && time ? parisToIso(date, time) : null,
+      travelFeeCents: travelC === null ? null : Number.isNaN(travelC) ? -1 : travelC,
+      startAt: startIso,
       durationMin: toInt(duration) ?? -1,
       origin,
       partStatus,
@@ -159,7 +173,8 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
     setError(null)
     const input = buildInput()
     const errors = validateInput(input)
-    if (travelFee.trim() !== '' && travelN === null) errors.push('Le déplacement doit être un nombre entier.')
+    if (Number.isNaN(priceC)) errors.push('Le prix doit être un montant (ex. 129 ou 129,90).')
+    if (Number.isNaN(travelC)) errors.push('Le déplacement doit être un montant (ex. 14,90).')
     if (mode === 'create' && initialStatus === 'confirme' && !input.startAt)
       errors.push('Un rendez-vous confirmé doit avoir une date et une heure.')
     if (errors.length) {
@@ -178,8 +193,8 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
   }
 
   const originOptions = (mode === 'create'
-    ? (['telephone', 'whatsapp'] as Origin[])
-    : (['site', 'telephone', 'whatsapp'] as Origin[])
+    ? (['telephone', 'whatsapp', 'manuel'] as Origin[])
+    : (['site', 'telephone', 'whatsapp', 'manuel'] as Origin[])
   ).map((o) => ({ id: o, label: ORIGIN_LABEL[o] }))
 
   const section = 'flex flex-col gap-4'
@@ -209,6 +224,10 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
               onChange={(e) => setClientPhone(e.target.value)} autoComplete="off" placeholder="06 12 34 56 78" />
           </Field>
         </div>
+        <Field label="E-mail (facultatif)" htmlFor="f-email">
+          <input id="f-email" type="email" className={inputCls} style={inputStyle} value={email}
+            onChange={(e) => setEmail(e.target.value)} autoComplete="off" maxLength={200} />
+        </Field>
         <Field label="Adresse d'intervention" htmlFor="f-address">
           <input id="f-address" className={inputCls} style={inputStyle} value={address}
             onChange={(e) => setAddress(e.target.value)} autoComplete="off" maxLength={300} />
@@ -218,31 +237,56 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
       {/* ── Prestation ── */}
       <div className={section}>
         {sectionTitle('Réparation')}
-        <Field label="Modèle" htmlFor="f-model">
-          <select id="f-model" className={inputCls} style={inputStyle} value={model}
-            onChange={(e) => setModel(e.target.value)}>
-            <option value="">Choisir un modèle</option>
-            {SERIES.map((s) => (
-              <optgroup key={s.serie} label={s.serie}>
-                {s.models.map((m) => <option key={m.model} value={m.model}>{m.model}</option>)}
-              </optgroup>
-            ))}
-          </select>
-        </Field>
         <Field label="Prestation">
-          <Segmented ariaLabel="Prestation" value={repair} onChange={setRepair}
-            options={REPAIRS.map((r) => ({ id: r.id, label: r.label }))} />
+          <Segmented ariaLabel="Prestation" value={repair}
+            onChange={(r) => { setRepair(r); if (!isGridRepair(r)) { setQuality(''); setPriceTouched(false); setRepairPrice('') } }}
+            options={ALL_REPAIRS.map((r) => ({ id: r, label: REPAIR_LABEL[r] }))} />
         </Field>
-        {qualities.length > 1 && (
-          <Field label="Qualité de pièce">
-            <Segmented ariaLabel="Qualité" value={quality} onChange={setQuality}
-              options={qualities.map((q) => ({ id: q.label, label: `${q.label} · ${q.price} €` }))} />
+        {grid ? (
+          <Field label="Modèle" htmlFor="f-model">
+            <select id="f-model" className={inputCls} style={inputStyle} value={model}
+              onChange={(e) => setModel(e.target.value)}>
+              <option value="">Choisir un modèle</option>
+              {SERIES.map((s) => (
+                <optgroup key={s.serie} label={s.serie}>
+                  {s.models.map((m) => <option key={m.model} value={m.model}>{m.model}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </Field>
+        ) : (
+          <Field label="Modèle" htmlFor="f-model" hint="Tout modèle (iPhone, Samsung, Pixel…).">
+            <input id="f-model" className={inputCls} style={inputStyle} value={model} list="f-models"
+              onChange={(e) => setModel(e.target.value)} maxLength={80} autoComplete="off" />
+            <datalist id="f-models">{MODELS.map((m) => <option key={m.model} value={m.model} />)}</datalist>
           </Field>
         )}
-        {qualities.length === 1 && (
+        {grid && qualities.length > 1 && (
+          <Field label="Qualité de pièce">
+            <Segmented ariaLabel="Qualité" value={quality} onChange={setQuality}
+              options={qualities.map((q) => ({ id: q.label, label: `${q.label} · ${euros(q.priceCents)}` }))} />
+          </Field>
+        )}
+        {grid && qualities.length === 1 && (
           <p className="font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>
             Qualité : {qualities[0].label}
           </p>
+        )}
+        {repair === 'module' && (
+          <Field label="Pièce concernée" htmlFor="f-quality" hint="Ex. connecteur de charge, caméra arrière, haut-parleur.">
+            <input id="f-quality" className={inputCls} style={inputStyle} value={quality ?? ''} maxLength={80}
+              onChange={(e) => setQuality(e.target.value)} />
+          </Field>
+        )}
+        {repair === 'diagnostic' && (
+          <Field label="Symptôme" htmlFor="f-symptom"
+            hint={`Réparation acceptée : réparation + déplacement. Refusée : déplacement + ${euros(DIAGNOSTIC.refusCents)}.`}>
+            <select id="f-symptom" className={inputCls} style={inputStyle} value={symptom ?? ''}
+              onChange={(e) => setSymptom((e.target.value || null) as Symptom | null)}>
+              <option value="">Non précisé</option>
+              {SYMPTOMS.map((x) => <option key={x} value={x}>{SYMPTOM_LABEL[x]}</option>)}
+            </select>
+          </Field>
         )}
       </div>
 
@@ -253,22 +297,23 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
           <Field
             label="Prix de réparation convenu (€)"
             htmlFor="f-price"
-            hint={grid !== null && priceN !== grid ? (
-              <>Prix grille : {grid} € ·{' '}
+            hint={gridCents !== null && priceC !== gridCents ? (
+              <>Prix grille : {euros(gridCents)} ·{' '}
                 <button type="button" className="underline underline-offset-2"
-                  onClick={() => { setRepairPrice(String(grid)); setPriceTouched(false) }}>
+                  onClick={() => { setRepairPrice(centsToInput(gridCents)); setPriceTouched(false) }}>
                   rétablir
                 </button>
               </>
-            ) : grid !== null ? 'Prix de la grille' : undefined}
+            ) : gridCents !== null ? 'Prix de la grille' : !grid ? 'Laisser vide si le prix sera fixé sur place.' : undefined}
           >
-            <input id="f-price" className={inputCls} style={inputStyle} inputMode="numeric" value={repairPrice}
+            <input id="f-price" className={inputCls} style={inputStyle} inputMode="decimal" value={repairPrice}
+              placeholder={grid ? '' : 'À définir'}
               onChange={(e) => { setRepairPrice(e.target.value); setPriceTouched(true) }} />
           </Field>
           <Field label="Zone de déplacement" htmlFor="f-zone" hint={
             <>
               {distInfo.text
-                ? <span style={{ color: distInfo.warn ? '#f5b94a' : undefined }} data-distance-info>{distInfo.text}</span>
+                ? <span style={{ color: distInfo.warn ? 'var(--c9-warn)' : undefined }} data-distance-info>{distInfo.text}</span>
                 : zone ? ZONES.find((z) => z.id === zone)?.full : null}
               {' '}
               <button type="button" className="underline underline-offset-2" disabled={distInfo.busy || address.trim().length < 5}
@@ -281,31 +326,31 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
               onChange={(e) => { setZone((e.target.value || null) as ZoneId | null); setTravelTouched(false) }}>
               <option value="">Non définie</option>
               {ZONES.map((z) => (
-                <option key={z.id} value={z.id}>{z.label} — {z.fee === null ? 'sur devis' : `${z.fee} €`}</option>
+                <option key={z.id} value={z.id}>{z.label} — {z.feeCents === null ? "pas d'intervention" : euros(z.feeCents)}</option>
               ))}
             </select>
           </Field>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Déplacement (€)" htmlFor="f-travel"
-            hint={zone === 'devis' ? 'Sur devis : saisissez le montant une fois chiffré.' : undefined}>
-            <input id="f-travel" className={inputCls} style={inputStyle} inputMode="numeric" value={travelFee}
-              placeholder={zone === 'devis' ? 'À chiffrer' : ''}
+            hint={zone === 'hors' ? "Au-delà de 30 km : saisissez un montant seulement si vous intervenez exceptionnellement." : undefined}>
+            <input id="f-travel" className={inputCls} style={inputStyle} inputMode="decimal" value={travelFee}
+              placeholder={zone === 'hors' ? '—' : ''}
               onChange={(e) => { setTravelFee(e.target.value); setTravelTouched(true) }} />
           </Field>
           <label className="flex items-center gap-3 self-end pb-3 font-space text-[0.875rem]"
             style={{ color: 'var(--c9-text-2)' }}>
             <input type="checkbox" checked={zoneVerified} onChange={(e) => setZoneVerified(e.target.checked)}
-              className="h-5 w-5 accent-[#3ad9ff]" />
+              className="h-5 w-5 accent-[#c9895c]" />
             Zone vérifiée par COM&apos;9
           </label>
         </div>
 
         <div className="flex items-baseline justify-between rounded-2xl px-4 py-3"
-          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--c9-hairline-soft)' }}>
+          style={{ background: 'var(--c9-elev-1)', border: '1px solid var(--c9-hairline-soft)' }}>
           <span className="font-space text-[0.9375rem] font-semibold">Total</span>
           <span className="font-space text-lg font-semibold tabular-nums">
-            {total !== null ? `${total} €` : travelN === null && zone === 'devis' ? 'Déplacement sur devis' : '—'}
+            {total !== null ? euros(total) : priceC === null && !grid ? 'Après diagnostic' : '—'}
           </span>
         </div>
       </div>
@@ -327,6 +372,11 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
               onChange={(e) => { setDuration(e.target.value); setDurationTouched(true) }} />
           </Field>
         </div>
+        {offHours && (
+          <p className="font-space text-[0.8125rem]" style={{ color: 'var(--c9-warn)' }} data-off-hours>
+            Hors des horaires publics : possible pour COM&apos;9, ce créneau n&apos;est jamais proposé aux clients.
+          </p>
+        )}
         {mode === 'create' && (
           <Field label="Statut à l'enregistrement">
             <Segmented ariaLabel="Statut initial" value={initialStatus} onChange={setInitialStatus}
@@ -342,7 +392,7 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
       <div className={section}>
         {sectionTitle('Pièce')}
         <Field label="État de la pièce" htmlFor="f-part"
-          hint={partNeedsOrder(partStatus) ? ORDER_DELAY_NOTE + ' Estimation, pas une garantie de livraison.' : undefined}>
+          hint={partNeedsOrder(partStatus) ? ORDER_DELAY_NOTE : undefined}>
           <select id="f-part" className={inputCls} style={inputStyle} value={partStatus ?? ''}
             onChange={(e) => setPartStatus((e.target.value || null) as PartStatus | null)}>
             <option value="">À vérifier</option>

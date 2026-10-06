@@ -11,6 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { RepairId, ZoneId } from '@/data/tarifs'
+import { DELAI_COMMANDE_JOURS, DUREES_MIN, type PaiementMode } from '@/config/com9'
 
 // ─── Statut du rendez-vous ───────────────────────────────────────────────────
 
@@ -63,7 +64,7 @@ export const PART_STATUS_LABEL: Record<PartStatus, string> = {
 }
 
 /** Mention affichée quand la pièce n'est pas encore là. Estimation, pas garantie. */
-export const ORDER_DELAY_NOTE = 'Sur commande — délai estimé de 3 jours.'
+export const ORDER_DELAY_NOTE = `Pièce sur commande — délai estimé ${DELAI_COMMANDE_JOURS} jours.`
 
 export function partNeedsOrder(p: PartStatus | null): boolean {
   return p === 'a_commander' || p === 'commandee'
@@ -71,13 +72,35 @@ export function partNeedsOrder(p: PartStatus | null): boolean {
 
 // ─── Origine ─────────────────────────────────────────────────────────────────
 
-export const ORIGINS = ['site', 'telephone', 'whatsapp'] as const
+export const ORIGINS = ['site', 'telephone', 'whatsapp', 'manuel'] as const
 export type Origin = (typeof ORIGINS)[number]
 
 export const ORIGIN_LABEL: Record<Origin, string> = {
   site:      'Site',
   telephone: 'Téléphone',
   whatsapp:  'WhatsApp',
+  manuel:    'Ajout manuel',
+}
+
+// ─── Symptômes (« Autre problème ») ──────────────────────────────────────────
+
+export const SYMPTOMS = [
+  'charge', 'chauffe', 'camera', 'micro', 'haut_parleur', 'face_id',
+  'ne_s_allume_plus', 'liquide', 'autre', 'ne_sais_pas',
+] as const
+export type Symptom = (typeof SYMPTOMS)[number]
+
+export const SYMPTOM_LABEL: Record<Symptom, string> = {
+  charge:           'Ne charge plus',
+  chauffe:          'Chauffe',
+  camera:           'Problème caméra',
+  micro:            'Problème microphone',
+  haut_parleur:     'Problème haut-parleur',
+  face_id:          'Face ID / Touch ID',
+  ne_s_allume_plus: 'Ne s\'allume plus',
+  liquide:          'Dommage liquide',
+  autre:            'Autre',
+  ne_sais_pas:      'Je ne sais pas',
 }
 
 // ─── Souhait du client (demande depuis le site) ───────────────────────────────
@@ -108,12 +131,13 @@ export const REQUEST_RECEIVED_MESSAGE =
  * jamais le rendez-vous toute seule : COM'9 décide.
  */
 export const CLIENT_REQUESTS = ['acceptation', 'refus', 'autre_dispo', 'modification', 'annulation'] as const
+// « refus » est conservé pour les fiches existantes ; le client choisit désormais un autre créneau.
 export type ClientRequest = (typeof CLIENT_REQUESTS)[number]
 
 export const CLIENT_REQUEST_LABEL: Record<ClientRequest, string> = {
   acceptation:  'Le client accepte le créneau indicatif — à confirmer',
   refus:        'Le client refuse le créneau proposé',
-  autre_dispo:  'Le client demande une autre disponibilité',
+  autre_dispo:  'Le client a choisi un autre créneau',
   modification: 'Le client demande à changer le rendez-vous',
   annulation:   "Le client demande l'annulation",
 }
@@ -163,6 +187,8 @@ export type Appointment = {
   // Client — données personnelles, accessibles à l'administrateur seulement
   clientName: string
   clientPhone: string
+  /** Facultatif */
+  email: string
   address: string
 
   // Prestation
@@ -173,14 +199,24 @@ export type Appointment = {
   /** Description du problème, fournie par le client */
   description: string
 
-  // Prix — montants en euros entiers
-  /** Prix de réparation convenu. Pré-rempli depuis la grille, modifiable. */
-  repairPrice: number
+  /** Symptôme choisi (parcours « Autre problème ») ; null sinon */
+  symptom: Symptom | null
+
+  // Prix — montants en CENTIMES
+  /** Prix de réparation convenu. null = à déterminer (diagnostic, petite pièce). */
+  repairPriceCents: number | null
   zone: ZoneId | null
-  /** true quand COM'9 a vérifié la zone (une zone choisie par le client est provisoire) */
+  /** true quand la zone est sûre (distance calculée sur l'adresse précise, ou vérifiée par COM'9) */
   zoneVerified: boolean
-  /** Forfait de déplacement. null = sur devis ou pas encore défini : aucun total. */
-  travelFee: number | null
+  /** Forfait de déplacement. null = pas encore défini ou hors zone : aucun total. */
+  travelFeeCents: number | null
+
+  // Après l'intervention
+  /** Montant final encaissé (centimes) */
+  finalAmountCents: number | null
+  paymentMode: PaiementMode | null
+  paid: boolean
+  paidAt: string | null
 
   // Planning
   /** Début prévu (ISO). null tant qu'aucun créneau n'est fixé. */
@@ -206,6 +242,8 @@ export type Appointment = {
   /** Message libre du client joint à sa demande */
   clientMessage: string
   clientRequestAt: string | null
+  /** Créneau choisi par le client depuis son lien (changement d'un rendez-vous confirmé) */
+  clientSlot: string | null
 
   /** Commune de la liste COM'9 (null : hors liste ou non précisée) */
   communeId: string | null
@@ -231,9 +269,31 @@ export type ApptEvent = {
   id: number
   apptId: string
   at: string
-  kind: 'creation' | 'statut' | 'modification' | 'proposition' | 'piece' | 'message'
+  kind: 'creation' | 'statut' | 'modification' | 'proposition' | 'piece' | 'message' | 'paiement'
   /** Résumé lisible de ce qui a changé */
   summary: string
+}
+
+// ─── Plages bloquées par COM'9 ───────────────────────────────────────────────
+
+export const BLOCK_REASONS = ['indisponible', 'personnel', 'trajet', 'piece', 'autre'] as const
+export type BlockReason = (typeof BLOCK_REASONS)[number]
+
+export const BLOCK_REASON_LABEL: Record<BlockReason, string> = {
+  indisponible: 'Indisponible',
+  personnel:    'Personnel',
+  trajet:       'Trajet',
+  piece:        'Récupération pièce',
+  autre:        'Autre',
+}
+
+export type Block = {
+  id: string
+  startAt: string
+  endAt: string
+  reason: BlockReason
+  /** Précision interne, jamais visible par les clients */
+  note: string
 }
 
 // ─── Réglages planning ───────────────────────────────────────────────────────
@@ -253,8 +313,9 @@ export type AgendaSettings = {
  * Ce sont des propositions, pas des durées validées.
  */
 export const DEFAULT_SETTINGS: AgendaSettings = {
-  durations: { ecran: 60, batterie: 45, vitre: 90 },
+  durations: { ...DUREES_MIN },
   marginMin: 30,
-  dayStartHour: 8,
-  dayEndHour: 20,
+  // Vue semaine : couvre les horaires publics (14 h – 23 h) avec un peu de marge.
+  dayStartHour: 13,
+  dayEndHour: 24,
 }

@@ -7,12 +7,14 @@
 //  délai, garantie ou frais qui n'existe pas dans la fiche.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { REPAIRS, ZONES } from '@/data/tarifs'
+import { REPAIR_LABEL, findZone } from '@/data/tarifs'
+import { DIAGNOSTIC } from '@/config/com9'
+import { euros } from '@/lib/money'
 import { ORDER_DELAY_NOTE, partNeedsOrder, type Appointment, type MessageKind } from '@/lib/agenda/types'
 import { addDays, fmtSlotFull, fmtTime, isoToParis, todayParis } from './time'
 
 const lowerFirst = (t: string) => t.charAt(0).toLowerCase() + t.slice(1)
-const repairLabel = (id: string) => (REPAIRS.find((r) => r.id === id)?.label ?? id).toLowerCase()
+const repairLabel = (id: Appointment['repair']) => (REPAIR_LABEL[id] ?? id).toLowerCase()
 
 export function trackUrl(origin: string, token: string): string {
   return `${origin}/suivi/${token}`
@@ -21,7 +23,7 @@ export function trackUrl(origin: string, token: string): string {
 type Msg = Pick<
   Appointment,
   | 'clientName' | 'model' | 'repair' | 'quality' | 'status' | 'startAt' | 'proposedStartAt' | 'proposedReason'
-  | 'repairPrice' | 'travelFee' | 'zone' | 'zoneVerified' | 'partStatus'
+  | 'repairPriceCents' | 'travelFeeCents' | 'zone' | 'zoneVerified' | 'partStatus'
 >
 
 /** « le mardi 13 octobre à 10 h 00 » */
@@ -39,18 +41,25 @@ export function whenPhrase(iso: string, today = todayParis()): string {
 }
 
 function amountPhrase(a: Msg): string {
-  const zone = ZONES.find((z) => z.id === a.zone)
-  if (a.travelFee === null) {
-    return `Réparation ${a.repairPrice} €, déplacement ${a.zone === 'devis' ? 'sur devis' : 'à confirmer'}.`
-  }
+  const zone = findZone(a.zone)
   const caveat = zone && !a.zoneVerified ? ' (zone à confirmer)' : ''
-  return `Réparation ${a.repairPrice} € + déplacement ${a.travelFee} €${caveat} = ${a.repairPrice + a.travelFee} €.`
+  if (a.repairPriceCents === null) {
+    // Diagnostic / petite pièce : prix connu après le diagnostic.
+    const travel = a.travelFeeCents === null ? 'déplacement à confirmer' : `déplacement ${euros(a.travelFeeCents)}${caveat}`
+    return `Prix de la réparation indiqué après le diagnostic sur place ; ${travel}. ` +
+      `Si vous refusez la réparation : déplacement + ${euros(DIAGNOSTIC.refusCents)} de diagnostic.`
+  }
+  if (a.travelFeeCents === null) {
+    return `Réparation ${euros(a.repairPriceCents)}, déplacement à confirmer.`
+  }
+  return `Réparation ${euros(a.repairPriceCents)} + déplacement ${euros(a.travelFeeCents)}${caveat} = ${euros(a.repairPriceCents + a.travelFeeCents)}.`
 }
 
 /** Texte prêt à envoyer. `url` = lien de suivi personnel du client. */
 export function buildMessage(kind: MessageKind, a: Msg, url: string, today = todayParis()): string {
   const hello = `Bonjour ${a.clientName},`
   const what = `votre ${a.model} (${repairLabel(a.repair)})`
+  const qual = a.quality ? `, ${a.quality}` : ''
   const part = partNeedsOrder(a.partStatus) ? ` ${ORDER_DELAY_NOTE}` : ''
 
   switch (kind) {
@@ -62,13 +71,13 @@ export function buildMessage(kind: MessageKind, a: Msg, url: string, today = tod
       return a.proposedStartAt
         ? `${hello} COM'9 vous propose un rendez-vous ${slotPhrase(a.proposedStartAt)} pour ${what}.` +
           (a.proposedReason ? ` Motif : ${a.proposedReason}.` : '') +
-          ` Vous pouvez accepter, refuser ou demander une autre disponibilité ici : ${url}`
+          ` Acceptez-le ou choisissez un autre créneau ici : ${url}`
         : `${hello} voici le suivi de votre demande COM'9 pour ${what} : ${url}`
 
     case 'confirmation':
       return a.startAt
-        ? `${hello} votre rendez-vous COM'9 est confirmé ${slotPhrase(a.startAt)}, à l'adresse indiquée, pour ${what}, ` +
-          `${a.quality}. ${amountPhrase(a)}${part} Aucun paiement à l'avance. Suivi et demandes de changement : ${url}`
+        ? `${hello} votre rendez-vous COM'9 est confirmé ${slotPhrase(a.startAt)}, à l'adresse indiquée, pour ${what}${qual}. ` +
+          `${amountPhrase(a)}${part} Aucun paiement à l'avance. Suivi et demandes de changement : ${url}`
         : `${hello} voici le suivi de votre rendez-vous COM'9 pour ${what} : ${url}`
 
     case 'rappel':

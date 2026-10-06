@@ -5,7 +5,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react'
-import { REPAIRS } from '@/data/tarifs'
+import { ALL_REPAIRS, REPAIR_LABEL, type RepairId } from '@/data/tarifs'
+import { HORAIRES_TEXTE } from '@/config/com9'
 import { validateSettings } from '@/lib/agenda/logic'
 import type { AgendaSettings } from '@/lib/agenda/types'
 import { ApiError, api } from './api'
@@ -17,11 +18,9 @@ export default function SettingsPanel({ settings, onSaved, onClose }: {
   onSaved: (s: AgendaSettings) => void
   onClose: () => void
 }) {
-  const [d, setD] = useState({
-    ecran: String(settings.durations.ecran),
-    batterie: String(settings.durations.batterie),
-    vitre: String(settings.durations.vitre),
-  })
+  const [d, setD] = useState<Record<RepairId, string>>(
+    Object.fromEntries(ALL_REPAIRS.map((r) => [r, String(settings.durations[r])])) as Record<RepairId, string>,
+  )
   const [margin, setMargin] = useState(String(settings.marginMin))
   const [h0, setH0] = useState(String(settings.dayStartHour))
   const [h1, setH1] = useState(String(settings.dayEndHour))
@@ -32,7 +31,7 @@ export default function SettingsPanel({ settings, onSaved, onClose }: {
 
   async function save() {
     const next: AgendaSettings = {
-      durations: { ecran: n(d.ecran), batterie: n(d.batterie), vitre: n(d.vitre) },
+      durations: Object.fromEntries(ALL_REPAIRS.map((r) => [r, n(d[r])])) as Record<RepairId, number>,
       marginMin: n(margin),
       dayStartHour: n(h0),
       dayEndHour: n(h1),
@@ -58,21 +57,33 @@ export default function SettingsPanel({ settings, onSaved, onClose }: {
         <p className="mb-3 font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>
           Proposée à la création d&apos;un rendez-vous, modifiable fiche par fiche.
         </p>
-        <div className="grid grid-cols-3 gap-3">
-          {REPAIRS.map((r) => (
-            <Field key={r.id} label={`${r.label} (min)`} htmlFor={`s-${r.id}`}>
-              <input id={`s-${r.id}`} className={inputCls} style={inputStyle} inputMode="numeric"
-                value={d[r.id]} onChange={(e) => setD({ ...d, [r.id]: e.target.value })} />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {ALL_REPAIRS.map((r) => (
+            <Field key={r} label={`${REPAIR_LABEL[r]} (min)`} htmlFor={`s-${r}`}>
+              <input id={`s-${r}`} className={inputCls} style={inputStyle} inputMode="numeric"
+                value={d[r]} onChange={(e) => setD({ ...d, [r]: e.target.value })} />
             </Field>
           ))}
         </div>
       </div>
 
       <Field label="Marge entre deux rendez-vous confirmés (min)" htmlFor="s-margin"
-        hint="Temps réservé au trajet et à l'installation. Il n'est pas calculé automatiquement : aucun service d'itinéraire n'est configuré.">
+        hint="Temps réservé au trajet et à l'installation entre deux interventions. Les créneaux proposés aux clients en tiennent compte.">
         <input id="s-margin" className={inputCls} style={inputStyle} inputMode="numeric"
           value={margin} onChange={(e) => setMargin(e.target.value)} />
       </Field>
+
+      <div className="rounded-2xl p-4" style={{ border: '1px solid var(--c9-hairline-soft)' }}>
+        <h3 className="mb-1 font-space text-[1rem] font-semibold">Horaires proposés aux clients</h3>
+        {HORAIRES_TEXTE.lignes.map((l) => (
+          <p key={l.jours} className="font-space text-[0.875rem] tabular-nums" style={{ color: 'var(--c9-text-2)' }}>
+            {l.jours} : {l.heures}
+          </p>
+        ))}
+        <p className="mt-1 font-space text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }}>
+          Modifiables dans config/com9.ts. Vous pouvez toujours créer un rendez-vous hors de ces horaires, et bloquer une plage depuis l&apos;agenda.
+        </p>
+      </div>
 
       <div>
         <h3 className="mb-3 font-space text-[1rem] font-semibold">Plage affichée dans la vue semaine</h3>

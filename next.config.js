@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // ─── Anciennes pages (Marketplace, diagnostic en ligne) ─────────────────────
+  async redirects() {
+    return [
+      { source: '/marketplace', destination: '/', permanent: true },
+      { source: '/marketplace/:path*', destination: '/', permanent: true },
+      { source: '/diagnostic-premium', destination: '/reservation?parcours=autre', permanent: true },
+    ]
+  },
+
   // ─── Headers de sécurité ────────────────────────────────────────────────────
   async headers() {
     return [

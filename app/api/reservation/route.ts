@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // COM'9 — API /api/reservation        (publique : formulaire du site)
-//   POST { clientName, clientPhone, address, model, repair, quality, zone,
-//          description, preferredDate, preferredPeriod, availabilityNote }
+//   POST { kind, repair, model, quality, symptom, description, address, citycode,
+//          startAt, clientName, clientPhone, email }
 //
 //  Crée une DEMANDE (statut « demande reçue »), jamais un rendez-vous confirmé.
 //  Renvoie un récapitulatif et le lien de suivi personnel de la demande

@@ -1,13 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // COM'9 — API /api/agenda          (administrateur uniquement)
 //   GET  ?view=pending                    → demandes à traiter
-//   GET  ?view=range&from=ISO&to=ISO      → rendez-vous d'une période
+//   GET  ?view=range&from=ISO&to=ISO      → rendez-vous et plages bloquées d'une période
 //   GET  ?view=followups                  → rappels et suivis WhatsApp à envoyer
 //   POST { input, status }                → création manuelle
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from 'next/server'
-import { createAppointment, getFollowups, listPending, listRange } from '@/lib/agenda/service'
+import { createAppointment, getFollowups, listBlocks, listPending, listRange } from '@/lib/agenda/service'
 import { errorResponse, requireAdmin, storageInfo, withoutToken } from '@/lib/agenda/http'
 import type { ApptInput } from '@/lib/agenda/logic'
 
@@ -47,8 +47,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Période trop longue.' }, { status: 400 })
     }
 
-    const items = await listRange(from as string, to as string)
-    return NextResponse.json({ items: items.map(withoutToken), storage: storageInfo() })
+    const [items, blocks] = await Promise.all([
+      listRange(from as string, to as string),
+      listBlocks(from as string, to as string),
+    ])
+    return NextResponse.json({ items: items.map(withoutToken), blocks, storage: storageInfo() })
   } catch (err) {
     return errorResponse(err)
   }

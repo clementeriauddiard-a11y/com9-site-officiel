@@ -4,10 +4,8 @@
 //  Les tentatives sont enregistrées dans Postgres (table auth_attempts) : la
 //  limite vaut pour TOUTES les instances Vercel et survit à un redémarrage.
 //
-//  Trois compteurs indépendants — une attaque sur l'un ne bloque jamais l'autre :
+//  Deux compteurs indépendants — une attaque sur l'un ne bloque jamais l'autre :
 //
-//    « diagnostic »           page publique /diagnostic-premium
-//                             5 échecs / adresse / 15 min · 50 échecs au total
 //    « responsable »          espace responsable, appareil inconnu
 //                             5 échecs / adresse / 15 min · 50 échecs au total
 //    « responsable-appareil » espace responsable, appareil de confiance
@@ -25,9 +23,9 @@ import { clientIp, sourceHash } from './request'
 
 export const LOGIN_LIMITS = { windowMin: 15, perSource: 5, global: 50 } as const
 
-export type GuardScope = 'responsable' | 'diagnostic'
+export type GuardScope = 'responsable'
 export type CounterScope = GuardScope | 'responsable-appareil'
-export const COUNTER_SCOPES: readonly CounterScope[] = ['responsable', 'responsable-appareil', 'diagnostic']
+export const COUNTER_SCOPES: readonly CounterScope[] = ['responsable', 'responsable-appareil']
 
 export type GuardResult =
   | { ok: true }

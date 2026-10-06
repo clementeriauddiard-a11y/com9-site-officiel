@@ -5,9 +5,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useMemo } from 'react'
-import { REPAIRS } from '@/data/tarifs'
+import { REPAIR_LABEL } from '@/data/tarifs'
+import { euros } from '@/lib/money'
 import { apptTotal, telHref, waHref } from '@/lib/agenda/logic'
-import { BLOCKING_STATUSES, PREFERRED_PERIOD_LABEL, type AgendaSettings } from '@/lib/agenda/types'
+import { BLOCKING_STATUSES, BLOCK_REASON_LABEL, PREFERRED_PERIOD_LABEL, type AgendaSettings, type Block } from '@/lib/agenda/types'
 import type { ApptLite } from './api'
 import {
   addDays,
@@ -23,7 +24,44 @@ import {
 } from './time'
 import { PartChip, STATUS_TONE, StatusChip } from './ui'
 
-const repairLabel = (id: string) => REPAIRS.find((r) => r.id === id)?.label ?? id
+const repairLabel = (id: ApptLite['repair']) => REPAIR_LABEL[id] ?? id
+
+// ─── Plage bloquée ───────────────────────────────────────────────────────────
+
+/** Partie d'une plage bloquée qui tombe dans un jour donné (minutes depuis minuit). */
+function blockOnDay(b: Block, day: string): { s: number; e: number } | null {
+  const sd = isoToParis(b.startAt).date
+  const ed = isoToParis(b.endAt).date
+  if (day < sd || day > ed) return null
+  const s = day === sd ? minutesOfDay(b.startAt) : 0
+  const e = day === ed ? minutesOfDay(b.endAt) : 24 * 60
+  return e > s ? { s, e } : null
+}
+
+const hatch = 'repeating-linear-gradient(135deg, var(--c9-block-a, var(--c9-elev-1)) 0 8px, var(--c9-block-b, var(--c9-elev-2)) 8px 16px)'
+const hm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+
+export function BlockCard({ b, day, onRemove }: { b: Block; day: string; onRemove: (id: string) => void }) {
+  const part = blockOnDay(b, day)
+  if (!part) return null
+  return (
+    <div className="flex items-center gap-4 rounded-[22px] p-4" data-block
+      style={{ background: hatch, border: '1px dashed var(--c9-hairline)' }}>
+      <div className="w-[4.25rem] shrink-0 font-space text-[0.9375rem] font-semibold tabular-nums">
+        {hm(part.s)}<span className="block text-[0.75rem] font-normal" style={{ color: 'var(--c9-text-3)' }}>{part.e >= 1440 ? '24:00' : hm(part.e)}</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="font-space text-[0.9375rem] font-semibold">Plage bloquée · {BLOCK_REASON_LABEL[b.reason]}</p>
+        {b.note && <p className="truncate font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>{b.note}</p>}
+      </div>
+      <button type="button" onClick={() => onRemove(b.id)}
+        className="c9-back shrink-0 rounded-xl px-3 font-space text-[0.8125rem] font-medium"
+        style={{ minHeight: '44px', border: '1px solid var(--c9-hairline-soft)' }}>
+        Libérer
+      </button>
+    </div>
+  )
+}
 
 /** Créneau à afficher : le créneau fixé, sinon le créneau proposé. */
 function slotOf(a: ApptLite): { iso: string | null; proposed: boolean } {
@@ -42,7 +80,7 @@ function QuickLinks({ phone }: { phone: string }) {
   const tel = telHref(phone)
   const wa = waHref(phone)
   const cls = 'c9-back flex h-11 w-11 items-center justify-center rounded-xl'
-  const st = { background: 'rgba(255,255,255,0.06)', border: '1px solid var(--c9-hairline-soft)' }
+  const st = { background: 'var(--c9-elev-2)', border: '1px solid var(--c9-hairline-soft)' }
   return (
     <div className="flex shrink-0 gap-1.5" onClick={(e) => e.stopPropagation()}>
       {tel && (
@@ -78,8 +116,8 @@ export function ApptCard({ a, onOpen, showDate = false }: { a: ApptLite; onOpen:
       onKeyDown={(e) => { if (e.key === 'Enter') onOpen(a.id) }}
       className="flex cursor-pointer gap-4 rounded-[22px] p-4 text-left transition-colors duration-200 focus-visible:outline-2"
       style={{
-        background: 'rgba(255,255,255,0.045)',
-        border: `1px solid ${proposed ? 'rgba(180,156,255,0.35)' : 'var(--c9-hairline-soft)'}`,
+        background: 'var(--c9-elev-1)',
+        border: `1px solid ${proposed ? 'var(--c9-hairline-lit)' : 'var(--c9-hairline-soft)'}`,
         borderStyle: proposed ? 'dashed' : 'solid',
         opacity: cancelled ? 0.5 : 1,
       }}
@@ -100,7 +138,7 @@ export function ApptCard({ a, onOpen, showDate = false }: { a: ApptLite; onOpen:
           </>
         ) : a.preferredDate ? (
           <>
-            <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: '#f5b94a' }}>Souhait</span>
+            <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: 'var(--c9-warn)' }}>Souhait</span>
             <span className="mt-1 font-space text-[0.9375rem] font-semibold leading-none">
               {fmtDayShort(a.preferredDate).dow} {fmtDayShort(a.preferredDate).num}
             </span>
@@ -128,14 +166,17 @@ export function ApptCard({ a, onOpen, showDate = false }: { a: ApptLite; onOpen:
         <p className="truncate font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>{a.address}</p>
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <StatusChip status={a.status} />
-          {proposed && <span className="font-space text-[0.75rem]" style={{ color: '#d4c6ff' }}>créneau proposé</span>}
+          {proposed && <span className="font-space text-[0.75rem]" style={{ color: 'var(--c9-text-2)' }}>créneau proposé</span>}
+          {!proposed && a.status === 'demande_recue' && a.startAt && (
+            <span className="font-space text-[0.75rem]" style={{ color: 'var(--c9-text-2)' }}>créneau demandé</span>
+          )}
           {a.clientRequest && (
             <span className="rounded-full px-2 py-0.5 font-space text-[0.75rem] font-semibold"
-              style={{ color: '#06131f', background: '#f5b94a' }}>Réponse client</span>
+              style={{ color: 'var(--c9-accent-ink)', background: 'var(--c9-warn)' }}>Réponse client</span>
           )}
           {partNeedsAttention(a.partStatus) && <PartChip part={a.partStatus} />}
           <span className="ml-auto font-space text-[0.875rem] font-semibold tabular-nums" style={{ color: 'var(--c9-text-2)' }}>
-            {total !== null ? `${total} €` : `${a.repairPrice} € + dépl.`}
+            {total !== null ? euros(total) : a.repairPriceCents !== null ? `${euros(a.repairPriceCents)} + dépl.` : 'Diagnostic'}
           </span>
         </div>
       </div>
@@ -156,7 +197,7 @@ function Nav({ label, sub, onPrev, onNext, onToday, todayLabel, isToday }: {
   label: string; sub?: string; onPrev: () => void; onNext: () => void; onToday: () => void; todayLabel: string; isToday: boolean
 }) {
   const arrow = 'c9-back flex h-11 w-11 shrink-0 items-center justify-center rounded-xl'
-  const st = { background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c9-hairline-soft)' }
+  const st = { background: 'var(--c9-elev-1)', border: '1px solid var(--c9-hairline-soft)' }
   return (
     <div className="mb-5 flex items-center gap-2">
       <button type="button" aria-label="Précédent" onClick={onPrev} className={arrow} style={st}>
@@ -181,14 +222,20 @@ function Nav({ label, sub, onPrev, onNext, onToday, todayLabel, isToday }: {
 
 // ─── Vue « Aujourd'hui » (téléphone) ─────────────────────────────────────────
 
-export function DayView({ date, items, onDate, onOpen }: {
-  date: string; items: ApptLite[]; onDate: (d: string) => void; onOpen: (id: string) => void
+export function DayView({ date, items, blocks = [], onDate, onOpen, onRemoveBlock }: {
+  date: string; items: ApptLite[]; blocks?: Block[]; onDate: (d: string) => void; onOpen: (id: string) => void
+  onRemoveBlock: (id: string) => void
 }) {
   const today = todayParis()
   const sorted = useMemo(
     () => [...items].sort((a, b) => (slotOf(a).iso ?? '').localeCompare(slotOf(b).iso ?? '')),
     [items],
   )
+  const dayBlocks = blocks.filter((b) => blockOnDay(b, date))
+  const merged = [
+    ...sorted.map((a) => ({ kind: 'a' as const, a, at: slotOf(a).iso ?? '' })),
+    ...dayBlocks.map((b) => ({ kind: 'b' as const, b, at: b.startAt })),
+  ].sort((x, y) => x.at.localeCompare(y.at))
   const blocking = items.filter((a) => BLOCKING_STATUSES.includes(a.status) && a.startAt && isoToParis(a.startAt).date === date)
   const minutes = blocking.reduce((s, a) => s + a.durationMin, 0)
 
@@ -208,11 +255,13 @@ export function DayView({ date, items, onDate, onOpen }: {
         </p>
       )}
 
-      {sorted.length === 0 ? (
+      {sorted.length === 0 && dayBlocks.length === 0 ? (
         <Empty>Aucun rendez-vous ce jour.</Empty>
       ) : (
         <div className="flex flex-col gap-3">
-          {sorted.map((a) => <ApptCard key={a.id} a={a} onOpen={onOpen} />)}
+          {merged.map((x) => x.kind === 'a'
+            ? <ApptCard key={x.a.id} a={x.a} onOpen={onOpen} />
+            : <BlockCard key={x.b.id} b={x.b} day={date} onRemove={onRemoveBlock} />)}
         </div>
       )}
     </div>
@@ -235,8 +284,9 @@ function lanes(items: { a: ApptLite; s: number; e: number }[]) {
   return { placed, count: Math.max(1, ends.length) }
 }
 
-export function WeekView({ monday, items, settings, onWeek, onOpen }: {
-  monday: string; items: ApptLite[]; settings: AgendaSettings; onWeek: (m: string) => void; onOpen: (id: string) => void
+export function WeekView({ monday, items, blocks = [], settings, onWeek, onOpen, onRemoveBlock }: {
+  monday: string; items: ApptLite[]; blocks?: Block[]; settings: AgendaSettings; onWeek: (m: string) => void; onOpen: (id: string) => void
+  onRemoveBlock: (id: string) => void
 }) {
   const today = todayParis()
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i))
@@ -269,7 +319,7 @@ export function WeekView({ monday, items, settings, onWeek, onOpen }: {
 
       {/* Grille horaire — ordinateur */}
       <div className="hidden overflow-x-auto rounded-[22px] lg:block"
-        style={{ border: '1px solid var(--c9-hairline-soft)', background: 'rgba(255,255,255,0.02)' }}>
+        style={{ border: '1px solid var(--c9-hairline-soft)', background: 'var(--c9-elev-1)' }}>
         <div className="grid min-w-[880px]" style={{ gridTemplateColumns: '56px repeat(7, minmax(0, 1fr))' }}>
           <div />
           {days.map((d) => {
@@ -280,7 +330,7 @@ export function WeekView({ monday, items, settings, onWeek, onOpen }: {
                 style={{ borderLeft: '1px solid var(--c9-hairline-soft)', borderBottom: '1px solid var(--c9-hairline-soft)' }}>
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: isT ? 'var(--c9-accent)' : 'var(--c9-text-3)' }}>{f.dow}</span>
                 <span className="flex h-8 w-8 items-center justify-center rounded-full font-space text-[0.9375rem] font-semibold"
-                  style={isT ? { background: 'var(--c9-accent)', color: '#06131f' } : undefined}>{f.num}</span>
+                  style={isT ? { background: 'var(--c9-accent)', color: 'var(--c9-accent-ink)' } : undefined}>{f.num}</span>
               </div>
             )
           })}
@@ -303,6 +353,22 @@ export function WeekView({ monday, items, settings, onWeek, onOpen }: {
                 {hours.map((h) => (
                   <div key={h} className="absolute inset-x-0" style={{ top: (h - h0) * HOUR_PX, borderTop: h !== h0 ? '1px solid var(--c9-hairline-soft)' : 'none' }} />
                 ))}
+                {blocks.map((b) => {
+                  const part = blockOnDay(b, d)
+                  if (!part) return null
+                  const top = Math.max(0, (part.s / 60 - h0) * HOUR_PX)
+                  const bottom = Math.min(height, (part.e / 60 - h0) * HOUR_PX)
+                  if (bottom <= 0 || top >= height) return null
+                  return (
+                    <div key={b.id} className="absolute inset-x-[3px] overflow-hidden rounded-lg px-2 py-1" data-block
+                      title={`Plage bloquée — ${BLOCK_REASON_LABEL[b.reason]}${b.note ? ` : ${b.note}` : ''}`}
+                      style={{ top, height: Math.max(22, bottom - top - 2), background: hatch, border: '1px dashed var(--c9-hairline)' }}>
+                      <p className="truncate font-space text-[0.6875rem] font-semibold" style={{ color: 'var(--c9-text-2)' }}>
+                        {BLOCK_REASON_LABEL[b.reason]}
+                      </p>
+                    </div>
+                  )
+                })}
                 {placed.map(({ a, s, e, lane }) => {
                   const top = Math.max(0, (s / 60 - h0) * HOUR_PX)
                   const bottom = Math.min(height, (e / 60 - h0) * HOUR_PX)
@@ -342,15 +408,19 @@ export function WeekView({ monday, items, settings, onWeek, onOpen }: {
       <div className="flex flex-col gap-6 lg:hidden">
         {days.map((d) => {
           const list = (byDay[d] ?? []).map((x) => x.a)
+          const dBlocks = blocks.filter((b) => blockOnDay(b, d))
           return (
             <section key={d}>
               <h3 className="mb-2.5 font-space text-[0.9375rem] font-semibold"
                 style={{ color: d === today ? 'var(--c9-accent)' : 'var(--c9-text)' }}>
                 {fmtDayLong(d)}
               </h3>
-              {list.length === 0
+              {list.length === 0 && dBlocks.length === 0
                 ? <p className="font-space text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>Aucun rendez-vous.</p>
-                : <div className="flex flex-col gap-3">{list.map((a) => <ApptCard key={a.id} a={a} onOpen={onOpen} />)}</div>}
+                : <div className="flex flex-col gap-3">
+                    {dBlocks.map((b) => <BlockCard key={b.id} b={b} day={d} onRemove={onRemoveBlock} />)}
+                    {list.map((a) => <ApptCard key={a.id} a={a} onOpen={onOpen} />)}
+                  </div>}
             </section>
           )
         })}

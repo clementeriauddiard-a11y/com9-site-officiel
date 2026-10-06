@@ -1,167 +1,94 @@
-'use client'
+// ─────────────────────────────────────────────────────────────────────────────
+// COM'9 — Hero : le concept compris en moins de 3 secondes
+// « Votre smartphone réparé chez vous. » · jusqu'à 23h · On vient à vous.
+// ─────────────────────────────────────────────────────────────────────────────
 
-import { motion } from 'framer-motion'
-import { waLink } from '@/lib/links'
+import Link from 'next/link'
+import { HORAIRES_TEXTE, ZONES } from '@/config/com9'
+import { findModel, getOptions } from '@/data/tarifs'
+import { euros } from '@/lib/money'
 
-const EASE = [0.22, 1, 0.36, 1] as const
-
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
-}
-
-const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.9, ease: EASE } },
+/** Exemple réel tiré de la grille (aucun prix écrit en dur ici). */
+function example() {
+  const m = findModel('iPhone 13')
+  const opt = m ? getOptions('ecran', m).find((o) => o.recommended) ?? getOptions('ecran', m)[0] : null
+  const zone = ZONES[0]
+  if (!m || !opt || zone.feeCents === null) return null
+  return { model: m.model, quality: opt.label, repair: opt.priceCents, travel: zone.feeCents, zone: zone.full }
 }
 
 export default function Hero() {
+  const ex = example()
   return (
-    <section
-      id="home"
-      className="relative flex min-h-[100svh] items-center justify-center overflow-x-hidden"
-    >
-      {/* Halo unique, statique, très diffus */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 58% 42% at 50% 38%, rgba(58,217,255,0.14) 0%, rgba(26,169,255,0.05) 46%, transparent 70%)',
-        }}
-      />
+    <section id="accueil" className="relative overflow-hidden" style={{ paddingTop: 'calc(64px + env(safe-area-inset-top, 0px))' }}>
+      {/* Lumière unique, très diffuse */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(60% 50% at 85% 10%, rgba(201,137,92,0.14) 0%, transparent 70%), radial-gradient(50% 40% at 0% 100%, rgba(255,255,255,0.04) 0%, transparent 70%)' }} />
 
-      <div className="relative z-10 mx-auto w-full max-w-4xl px-6 pb-28 pt-28 text-center">
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          animate="show"
-          className="flex flex-col items-center"
-        >
-          {/* Logo */}
-          <motion.div
-            variants={item}
-            className="relative mb-9 flex items-center justify-center"
-            style={{
-              width: 'clamp(150px, 30vmin, 260px)',
-              height: 'clamp(150px, 30vmin, 260px)',
-            }}
-          >
-            <div
-              className="pointer-events-none absolute inset-0 rounded-full"
-              style={{
-                background:
-                  'radial-gradient(circle at 50% 52%, rgba(58,217,255,0.22) 0%, rgba(26,169,255,0.07) 52%, transparent 72%)',
-                filter: 'blur(26px)',
-              }}
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo.png"
-              alt="Com'9"
-              draggable={false}
-              className="relative h-full w-full select-none object-contain"
-            />
-          </motion.div>
+      <div className="relative mx-auto grid max-w-6xl gap-14 px-5 pb-20 pt-12 md:px-8 md:pb-28 md:pt-20 lg:grid-cols-[1.25fr_1fr] lg:items-center lg:gap-16">
+        <div className="flex flex-col gap-7">
+          <span className="section-label c9-rise">Réparation smartphone à domicile</span>
 
-          {/* Titre */}
-          <motion.h1
-            variants={item}
-            className="mb-6 font-space"
-            style={{
-              color: 'var(--c9-text)',
-              fontSize: 'clamp(2rem, 6.6vw, 4.25rem)',
-              fontWeight: 700,
-              letterSpacing: '-0.042em',
-              lineHeight: 1.04,
-            }}
-          >
-            Réparation premium.
-            <br />
-            <span className="gradient-text">Appareils certifiés.</span>
-          </motion.h1>
+          <h1 className="c9-display c9-rise" style={{ animationDelay: '60ms' }}>
+            Votre smartphone réparé chez vous.
+          </h1>
 
-          {/* Accroche */}
-          <motion.p
-            variants={item}
-            className="mb-3 font-space"
-            style={{
-              color: 'var(--c9-text-2)',
-              fontSize: 'clamp(1rem, 2.2vw, 1.1875rem)',
-              lineHeight: 1.55,
-              maxWidth: '30ch',
-            }}
-          >
-            Écran, batterie, vitre arrière — un tarif clair avant même de nous
-            écrire.
-          </motion.p>
+          <div className="c9-rise flex flex-col gap-2" style={{ animationDelay: '120ms' }}>
+            <p className="text-[1.375rem] font-medium leading-snug tracking-[-0.02em] sm:text-[1.625rem]">
+              Réparation à domicile <span className="c9-copper">{HORAIRES_TEXTE.accroche.toLowerCase()}</span>.
+            </p>
+            <p className="text-[1rem]" style={{ color: 'var(--c9-text-2)' }}>{HORAIRES_TEXTE.detail}</p>
+          </div>
 
-          {/* Localisation */}
-          <motion.p
-            variants={item}
-            className="mb-11 font-mono uppercase tracking-[0.26em]"
-            style={{ fontSize: 'clamp(0.6rem, 1.6vw, 0.6875rem)', color: 'var(--c9-text-3)' }}
-          >
-            Nogent-le-Rotrou · Eure-et-Loir
-          </motion.p>
+          <div className="c9-rise flex flex-col gap-3 sm:flex-row sm:items-center" style={{ animationDelay: '180ms' }}>
+            <Link href="/reservation" className="c9-btn c9-btn-primary w-full sm:w-auto">Voir mon tarif</Link>
+            <Link href="/reservation?etape=creneau" className="c9-btn c9-btn-secondary w-full sm:w-auto">Réserver une intervention</Link>
+          </div>
+          <Link href="/reservation?parcours=autre" className="c9-rise self-start text-[0.9375rem] font-medium"
+            style={{ color: 'var(--c9-text-2)', animationDelay: '220ms' }}>
+            <span className="c9-link">J&apos;ai un autre problème</span> →
+          </Link>
+        </div>
 
-          {/* CTA */}
-          <motion.div
-            variants={item}
-            className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row"
-          >
-            <motion.a
-              href="/#tarifs"
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.985 }}
-              transition={{ duration: 0.25, ease: EASE }}
-              className="flex w-full items-center justify-center rounded-full px-9 font-space text-[0.9375rem] font-semibold sm:w-auto"
-              style={{
-                minHeight: '54px',
-                background: 'linear-gradient(118deg, #6fe6ff 0%, #3ad9ff 42%, #1aa9ff 100%)',
-                color: '#06131f',
-                boxShadow: '0 16px 44px -20px rgba(26,169,255,0.85)',
-              }}
-            >
-              Voir les tarifs
-            </motion.a>
+        {/* Signature + exemple concret */}
+        <div className="c9-rise flex flex-col gap-4" style={{ animationDelay: '260ms' }}>
+          <div className="c9-surface rounded-[24px] p-6 sm:p-7">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full" style={{ background: 'var(--c9-accent-soft)', color: 'var(--c9-accent-text)' }}>
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M3 11.5L12 4l9 7.5" /><path d="M5.5 10v9.5h13V10" /><path d="M10 19.5v-5h4v5" />
+                </svg>
+              </span>
+              <div>
+                <p className="text-[1.125rem] font-semibold tracking-[-0.02em]">On vient à vous.</p>
+                <p className="text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>Depuis Nogent-le-Rotrou, jusqu&apos;à 30 km</p>
+              </div>
+            </div>
 
-            <motion.a
-              href={waLink("Bonjour, je viens du site Com'9. Je souhaite prendre rendez-vous.")}
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.985 }}
-              transition={{ duration: 0.25, ease: EASE }}
-              className="flex w-full items-center justify-center rounded-full px-9 font-space text-[0.9375rem] font-medium transition-colors duration-300 sm:w-auto"
-              style={{
-                minHeight: '54px',
-                border: '1px solid var(--c9-hairline-lit)',
-                background: 'rgba(255,255,255,0.04)',
-                color: 'var(--c9-text)',
-              }}
-            >
-              Prendre rendez-vous
-            </motion.a>
-          </motion.div>
-        </motion.div>
+            {ex && (
+              <div className="mt-6 flex flex-col gap-3" aria-label="Exemple de prix">
+                <p className="font-mono text-[0.6875rem] uppercase tracking-[0.18em]" style={{ color: 'var(--c9-text-3)' }}>Exemple</p>
+                <div className="flex items-baseline justify-between gap-4">
+                  <span style={{ color: 'var(--c9-text-2)' }}>Écran {ex.model} · {ex.quality}</span>
+                  <span className="tabular-nums">{euros(ex.repair)}</span>
+                </div>
+                <div className="flex items-baseline justify-between gap-4">
+                  <span style={{ color: 'var(--c9-text-2)' }}>Déplacement · {ex.zone.toLowerCase()}</span>
+                  <span className="tabular-nums">{euros(ex.travel)}</span>
+                </div>
+                <div className="c9-divider" />
+                <div className="flex items-baseline justify-between gap-4">
+                  <span className="font-semibold">Total</span>
+                  <span className="text-[1.5rem] font-semibold tabular-nums tracking-[-0.02em]">{euros(ex.repair + ex.travel)}</span>
+                </div>
+              </div>
+            )}
+          </div>
+          <p className="px-1 text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>
+            Aucun acompte · Paiement après l&apos;intervention (CB, espèces, virement)
+          </p>
+        </div>
       </div>
-
-      {/* Indicateur de défilement — statique, discret */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.6, duration: 1 }}
-        className="pointer-events-none absolute bottom-8 left-1/2 z-10 -translate-x-1/2"
-      >
-        <div
-          style={{
-            width: '1px',
-            height: '38px',
-            background:
-              'linear-gradient(to bottom, rgba(255,255,255,0.32), transparent)',
-          }}
-        />
-      </motion.div>
     </section>
   )
 }

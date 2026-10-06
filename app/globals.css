@@ -3,45 +3,100 @@
 @tailwind utilities;
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   COM'9 — Direction artistique
-   Bleu ardoise lumineux · lumière diffuse · contraste maîtrisé · zéro bruit.
-   Le premium vient de la composition, pas des effets.
+   COM'9 — Direction artistique « réparation à domicile »
+   Charbon profond · blanc cassé · graphite · accent cuivre.
+   Premium, minimal, rassurant. Le cuivre se réserve aux actions et aux
+   détails importants — jamais en aplat criard.
+
+   Thème sombre par défaut. Une section claire se déclare avec .c9-light :
+   tous les composants basés sur les variables s'adaptent seuls.
    ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* Surfaces */
-  --c9-bg:            #111f35;   /* base ardoise lumineuse */
-  --c9-bg-deep:       #0b1220;   /* pied de page / zones basses */
-  --c9-elev-1:        rgba(255, 255, 255, 0.045);
-  --c9-elev-2:        rgba(255, 255, 255, 0.075);
+  /* Polices (Geist, livrée avec le site) */
+  --font-sans:        var(--font-geist-sans);
+  --font-mono:        var(--font-geist-mono);
 
-  /* Traits — un seul niveau de bordure, très doux */
+  /* Surfaces */
+  --c9-bg:            #0f0f11;   /* charbon profond */
+  --c9-bg-deep:       #0a0a0b;   /* pied de page */
+  --c9-surface:       #17171a;   /* carte opaque */
+  --c9-surface-2:     #1f1f23;   /* carte élevée */
+  --c9-elev-1:        rgba(255, 255, 255, 0.035);
+  --c9-elev-2:        rgba(255, 255, 255, 0.065);
+
+  /* Traits — graphite */
   --c9-hairline:      rgba(255, 255, 255, 0.10);
   --c9-hairline-soft: rgba(255, 255, 255, 0.06);
-  --c9-hairline-lit:  rgba(255, 255, 255, 0.18);
+  --c9-hairline-lit:  rgba(255, 255, 255, 0.20);
 
-  /* Texte — blanc réellement lumineux, secondaire dosé mais lisible */
-  --c9-text:          #ffffff;
-  --c9-text-2:        rgba(255, 255, 255, 0.80);
-  --c9-text-3:        rgba(255, 255, 255, 0.60);
+  /* Texte — blanc cassé */
+  --c9-text:          #f5f2ec;
+  --c9-text-2:        #c6c1b8;
+  --c9-text-3:        #928d85;
 
-  /* Accent Com'9 */
-  --c9-accent:        #3ad9ff;
-  --c9-accent-deep:   #1aa9ff;
-  --c9-accent-soft:   rgba(58, 217, 255, 0.12);
-  --c9-accent-line:   rgba(58, 217, 255, 0.28);
+  /* Accent cuivre */
+  --c9-accent:        #c9895c;   /* actions, détails importants */
+  --c9-accent-hi:     #d99b6e;   /* survol */
+  --c9-accent-text:   #d9a27a;   /* texte cuivré lisible sur fond sombre */
+  --c9-accent-ink:    #1a120c;   /* texte posé sur le cuivre */
+  --c9-accent-soft:   rgba(201, 137, 92, 0.12);
+  --c9-accent-line:   rgba(201, 137, 92, 0.38);
 
-  /* Rythme vertical */
-  --section-py:       clamp(6rem, 9vw, 9.5rem);
+  /* États */
+  --c9-warn:          #e2b469;
+  --c9-warn-soft:     rgba(226, 180, 105, 0.10);
+  --c9-warn-line:     rgba(226, 180, 105, 0.38);
+  --c9-ok:            #93d0a0;
+  --c9-ok-soft:       rgba(147, 208, 160, 0.10);
+  --c9-ok-line:       rgba(147, 208, 160, 0.38);
+  --c9-danger:        #f0958a;
+  --c9-danger-soft:   rgba(240, 149, 138, 0.10);
+  --c9-danger-line:   rgba(240, 149, 138, 0.38);
 
-  /* Courbe d'animation unique — tout le site respire pareil */
+  /* Fond de calque (feuilles, menus) */
+  --c9-scrim:         rgba(5, 5, 6, 0.62);
+  --c9-header:        rgba(15, 15, 17, 0.82);
+
+  /* Rythme */
+  --section-py:       clamp(5rem, 9vw, 8.5rem);
+  --c9-radius:        18px;
   --c9-ease:          cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* Aliases historiques (compatibilité) */
-  --space-black:      var(--c9-bg);
-  --neon-blue:        var(--c9-accent);
-  --electric-blue:    var(--c9-accent-deep);
-  --cold-white:       #ffffff;
+  color-scheme: dark;
+}
+
+/* ─── Section claire ──────────────────────────────────────────────────────── */
+.c9-light {
+  --c9-bg:            #f4f1ec;
+  --c9-bg-deep:       #ebe7e0;
+  --c9-surface:       #ffffff;
+  --c9-surface-2:     #fbfaf7;
+  --c9-elev-1:        rgba(21, 21, 23, 0.03);
+  --c9-elev-2:        rgba(21, 21, 23, 0.06);
+  --c9-hairline:      rgba(21, 21, 23, 0.12);
+  --c9-hairline-soft: rgba(21, 21, 23, 0.07);
+  --c9-hairline-lit:  rgba(21, 21, 23, 0.22);
+  --c9-text:          #151517;
+  --c9-text-2:        #47443f;
+  --c9-text-3:        #6c6862;
+  --c9-accent-text:   #8f532a;
+  --c9-accent-soft:   rgba(201, 137, 92, 0.12);
+  --c9-accent-line:   rgba(160, 99, 58, 0.40);
+  --c9-warn:          #8a5d10;
+  --c9-warn-soft:     rgba(176, 124, 30, 0.10);
+  --c9-warn-line:     rgba(176, 124, 30, 0.40);
+  --c9-ok:            #2f7a44;
+  --c9-ok-soft:       rgba(47, 122, 68, 0.08);
+  --c9-ok-line:       rgba(47, 122, 68, 0.35);
+  --c9-danger:        #a8392c;
+  --c9-danger-soft:   rgba(168, 57, 44, 0.07);
+  --c9-danger-line:   rgba(168, 57, 44, 0.35);
+  --c9-scrim:         rgba(21, 21, 23, 0.35);
+  --c9-header:        rgba(244, 241, 236, 0.86);
+  color-scheme: light;
+  background-color: var(--c9-bg);
+  color: var(--c9-text);
 }
 
 * {
@@ -58,268 +113,197 @@ html {
 
 body {
   color: var(--c9-text);
-  font-family: var(--font-space-grotesk), sans-serif;
+  background-color: var(--c9-bg);
+  font-family: var(--font-sans), system-ui, -apple-system, 'Segoe UI', sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: -0.005em;
-
-  /* Lumière : trois halos très diffus, statiques. Aucune animation. */
-  background-color: var(--c9-bg);
-  background-image:
-    radial-gradient(132% 76% at 50% -12%, rgba(96, 226, 255, 0.20) 0%, transparent 58%),
-    radial-gradient(96%  66% at 0%   26%, rgba(52,  140, 255, 0.18) 0%, transparent 60%),
-    radial-gradient(104% 72% at 100% 62%, rgba(96,  226, 255, 0.15) 0%, transparent 60%),
-    radial-gradient(90%  60% at 50% 108%, rgba(52,  140, 255, 0.10) 0%, transparent 60%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, transparent 26%);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+  letter-spacing: -0.006em;
+  font-feature-settings: 'ss01' 1;
 }
 
-/* ─── Ancres sous navbar fixe ─────────────────────────────────────────────── */
-#services,
-#tarifs,
-#diagnostic,
-#occasion,
-#marketplace,
-#contact {
-  scroll-margin-top: 88px;
-}
+/* ─── Ancres sous la barre fixe ───────────────────────────────────────────── */
+section[id] { scroll-margin-top: 80px; }
 
-/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+/* ─── Scrollbar, sélection, focus ─────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
-  border-radius: 6px;
-}
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.26); }
-::selection { background: rgba(58, 217, 255, 0.24); color: #ffffff; }
+::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.35); border-radius: 6px; }
+::selection { background: rgba(201, 137, 92, 0.32); }
 
-/* ─── Focus ───────────────────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid rgba(58, 217, 255, 0.65);
+  outline: 2px solid var(--c9-accent);
   outline-offset: 3px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
-/* ─── Surface premium — une seule carte, jamais imbriquée ─────────────────── */
-.c9-surface {
-  background: linear-gradient(
-    168deg,
-    rgba(255, 255, 255, 0.075) 0%,
-    rgba(255, 255, 255, 0.030) 46%,
-    rgba(255, 255, 255, 0.018) 100%
-  );
-  backdrop-filter: blur(28px) saturate(140%);
-  -webkit-backdrop-filter: blur(28px) saturate(140%);
-  border: 1px solid var(--c9-hairline);
-  box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
-    0 24px 60px -30px rgba(0, 0, 0, 0.55);
-}
-
-/* Variante mise en avant — accent cyan, toujours sobre */
-.c9-surface-accent {
-  background: linear-gradient(
-    168deg,
-    rgba(58, 217, 255, 0.13) 0%,
-    rgba(58, 217, 255, 0.045) 48%,
-    rgba(255, 255, 255, 0.020) 100%
-  );
-  backdrop-filter: blur(28px) saturate(140%);
-  -webkit-backdrop-filter: blur(28px) saturate(140%);
-  border: 1px solid var(--c9-accent-line);
-  box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.10) inset,
-    0 24px 70px -32px rgba(26, 169, 255, 0.40);
-}
-
-/* Compat : ancien nom conservé pour les composants non refondus */
-.glass-card {
-  background: linear-gradient(
-    168deg,
-    rgba(255, 255, 255, 0.075) 0%,
-    rgba(255, 255, 255, 0.028) 100%
-  );
-  backdrop-filter: blur(28px) saturate(140%);
-  -webkit-backdrop-filter: blur(28px) saturate(140%);
-  border: 1px solid var(--c9-hairline);
-  box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
-    0 24px 60px -30px rgba(0, 0, 0, 0.55);
-  transition:
-    transform 0.5s var(--c9-ease),
-    border-color 0.5s var(--c9-ease),
-    box-shadow 0.5s var(--c9-ease);
-}
-
-@media (hover: hover) {
-  .glass-card:hover {
-    border-color: var(--c9-hairline-lit);
-    box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.10) inset,
-      0 32px 80px -34px rgba(0, 0, 0, 0.6);
-    transform: translateY(-2px);
-  }
-}
-
-/* ─── Séparateur de section — un seul trait, presque invisible ────────────── */
-.c9-divider {
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(255, 255, 255, 0.10) 22%,
-    rgba(255, 255, 255, 0.10) 78%,
-    transparent
-  );
-}
-
-/* ─── Texte accentué ──────────────────────────────────────────────────────── */
-.gradient-text {
-  background: linear-gradient(105deg, #ffffff 0%, #a9ecff 42%, var(--c9-accent) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* ─── Sur-titre de section ────────────────────────────────────────────────── */
-.section-label {
-  display: inline-block;
-  font-family: var(--font-space-mono), monospace;
-  font-size: 0.625rem;
-  letter-spacing: 0.32em;
-  text-transform: uppercase;
-  color: var(--c9-accent);
-}
-
-/* ─── Titre de section ──────────────────────────────────────────────────────
-   Un seul mot, blanc pur, très grand. C'est le repère principal de la page :
-   aucune phrase ne doit lui faire concurrence.
+/* Composants dans la couche « components » : les utilitaires Tailwind
+   (hidden, md:inline-flex…) gardent toujours la priorité. */
+@layer components {
+/* ─── Boutons ────────────────────────────────────────────────────────────────
+   Grands, lisibles au pouce, coins légèrement arrondis.
    ───────────────────────────────────────────────────────────────────────── */
-.c9-title {
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  font-size: clamp(2.75rem, 11vw, 4.5rem);
+.c9-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 56px;
+  padding: 0 1.5rem;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.25s var(--c9-ease), border-color 0.25s var(--c9-ease),
+    color 0.25s var(--c9-ease), transform 0.15s var(--c9-ease), box-shadow 0.25s var(--c9-ease);
+}
+.c9-btn:active { transform: scale(0.98); }
+.c9-btn:disabled, .c9-btn[aria-disabled='true'] { opacity: 0.45; pointer-events: none; }
+
+.c9-btn-primary {
+  background: var(--c9-accent);
+  color: var(--c9-accent-ink);
+  box-shadow: 0 10px 30px -14px rgba(201, 137, 92, 0.55);
+}
+@media (hover: hover) { .c9-btn-primary:hover { background: var(--c9-accent-hi); } }
+
+.c9-btn-secondary {
+  background: var(--c9-elev-1);
+  color: var(--c9-text);
+  border: 1px solid var(--c9-hairline-lit);
+}
+@media (hover: hover) { .c9-btn-secondary:hover { background: var(--c9-elev-2); } }
+
+.c9-btn-ghost { color: var(--c9-text-2); }
+@media (hover: hover) { .c9-btn-ghost:hover { background: var(--c9-elev-1); color: var(--c9-text); } }
+
+.c9-link {
+  color: var(--c9-accent-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
 }
 
-/* Sous-titre : une ligne, discret, jamais concurrent du titre. */
+/* ─── Surfaces ───────────────────────────────────────────────────────────── */
+.c9-surface {
+  background: var(--c9-surface);
+  border: 1px solid var(--c9-hairline-soft);
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.03) inset, 0 20px 50px -34px rgba(0, 0, 0, 0.55);
+}
+.c9-light .c9-surface {
+  box-shadow: 0 1px 2px rgba(21, 21, 23, 0.04), 0 18px 44px -30px rgba(21, 21, 23, 0.25);
+}
+
+/* Variante mise en avant — liseré cuivre, jamais d'aplat */
+.c9-surface-accent {
+  background: linear-gradient(170deg, var(--c9-accent-soft) 0%, transparent 60%), var(--c9-surface);
+  border: 1px solid var(--c9-accent-line);
+}
+
+/* Choix sélectionnable (tuile) */
+.c9-choice {
+  background: var(--c9-surface);
+  border: 1px solid var(--c9-hairline);
+  border-radius: 16px;
+  color: var(--c9-text);
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s var(--c9-ease), background-color 0.2s var(--c9-ease), transform 0.15s var(--c9-ease);
+}
+@media (hover: hover) { .c9-choice:hover { border-color: var(--c9-hairline-lit); } }
+.c9-choice:active { transform: scale(0.985); }
+.c9-choice[aria-checked='true'], .c9-choice[aria-pressed='true'], .c9-choice[data-on='true'] {
+  border-color: var(--c9-accent);
+  background: linear-gradient(170deg, var(--c9-accent-soft), transparent 70%), var(--c9-surface);
+  box-shadow: 0 0 0 1px var(--c9-accent) inset;
+}
+
+/* ─── Séparateur ─────────────────────────────────────────────────────────── */
+.c9-divider { height: 1px; background: var(--c9-hairline-soft); }
+
+/* ─── Typographie ────────────────────────────────────────────────────────── */
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--c9-text-3);
+}
+.section-label::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--c9-accent);
+}
+
+.c9-display {
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+  font-size: clamp(2.6rem, 10.5vw, 4.6rem);
+  text-wrap: balance;
+}
+
+.c9-title {
+  font-weight: 600;
+  color: var(--c9-text);
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+  font-size: clamp(2.1rem, 7.5vw, 3.6rem);
+  text-wrap: balance;
+}
+
 .c9-subtitle {
   color: var(--c9-text-2);
-  font-size: clamp(0.9375rem, 1.5vw, 1.0625rem);
-  line-height: 1.55;
+  font-size: clamp(1rem, 1.6vw, 1.125rem);
+  line-height: 1.6;
+  text-wrap: pretty;
 }
 
-/* ─── Retour unifié ─────────────────────────────────────────────────────────
-   Sobre au repos, réactif au toucher. Aucune bordure, aucune carte.
-   ───────────────────────────────────────────────────────────────────────── */
+.c9-copper { color: var(--c9-accent-text); }
+
+/* ─── Retour / bouton discret ────────────────────────────────────────────── */
 .c9-back {
   -webkit-tap-highlight-color: transparent;
-  transition:
-    background-color 0.25s var(--c9-ease),
-    opacity 0.25s var(--c9-ease),
-    transform 0.2s var(--c9-ease);
+  transition: background-color 0.25s var(--c9-ease), opacity 0.25s var(--c9-ease), transform 0.2s var(--c9-ease);
+}
+@media (hover: hover) { .c9-back:hover { background-color: var(--c9-elev-2); } }
+.c9-back:active { transform: scale(0.97); opacity: 0.75; }
+
 }
 
-@media (hover: hover) {
-  .c9-back:hover { background-color: rgba(255, 255, 255, 0.07); }
-}
+/* ─── Apparition douce ───────────────────────────────────────────────────── */
+@keyframes c9-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.c9-rise { animation: c9-rise 0.8s var(--c9-ease) both; }
 
-.c9-back:active {
-  transform: scale(0.97);
-  opacity: 0.7;
-}
-
-/* ─── Cible du défilement tarifaire ────────────────────────────────────────
-   Marge de sécurité sous le header fixe (68px) pour les navigateurs qui
-   honorent scroll-margin-top ; le calcul JS assure le reste.
+/* ─── Selon l'appareil : téléphone (tactile) ou ordinateur ─────────────────
+   Pas de détection en JavaScript : aucun décalage à l'affichage.
    ───────────────────────────────────────────────────────────────────────── */
-.c9-scroll-target {
-  scroll-margin-top: 88px;
+.c9-touch-only { display: none !important; }
+@media (pointer: coarse) {
+  .c9-touch-only { display: flex !important; }
+  .c9-desk-only  { display: none !important; }
 }
 
-/* ─── Mockup téléphone (conservé pour BeforeAfter) ────────────────────────── */
-.phone-mockup {
-  position: relative;
-  width: 160px;
-  height: 320px;
-  background: linear-gradient(145deg, #1a2740, #121c2e);
-  border-radius: 28px;
-  border: 1px solid var(--c9-hairline-lit);
-  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7);
-}
-.phone-screen {
-  position: absolute;
-  top: 20px; left: 8px; right: 8px; bottom: 20px;
-  border-radius: 20px;
-  overflow: hidden;
-}
-.phone-notch {
-  position: absolute;
-  top: 8px; left: 50%;
-  transform: translateX(-50%);
-  width: 50px; height: 5px;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 4px;
-  z-index: 2;
-}
-
-/* ─── Feuille de diagnostic imprimable (inchangé fonctionnellement) ───────── */
-.diag-print-sheet { display: none; }
-
-@media print {
-  @page { size: A4 portrait; margin: 10mm 12mm; }
-  * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  body > * { display: none !important; }
-  #diag-print-portal { display: block !important; }
-  .diag-print-sheet {
-    display: block !important;
-    width: 100%; height: 100%;
-    background: #0b1220 !important;
-    color: #ffffff !important;
-    font-family: 'Space Grotesk', sans-serif;
-    page-break-inside: avoid;
-  }
-  .diag-print-sheet * { page-break-inside: avoid; }
-}
-
-/* ─── Mobile ──────────────────────────────────────────────────────────────── */
+/* ─── Mobile ─────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  :root { --section-py: clamp(4.5rem, 13vw, 6.5rem); }
-
-  .c9-surface,
-  .c9-surface-accent,
-  .glass-card {
-    backdrop-filter: blur(18px) saturate(135%);
-    -webkit-backdrop-filter: blur(18px) saturate(135%);
-  }
-
-  body {
-    text-rendering: optimizeLegibility;
-    /* background-attachment: fixed est coûteux et instable sur iOS */
-    background-attachment: scroll;
-  }
+  body { text-rendering: optimizeLegibility; }
 }
-
-/* ─── Écrans tactiles ─────────────────────────────────────────────────────── */
 @media (pointer: coarse) {
   * { -webkit-tap-highlight-color: transparent; }
 }
-
-/* ─── Anti-débordement des titres ─────────────────────────────────────────── */
 @media (max-width: 768px) {
-  h1, h2, h3 {
-    overflow-wrap: break-word;
-  }
+  h1, h2, h3 { overflow-wrap: break-word; }
 }
 
-/* ─── Accessibilité : respect de « réduire les animations » ───────────────── */
+/* ─── Accessibilité : « réduire les animations » ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {

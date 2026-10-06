@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // COM'9 — API /api/suivi/[jeton]      (publique, réservée au détenteur du lien)
-//   POST { action, message?, preferredDate?, preferredPeriod?, expectedProposal? }
+//   POST { action: accepter | autre_creneau | annulation, message?, startAt?, expectedProposal? }
 //
 //  Le jeton ne donne accès qu'à SON rendez-vous. La réponse est la vue client
 //  (liste blanche) : jamais de coordonnées, d'adresse ni de notes internes.

@@ -5,7 +5,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useCallback, useEffect, useState } from 'react'
-import { REPAIRS, ZONES } from '@/data/tarifs'
+import { REPAIR_LABEL, findZone } from '@/data/tarifs'
+import { DIAGNOSTIC, PAIEMENT_LABEL, PAIEMENT_MODES, type PaiementMode } from '@/config/com9'
+import { centsToInput, euros, parseEuros } from '@/lib/money'
+import { withinPublicHours } from '@/lib/agenda/slots'
 import {
   ACTIONS,
   apptTotal,
@@ -23,6 +26,7 @@ import {
   ORIGIN_LABEL,
   PART_STATUSES,
   PART_STATUS_LABEL,
+  SYMPTOM_LABEL,
   partNeedsOrder,
   type AgendaSettings,
   type ApptEvent,
@@ -34,7 +38,7 @@ import { buildMessage, trackUrl } from './messages'
 import { messagePending } from '@/lib/agenda/messages-state'
 import { ApiError, api, type ConflictInfo } from './api'
 import { endIso, fmtDuration, fmtSlotFull, fmtTime, fmtWish, isoToParis, parisToIso } from './time'
-import { Btn, Chip, ErrorBox, Field, PartChip, StatusChip, copyText, inputCls, inputStyle } from './ui'
+import { Btn, Chip, ErrorBox, Field, PartChip, Segmented, StatusChip, copyText, inputCls, inputStyle } from './ui'
 
 type Props = {
   id: string
@@ -43,7 +47,7 @@ type Props = {
   onChanged: () => void
 }
 
-const repairLabel = (id: string) => REPAIRS.find((r) => r.id === id)?.label ?? id
+const repairLabel = (id: Appointment['repair']) => REPAIR_LABEL[id] ?? id
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -65,7 +69,7 @@ const lowerFirstSlot = (iso: string) => {
 function Block({ title, children, aside }: { title: string; children: React.ReactNode; aside?: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-3 rounded-[22px] p-5"
-      style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid var(--c9-hairline-soft)' }}>
+      style={{ background: 'var(--c9-elev-1)', border: '1px solid var(--c9-hairline-soft)' }}>
       <div className="flex items-center justify-between gap-3">
         <h3 className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: 'var(--c9-text-3)' }}>{title}</h3>
         {aside}
@@ -92,6 +96,12 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
   const [pTime, setPTime] = useState('')
   const [pReason, setPReason] = useState('')
   const [pFirm, setPFirm] = useState(true)
+
+  // Fin d'intervention / paiement
+  const [finishing, setFinishing] = useState<'terminer' | 'paiement' | null>(null)
+  const [fAmount, setFAmount] = useState('')
+  const [fMode, setFMode] = useState<PaiementMode | null>(null)
+  const [fPaid, setFPaid] = useState(true)
 
   const load = useCallback(async () => {
     try {
@@ -126,6 +136,42 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
     } catch (e) {
       if (e instanceof ApiError) setActionError({ message: e.message, conflicts: e.conflicts })
       else setActionError({ message: 'Action impossible.' })
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  function openFinish(kind: 'terminer' | 'paiement') {
+    if (!appt) return
+    const t = apptTotal(appt)
+    setFAmount(centsToInput(appt.finalAmountCents ?? t))
+    setFMode(appt.paymentMode)
+    setFPaid(kind === 'terminer' ? true : appt.paid)
+    setFinishing(kind)
+    setActionError(null)
+  }
+
+  async function submitFinish() {
+    const cents = parseEuros(fAmount)
+    if (cents === null || Number.isNaN(cents)) {
+      setActionError({ message: 'Indiquez le montant final (ex. 137,90).' })
+      return
+    }
+    const payload = { finalAmountCents: cents, paymentMode: fMode, paid: fPaid }
+    if (finishing === 'terminer') {
+      await run('terminer', payload)
+      setFinishing(null)
+      return
+    }
+    setBusy('paiement')
+    setActionError(null)
+    try {
+      await api.payment(id, payload)
+      setFinishing(null)
+      await load()
+      onChanged()
+    } catch (e) {
+      setActionError({ message: e instanceof ApiError ? e.message : 'Enregistrement impossible.' })
     } finally {
       setBusy(null)
     }
@@ -200,9 +246,9 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
   const shell = (content: React.ReactNode) => (
     <div className="fixed inset-0 z-[60] flex justify-end" role="dialog" aria-modal="true" aria-label="Fiche rendez-vous">
       <button type="button" aria-label="Fermer" className="absolute inset-0 cursor-default"
-        style={{ background: 'rgba(5,10,20,0.55)', backdropFilter: 'blur(4px)' }} onClick={onClose} />
+        style={{ background: 'var(--c9-scrim)', backdropFilter: 'blur(4px)' }} onClick={onClose} />
       <div className="relative flex h-full w-full flex-col overflow-y-auto sm:max-w-[540px]"
-        style={{ background: 'var(--c9-bg)', borderLeft: '1px solid var(--c9-hairline)', boxShadow: '-30px 0 80px -30px rgba(0,0,0,0.7)' }}>
+        style={{ background: 'var(--c9-bg)', borderLeft: '1px solid var(--c9-hairline)', boxShadow: '-30px 0 80px -30px rgba(0,0,0,0.6)' }}>
         {content}
       </div>
     </div>
@@ -248,9 +294,38 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
   const link = trackUrl(typeof window !== 'undefined' ? window.location.origin : '', appt.trackToken)
   const msgKinds = MESSAGES_FOR_STATUS[appt.status]
   const total = apptTotal(appt)
-  const zone = ZONES.find((z) => z.id === appt.zone)
-  const actions = availableActions(appt.status).filter((a) => a !== 'annuler')
+  const zone = findZone(appt.zone)
+  const actions = availableActions(appt.status).filter((a) =>
+    a !== 'annuler' && (a !== 'valider_choix_client' || Boolean(appt.clientSlot)))
+  const offHours = appt.startAt ? !withinPublicHours(appt.startAt, appt.durationMin) : false
   const canCancel = availableActions(appt.status).includes('annuler')
+
+  const finishForm = (
+            <div className="flex flex-col gap-4" data-finish>
+              <p className="font-space text-[0.9375rem] font-semibold">
+                {finishing === 'terminer' ? "Terminer l'intervention" : 'Paiement'}
+              </p>
+              {finishing === 'paiement' && actionError && <ErrorBox message={actionError.message} />}
+              <Field label="Montant final (€)" htmlFor="f-final" hint={total !== null ? `Total prévu : ${euros(total)}` : undefined}>
+                <input id="f-final" className={inputCls} style={inputStyle} inputMode="decimal" value={fAmount}
+                  onChange={(e) => setFAmount(e.target.value)} />
+              </Field>
+              <Field label="Mode de paiement">
+                <Segmented ariaLabel="Mode de paiement" value={fMode} onChange={setFMode}
+                  options={PAIEMENT_MODES.map((m) => ({ id: m, label: PAIEMENT_LABEL[m] }))} />
+              </Field>
+              <label className="flex items-center gap-3 font-space text-[0.9375rem]" style={{ color: 'var(--c9-text)' }}>
+                <input type="checkbox" checked={fPaid} onChange={(e) => setFPaid(e.target.checked)} className="h-5 w-5 accent-[#c9895c]" />
+                Payé
+              </label>
+              <div className="flex gap-2">
+                <Btn variant="ghost" className="shrink-0 !px-3" onClick={() => setFinishing(null)}>Retour</Btn>
+                <Btn variant="primary" className="flex-1 whitespace-nowrap" disabled={busy !== null} onClick={submitFinish}>
+                  {busy ? '…' : finishing === 'terminer' ? "Terminer l'intervention" : 'Enregistrer'}
+                </Btn>
+              </div>
+            </div>
+  )
 
   return shell(
     <>
@@ -263,12 +338,12 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
           </h2>
           <div className="flex flex-wrap gap-2">
             <StatusChip status={appt.status} />
-            <Chip tone="rgba(255,255,255,0.6)">{ORIGIN_LABEL[appt.origin]}</Chip>
+            <Chip tone="#928d85">{ORIGIN_LABEL[appt.origin]}</Chip>
           </div>
         </div>
         <button type="button" onClick={onClose} aria-label="Fermer la fiche"
           className="c9-back flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-          style={{ background: 'rgba(255,255,255,0.06)' }}>
+          style={{ background: 'var(--c9-elev-2)' }}>
           <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
             <path d="M4 4l8 8M12 4l-8 8" />
           </svg>
@@ -279,8 +354,8 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
         {/* ── Demande du client (lien de suivi) ── */}
         {appt.clientRequest && (
           <div role="status" className="flex flex-col gap-2 rounded-[22px] p-4"
-            style={{ background: 'rgba(245,185,74,0.08)', border: '1px solid rgba(245,185,74,0.4)' }}>
-            <p className="font-space text-[0.9375rem] font-semibold" style={{ color: '#f5c46e' }}>
+            style={{ background: 'var(--c9-warn-soft)', border: '1px solid var(--c9-warn-line)' }}>
+            <p className="font-space text-[0.9375rem] font-semibold" style={{ color: 'var(--c9-warn)' }}>
               {CLIENT_REQUEST_LABEL[appt.clientRequest]}
             </p>
             {appt.clientMessage && (
@@ -298,6 +373,9 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
         {/* ── Contact ── */}
         <Block title="Contact">
           <p className="select-all font-space text-lg font-semibold tabular-nums">{appt.clientPhone}</p>
+          {appt.email && (
+            <p className="-mt-1 select-all break-all font-space text-[0.875rem]" style={{ color: 'var(--c9-text-2)' }}>{appt.email}</p>
+          )}
           <div className="grid grid-cols-3 gap-2">
             {tel ? <Btn href={tel} className="text-[0.875rem]">Appeler</Btn> : <Btn disabled>Appeler</Btn>}
             {wa ? <Btn href={wa} external className="text-[0.875rem]">WhatsApp</Btn> : <Btn disabled>WhatsApp</Btn>}
@@ -326,15 +404,22 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
           <p className="font-space text-[1.0625rem] font-semibold">
             {appt.model} · {repairLabel(appt.repair)}
           </p>
-          <p className="-mt-1 font-space text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>{appt.quality}</p>
+          {appt.quality && (
+            <p className="-mt-1 font-space text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>{appt.quality}</p>
+          )}
+          {appt.symptom && (
+            <p className="-mt-1 font-space text-[0.875rem]" style={{ color: 'var(--c9-text-2)' }}>
+              Problème : {SYMPTOM_LABEL[appt.symptom]}
+            </p>
+          )}
           <div className="c9-divider my-1" />
-          <Row label="Réparation">{appt.repairPrice} €</Row>
+          <Row label="Réparation">{appt.repairPriceCents !== null ? euros(appt.repairPriceCents) : 'Après diagnostic'}</Row>
           <Row label="Déplacement">
-            {appt.travelFee !== null ? `${appt.travelFee} €` : zone?.id === 'devis' ? 'Sur devis' : 'Non défini'}
+            {appt.travelFeeCents !== null ? euros(appt.travelFeeCents) : zone?.id === 'hors' ? 'Hors zone (> 30 km)' : 'Non défini'}
           </Row>
           {zone && (
             <p className="-mt-1 text-right font-space text-[0.75rem]"
-              style={{ color: appt.zoneVerified ? 'var(--c9-text-3)' : '#f5b94a' }}>
+              style={{ color: appt.zoneVerified ? 'var(--c9-text-3)' : 'var(--c9-warn)' }}>
               {zone.full}{appt.zoneVerified ? '' : ' — zone provisoire, à vérifier'}
             </p>
           )}
@@ -351,10 +436,33 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
           <div className="flex items-baseline justify-between">
             <span className="font-space font-semibold">Total</span>
             <span className="font-space text-xl font-semibold tabular-nums">
-              {total !== null ? `${total} €` : 'Déplacement sur devis'}
+              {total !== null ? euros(total) : '—'}
             </span>
           </div>
+          {appt.repair === 'diagnostic' && (
+            <p className="font-space text-[0.75rem] leading-snug" style={{ color: 'var(--c9-text-3)' }}>
+              Réparation acceptée : réparation + déplacement. Refusée : déplacement + {euros(DIAGNOSTIC.refusCents)} de diagnostic.
+            </p>
+          )}
         </Block>
+
+        {/* ── Paiement (après l'intervention) ── */}
+        {appt.status === 'termine' && (
+          <Block title="Paiement" aside={
+            <span className="font-space text-[0.75rem] font-semibold"
+              style={{ color: appt.paid ? 'var(--c9-ok)' : 'var(--c9-warn)' }}>
+              {appt.paid ? 'Payé' : 'Non payé'}
+            </span>}>
+            <Row label="Montant final">{appt.finalAmountCents !== null ? euros(appt.finalAmountCents) : '—'}</Row>
+            <Row label="Mode">{appt.paymentMode ? PAIEMENT_LABEL[appt.paymentMode] : '—'}</Row>
+            {finishing === 'paiement' && finishForm}
+            {finishing !== 'paiement' && (
+              <Btn variant="secondary" disabled={busy !== null} onClick={() => openFinish('paiement')}>
+                {appt.paid ? 'Corriger le paiement' : 'Enregistrer le paiement'}
+              </Btn>
+            )}
+          </Block>
+        )}
 
         {/* ── Créneau ── */}
         <Block title="Créneau">
@@ -370,10 +478,29 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
               Aucun créneau fixé · durée prévue {fmtDuration(appt.durationMin)}
             </p>
           )}
-          {appt.preferredDate && (
+          {offHours && (
+            <p className="font-space text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }}>Hors des horaires publics.</p>
+          )}
+          {appt.startAt && appt.status === 'demande_recue' && appt.origin === 'site' && (
+            <p className="font-space text-[0.8125rem]" style={{ color: 'var(--c9-warn)' }}>
+              Créneau demandé par le client, pas encore confirmé.
+            </p>
+          )}
+          {appt.clientSlot && appt.status === 'confirme' && (
+            <div className="mt-1 rounded-2xl px-4 py-3" data-client-slot
+              style={{ background: 'var(--c9-warn-soft)', border: '1px solid var(--c9-warn-line)' }}>
+              <p className="font-space text-[0.875rem] font-semibold" style={{ color: 'var(--c9-warn)' }}>
+                Le client souhaite déplacer au {lowerFirstSlot(appt.clientSlot).slice(3)}
+              </p>
+              <p className="mt-0.5 font-space text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }}>
+                Le rendez-vous actuel reste prévu tant que vous ne validez pas.
+              </p>
+            </div>
+          )}
+          {appt.preferredDate && !appt.startAt && (
             <div className="mt-1 rounded-2xl px-4 py-3"
-              style={{ background: 'rgba(245,185,74,0.07)', border: '1px solid rgba(245,185,74,0.35)' }}>
-              <p className="font-space text-[0.875rem] font-semibold" style={{ color: '#f5c46e' }}>
+              style={{ background: 'var(--c9-warn-soft)', border: '1px solid var(--c9-warn-line)' }}>
+              <p className="font-space text-[0.875rem] font-semibold" style={{ color: 'var(--c9-warn)' }}>
                 Souhait du client : {fmtWish(appt.preferredDate, appt.preferredPeriod)}
               </p>
               {appt.availabilityNote && (
@@ -390,8 +517,8 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
           )}
           {appt.proposedStartAt && (
             <div className="mt-1 rounded-2xl px-4 py-3"
-              style={{ background: 'rgba(180,156,255,0.08)', border: '1px solid rgba(180,156,255,0.35)' }}>
-              <p className="font-space text-[0.875rem] font-semibold" style={{ color: '#d4c6ff' }}>
+              style={{ background: 'var(--c9-elev-1)', border: '1px solid var(--c9-hairline-lit)' }}>
+              <p className="font-space text-[0.875rem] font-semibold" style={{ color: 'var(--c9-text)' }}>
                 Proposé : {fmtSlotFull(appt.proposedStartAt)}
               </p>
               <p className="mt-0.5 font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-2)' }}>
@@ -411,8 +538,8 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
             {PART_STATUSES.map((p) => <option key={p} value={p}>{PART_STATUS_LABEL[p]}</option>)}
           </select>
           {partNeedsOrder(appt.partStatus) && (
-            <p className="font-space text-[0.8125rem]" style={{ color: '#f5b94a' }}>
-              {ORDER_DELAY_NOTE} <span style={{ color: 'var(--c9-text-3)' }}>Estimation, pas une garantie.</span>
+            <p className="font-space text-[0.8125rem]" style={{ color: 'var(--c9-warn)' }}>
+              {ORDER_DELAY_NOTE} <span style={{ color: 'var(--c9-text-3)' }}>Estimation.</span>
             </p>
           )}
         </Block>
@@ -444,10 +571,10 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
             const pending = messagePending(appt, k)
             return (
               <div key={k} className="flex flex-col gap-2 rounded-2xl p-3" data-message={k}
-                style={{ border: `1px solid ${pending ? 'var(--c9-hairline-lit)' : 'var(--c9-hairline-soft)'}`, background: 'rgba(255,255,255,0.03)' }}>
+                style={{ border: `1px solid ${pending ? 'var(--c9-hairline-lit)' : 'var(--c9-hairline-soft)'}`, background: 'var(--c9-elev-1)' }}>
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="font-space text-[0.9375rem] font-semibold">{MESSAGE_LABEL[k]}</p>
-                  <span className="shrink-0 font-space text-[0.75rem]" style={{ color: pending ? '#f5c46e' : '#4ade80' }}>
+                  <span className="shrink-0 font-space text-[0.75rem]" style={{ color: pending ? 'var(--c9-warn)' : 'var(--c9-ok)' }}>
                     {pending ? (log ? 'À renvoyer (créneau changé)' : 'À envoyer') : `Envoyé ${lowerFirstSlot(log!.at)}`}
                   </span>
                 </div>
@@ -515,7 +642,9 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
             </div>
           )}
 
-          {proposing ? (
+          {finishing === 'terminer' ? (
+            finishForm
+          ) : proposing ? (
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Nouvelle date" htmlFor="p-date">
@@ -532,7 +661,7 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
                   onChange={(e) => setPReason(e.target.value)} />
               </Field>
               <label className="flex items-start gap-3 font-space text-[0.875rem] leading-snug" style={{ color: 'var(--c9-text-2)' }}>
-                <input type="checkbox" checked={pFirm} onChange={(e) => setPFirm(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[#3ad9ff]" />
+                <input type="checkbox" checked={pFirm} onChange={(e) => setPFirm(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[#c9895c]" />
                 Proposition ferme : si le client l&apos;accepte, le rendez-vous est confirmé.
               </label>
               <div className="flex gap-2">
@@ -543,16 +672,16 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
                 </Btn>
               </div>
               <p className="font-space text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }}>
-                Le client n&apos;est pas prévenu automatiquement : envoyez-lui ensuite le lien de suivi (bouton WhatsApp du bloc « Suivi client »). Il pourra accepter, refuser ou demander une autre disponibilité.
+                Le client n&apos;est pas prévenu automatiquement : envoyez-lui le message « Proposition de créneau » (bloc Messages WhatsApp). Il pourra accepter ou choisir un autre créneau.
               </p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
               {actions.map((a) => (
                 <Btn key={a}
-                  variant={a === 'confirmer' || a === 'accepter_proposition' || a === 'terminer' ? 'primary' : 'secondary'}
+                  variant={a === 'confirmer' || a === 'accepter_proposition' || a === 'terminer' || a === 'valider_choix_client' ? 'primary' : 'secondary'}
                   disabled={busy !== null}
-                  onClick={() => (a === 'proposer' ? openPropose() : run(a))}>
+                  onClick={() => (a === 'proposer' ? openPropose() : a === 'terminer' ? openFinish('terminer') : run(a))}>
                   {busy === a ? '…' : ACTIONS[a].label}
                 </Btn>
               ))}
@@ -566,8 +695,8 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
                 </Btn>
               )}
               {confirmCancel && (
-                <div className="flex flex-col gap-2 rounded-2xl p-3" style={{ border: '1px solid rgba(248,113,113,0.35)' }}>
-                  <p className="font-space text-[0.875rem]" style={{ color: '#fecaca' }}>
+                <div className="flex flex-col gap-2 rounded-2xl p-3" style={{ border: '1px solid var(--c9-danger-line)' }}>
+                  <p className="font-space text-[0.875rem]" style={{ color: 'var(--c9-danger)' }}>
                     Annuler ce rendez-vous ? Le dossier est conservé et pourra être rouvert.
                   </p>
                   <div className="flex gap-2">

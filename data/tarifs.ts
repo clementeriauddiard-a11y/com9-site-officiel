@@ -5,9 +5,10 @@
 //  ⚠️  C'est LE seul fichier à modifier pour mettre à jour les prix du site.
 //      Aucun tarif ni forfait de déplacement n'est écrit en dur ailleurs.
 //
-//  Deux tableaux à maintenir :
-//    • MODELS  → la grille réparation (pièce + main-d'œuvre, hors déplacement)
-//    • ZONES   → les forfaits de déplacement
+//  Tableau à maintenir :
+//    • MODELS  → la grille réparation (pièce + main-d'œuvre, hors déplacement),
+//                en euros entiers.
+//  Les frais de déplacement, durées et horaires sont dans config/com9.ts.
 //
 //  Pour ajouter un modèle : ajouter une ligne dans MODELS (l'ordre affiché
 //  est l'ordre du tableau). `null` = prestation non proposée sur ce modèle,
@@ -26,9 +27,18 @@
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type RepairId = 'ecran' | 'batterie' | 'vitre'
+import { ZONES, type Zone, type ZoneId } from '@/config/com9'
+import { euros, toCents } from '@/lib/money'
 
-export type ZoneId = 'z5' | 'z15' | 'z30' | 'devis'
+export { ZONES, type Zone, type ZoneId }
+
+/**
+ * Prestations. Les trois premières ont un prix dans la grille ; « module »
+ * (petite pièce) et « diagnostic » se chiffrent sur place.
+ */
+export type RepairId = 'ecran' | 'batterie' | 'vitre' | 'module' | 'diagnostic'
+/** Prestations dont le prix est dans la grille */
+export type GridRepairId = 'ecran' | 'batterie' | 'vitre'
 
 export type ModelTarif = {
   /** Nom commercial exact affiché au client */
@@ -52,31 +62,36 @@ export type PriceOption = {
   id: string
   /** Libellé affiché (ex. « Soft OLED Premium ») */
   label: string
-  /** Prix de la réparation en euros — pièce et main-d'œuvre, hors déplacement */
-  price: number
+  /** Prix de la réparation en centimes — pièce et main-d'œuvre, hors déplacement */
+  priceCents: number
   /** Ligne d'explication courte sous le libellé */
   note: string
   /** Mise en avant sobre « Recommandé » */
   recommended: boolean
 }
 
-export type Zone = {
-  id: ZoneId
-  /** Libellé court, pour les boutons */
-  label: string
-  /** Libellé complet, pour les récapitulatifs */
-  full: string
-  /** Forfait en euros — null = sur devis, aucun total définitif affiché */
-  fee: number | null
-}
-
 // ─── Prestations ─────────────────────────────────────────────────────────────
 
-export const REPAIRS: { id: RepairId; label: string }[] = [
+/** Prestations à prix fixe, proposées dans le parcours principal. */
+export const REPAIRS: { id: GridRepairId; label: string }[] = [
   { id: 'ecran',    label: 'Écran'         },
   { id: 'batterie', label: 'Batterie'      },
   { id: 'vitre',    label: 'Vitre arrière' },
 ]
+
+/** Libellé de toutes les prestations (agenda, récapitulatifs). */
+export const REPAIR_LABEL: Record<RepairId, string> = {
+  ecran: 'Écran',
+  batterie: 'Batterie',
+  vitre: 'Vitre arrière',
+  module: 'Petite pièce / module',
+  diagnostic: 'Diagnostic à domicile',
+}
+
+export const ALL_REPAIRS = Object.keys(REPAIR_LABEL) as RepairId[]
+
+export const isGridRepair = (r: RepairId): r is GridRepairId =>
+  r === 'ecran' || r === 'batterie' || r === 'vitre'
 
 // ─── Libellés qualité ────────────────────────────────────────────────────────
 
@@ -129,16 +144,7 @@ export const MODELS: ModelTarif[] = [
   { model: 'iPhone 16 Pro Max', serie: 'iPhone 16', gamme: 'pro',      lcd: null, oled: 219, batterie: 109, vitre: 159 },
 ]
 
-// ─── FORFAITS DE DÉPLACEMENT ─────────────────────────────────────────────────
-//     Un seul déplacement est facturé par intervention, même si plusieurs
-//     réparations sont réalisées sur place.
-
-export const ZONES: Zone[] = [
-  { id: 'z5',    label: 'Jusqu\'à 5 km',  full: 'Jusqu\'à 5 km inclus',                 fee: 9    },
-  { id: 'z15',   label: '5 à 15 km',      full: 'Plus de 5 km et jusqu\'à 15 km inclus', fee: 15   },
-  { id: 'z30',   label: '15 à 30 km',     full: 'Plus de 15 km et jusqu\'à 30 km inclus', fee: 25  },
-  { id: 'devis', label: 'Plus de 30 km',  full: 'Au-delà de 30 km',                     fee: null },
-]
+// ─── FORFAITS DE DÉPLACEMENT (définis dans config/com9.ts) ───────────────────
 
 export function findZone(id: ZoneId | null): Zone | null {
   if (!id) return null
@@ -150,15 +156,18 @@ export function findZone(id: ZoneId | null): Zone | null {
  * Bornes incluses : 5 km → « jusqu'à 5 km », 15 km → « 5 à 15 km »…
  */
 export function zoneForDistance(km: number): ZoneId {
-  if (km <= 5) return 'z5'
-  if (km <= 15) return 'z15'
-  if (km <= 30) return 'z30'
-  return 'devis'
+  for (const z of ZONES) if (z.maxKm !== null && km <= z.maxKm) return z.id
+  return 'hors'
+}
+
+/** Forfait d'une zone en centimes ; null si inconnue ou hors zone. */
+export function zoneFeeCents(zone: ZoneId | null | undefined): number | null {
+  return findZone(zone ?? null)?.feeCents ?? null
 }
 
 /** Mention affichée près des tarifs. */
 export const PRICE_NOTE =
-  'Pièce et main-d\'œuvre comprises. Frais de déplacement selon votre zone.'
+  'Pièce et main-d\'œuvre comprises. Frais de déplacement selon la distance.'
 
 /** Règle de facturation du déplacement. */
 export const TRAVEL_RULE =
@@ -194,7 +203,7 @@ export function getOptions(repair: RepairId, m: ModelTarif): PriceOption[] {
       out.push({
         id: 'lcd',
         label: QUALITY.lcd.label,
-        price: m.lcd,
+        priceCents: toCents(m.lcd),
         note: QUALITY.lcd.note,
         recommended: false,
       })
@@ -203,7 +212,7 @@ export function getOptions(repair: RepairId, m: ModelTarif): PriceOption[] {
       out.push({
         id: 'oled',
         label: oledQuality.label,
-        price: m.oled,
+        priceCents: toCents(m.oled),
         note: oledQuality.note,
         // Mis en avant uniquement lorsque le client a réellement un choix.
         recommended: hasBoth,
@@ -217,17 +226,17 @@ export function getOptions(repair: RepairId, m: ModelTarif): PriceOption[] {
     return [{
       id: 'batterie',
       label: QUALITY.batterie.label,
-      price: m.batterie,
+      priceCents: toCents(m.batterie),
       note: QUALITY.batterie.note,
       recommended: false,
     }]
   }
 
-  if (m.vitre === null) return []
+  if (repair !== 'vitre' || m.vitre === null) return []
   return [{
     id: 'vitre',
     label: QUALITY.vitre.label,
-    price: m.vitre,
+    priceCents: toCents(m.vitre),
     note: QUALITY.vitre.note,
     recommended: false,
   }]
@@ -238,9 +247,9 @@ export function modelsFor(repair: RepairId): ModelTarif[] {
   return MODELS.filter((m) => getOptions(repair, m).length > 0)
 }
 
-/** Prix d'appel « à partir de » d'une prestation — hors déplacement. */
-export function priceFrom(repair: RepairId): number {
-  const all = MODELS.flatMap((m) => getOptions(repair, m).map((o) => o.price))
+/** Prix d'appel « à partir de » d'une prestation (centimes) — hors déplacement. */
+export function priceFrom(repair: GridRepairId): number {
+  const all = MODELS.flatMap((m) => getOptions(repair, m).map((o) => o.priceCents))
   return Math.min(...all)
 }
 
@@ -252,28 +261,28 @@ export function findModel(model: string): ModelTarif | undefined {
 // ─── Calcul du total ─────────────────────────────────────────────────────────
 
 export type Quote = {
-  /** Prix de la réparation seule */
-  repairPrice: number
-  /** Forfait de déplacement — null tant qu'aucune zone n'est choisie ou sur devis */
-  travelFee: number | null
-  /** Total à payer — null si la zone est sur devis ou non choisie */
-  total: number | null
-  /** true au-delà de 30 km : aucun total définitif ne doit être affiché */
-  onQuote: boolean
+  /** Prix de la réparation seule (centimes) */
+  repairCents: number
+  /** Forfait de déplacement (centimes) — null tant qu'aucune zone n'est connue ou hors zone */
+  travelCents: number | null
+  /** Total à payer (centimes) — null si zone inconnue ou hors zone */
+  totalCents: number | null
+  /** true au-delà de 30 km : COM'9 n'intervient pas */
+  outOfArea: boolean
 }
 
 export function buildQuote(option: PriceOption, zone: Zone | null): Quote {
   if (!zone) {
-    return { repairPrice: option.price, travelFee: null, total: null, onQuote: false }
+    return { repairCents: option.priceCents, travelCents: null, totalCents: null, outOfArea: false }
   }
-  if (zone.fee === null) {
-    return { repairPrice: option.price, travelFee: null, total: null, onQuote: true }
+  if (zone.feeCents === null) {
+    return { repairCents: option.priceCents, travelCents: null, totalCents: null, outOfArea: true }
   }
   return {
-    repairPrice: option.price,
-    travelFee: zone.fee,
-    total: option.price + zone.fee,
-    onQuote: false,
+    repairCents: option.priceCents,
+    travelCents: zone.feeCents,
+    totalCents: option.priceCents + zone.feeCents,
+    outOfArea: false,
   }
 }
 
@@ -287,14 +296,18 @@ function repairPhrase(repair: RepairId, model: string, quality?: string): string
     return `le remplacement de l'écran de mon ${model}${q}`
   }
   if (repair === 'batterie') return `le remplacement de la batterie de mon ${model}`
-  return `le remplacement de la vitre arrière de mon ${model}`
+  if (repair === 'vitre') return `le remplacement de la vitre arrière de mon ${model}`
+  if (repair === 'module') return `le remplacement d'une petite pièce de mon ${model}`
+  return `un diagnostic à domicile de mon ${model}`
 }
 
 /** Message générique, sans modèle — utilisé par les liens de repli. */
 export function buildRepairMessage(repair: RepairId): string {
   if (repair === 'ecran')    return `${WA_INTRO} le remplacement d'un écran.`
   if (repair === 'batterie') return `${WA_INTRO} le remplacement d'une batterie.`
-  return `${WA_INTRO} le remplacement d'une vitre arrière.`
+  if (repair === 'vitre')    return `${WA_INTRO} le remplacement d'une vitre arrière.`
+  if (repair === 'module')   return `${WA_INTRO} le remplacement d'une petite pièce.`
+  return `${WA_INTRO} un diagnostic à domicile.`
 }
 
 /**
@@ -312,44 +325,11 @@ export function buildQuoteMessage(
   const quality = repair === 'ecran' ? option.label : undefined
   let msg = `${WA_INTRO} ${repairPhrase(repair, model, quality)}.`
 
-  msg += `\n\nRéparation : ${option.price} €`
+  msg += `\n\nRéparation : ${euros(option.priceCents)}`
 
-  if (!zone) return msg
+  if (!zone || zone.feeCents === null) return msg
 
-  if (zone.fee === null) {
-    msg += `\nZone : ${zone.full}`
-    msg += `\nDéplacement sur devis`
-    return msg
-  }
-
-  msg += `\nDéplacement (${zone.full}) : ${zone.fee} €`
-  msg += `\nTotal : ${option.price + zone.fee} €`
+  msg += `\nDéplacement (${zone.full}) : ${euros(zone.feeCents)}`
+  msg += `\nTotal : ${euros(option.priceCents + zone.feeCents)}`
   return msg
 }
-
-// ─── DIAGNOSTIC ──────────────────────────────────────────────────────────────
-//     Inchangé : le diagnostic conserve son fonctionnement et ses conditions.
-//     Il n'est pas une catégorie de réparation et n'entre pas dans le calcul
-//     des frais de déplacement ci-dessus.
-
-export const DIAGNOSTIC = {
-  free: {
-    label: 'Diagnostic simplifié',
-    price: 'Gratuit',
-    desc:  'Analyse simplifiée réalisée directement depuis le site. Résultat immédiat.',
-    points: ['Batterie', 'Écran', 'Caméras', 'Vitre arrière'],
-  },
-  premium: {
-    label: 'Diagnostic Premium Com\'9',
-    price: '4,99 €',
-    desc:  'Analyse complète réalisée en atelier dans le cadre du service Com\'9.',
-    note:  'Montant déduit du prix final en cas de réparation.',
-    points: [
-      'Batterie', 'Écran', 'Caméras', 'Audio',
-      'Réseau', 'Capteurs', 'Performances', 'État physique',
-    ],
-    highlights: ['Score sur 100', 'Feuille officielle Com\'9', 'Résultat immédiat'],
-    waMessage:
-      "Bonjour, je viens du site Com'9. Je souhaite prendre rendez-vous pour un Diagnostic Premium Com'9 (4,99 €).",
-  },
-} as const

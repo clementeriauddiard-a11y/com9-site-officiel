@@ -3,62 +3,36 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // COM'9 — Suivi client (page ouverte depuis le lien personnel)
 //
-//  Le client voit son rendez-vous, et peut selon le cas : accepter ou refuser
-//  le créneau proposé, demander une autre disponibilité, demander un
-//  changement ou l'annulation. Une demande ne modifie jamais un rendez-vous
-//  confirmé toute seule : COM'9 décide. Aucun paiement en ligne.
+//  Selon l'état : « Accepter » la proposition de COM'9, « Choisir un autre
+//  créneau » parmi les créneaux libres, ou demander l'annulation.
+//  Un rendez-vous confirmé ne bouge jamais tout seul : COM'9 valide.
+//  Aucun paiement en ligne.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useMemo, useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import type { ClientAction, ClientView } from '@/lib/agenda/service'
-import { BOOKING_HORIZON_DAYS, addDaysToDay, todayInParis } from '@/lib/agenda/logic'
-import { PREFERRED_PERIODS, PREFERRED_PERIOD_LABEL, type PreferredPeriod } from '@/lib/agenda/types'
-import { LINKS, PHONE } from '@/lib/links'
-import { Choice, Label, Line, inputCls, inputStyle } from './ui'
+import { euros } from '@/lib/money'
+import { Btn, ErrorBox, Field, Line, Notice, inputCls, inputStyle } from '@/components/ui/kit'
+import ContactActions from '@/components/ui/ContactActions'
+import SlotPicker, { type DayAvailability } from './SlotPicker'
 
 const TONE: Record<ClientView['status'], string> = {
-  demande_recue: '#f5b94a',
-  creneau_propose: '#b49cff',
-  confirme: '#3ad9ff',
-  en_route: '#6fb4ff',
-  en_cours: '#4ade80',
-  termine: 'rgba(255,255,255,0.6)',
-  annule: '#f87171',
+  demande_recue: 'var(--c9-warn)',
+  creneau_propose: 'var(--c9-accent-text)',
+  confirme: 'var(--c9-ok)',
+  en_route: 'var(--c9-ok)',
+  en_cours: 'var(--c9-ok)',
+  termine: 'var(--c9-text-3)',
+  annule: 'var(--c9-danger)',
 }
 
-function Card({ children, accent }: { children: ReactNode; accent?: boolean }) {
+function Card({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
   return (
-    <div className={`${accent ? 'c9-surface-accent' : 'c9-surface'} flex flex-col gap-3 rounded-[24px] p-5 sm:p-7`}>
-      {children}
-    </div>
+    <div className={`${accent ? 'c9-surface-accent' : 'c9-surface'} flex flex-col gap-3 rounded-[24px] p-5 sm:p-7`}>{children}</div>
   )
 }
 
-function Kicker({ children }: { children: ReactNode }) {
-  return (
-    <p className="font-mono text-[9.5px] uppercase tracking-[0.2em]" style={{ color: 'var(--c9-text-3)' }}>{children}</p>
-  )
-}
-
-function Button({ children, onClick, variant = 'secondary', disabled, type = 'button' }: {
-  children: ReactNode; onClick?: () => void; variant?: 'primary' | 'secondary' | 'danger'; disabled?: boolean; type?: 'button' | 'submit'
-}) {
-  const style: React.CSSProperties =
-    variant === 'primary'
-      ? { background: 'linear-gradient(118deg, #6fe6ff 0%, #3ad9ff 42%, #1aa9ff 100%)', color: '#06131f', boxShadow: '0 14px 40px -18px rgba(26,169,255,0.75)' }
-      : variant === 'danger'
-        ? { background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.35)', color: '#fca5a5' }
-        : { background: 'rgba(255,255,255,0.05)', border: '1px solid var(--c9-hairline-lit)', color: 'var(--c9-text)' }
-  return (
-    <button type={type} onClick={onClick} disabled={disabled}
-      className="flex w-full items-center justify-center rounded-2xl px-5 text-center font-space text-[0.9375rem] font-semibold transition-transform duration-200 active:scale-[0.985] disabled:opacity-50"
-      style={{ minHeight: '52px', ...style }}>
-      {children}
-    </button>
-  )
-}
-
-type Mode = null | 'refuser' | 'autre_dispo' | 'modification' | 'annulation'
+type Mode = null | 'autre_creneau' | 'annulation'
 
 export default function TrackingView({ token, initial }: { token: string; initial: ClientView }) {
   const [view, setView] = useState(initial)
@@ -66,18 +40,38 @@ export default function TrackingView({ token, initial }: { token: string; initia
   const [busy, setBusy] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
   const [done, setDone] = useState<string | null>(null)
-
-  const today = useMemo(() => todayInParis(), [])
-  const [date, setDate] = useState('')
-  const [period, setPeriod] = useState<PreferredPeriod | 'indifferent' | null>(null)
   const [message, setMessage] = useState('')
+
+  const [days, setDays] = useState<DayAvailability[] | null>(null)
+  const [daysLoading, setDaysLoading] = useState(false)
+  const [daysError, setDaysError] = useState<string | null>(null)
+  const [slot, setSlot] = useState<string | null>(null)
 
   const can = (a: ClientAction) => view.actions.includes(a)
 
+  async function openSlots() {
+    setMode('autre_creneau')
+    setErrors([])
+    setDone(null)
+    setSlot(null)
+    setDaysLoading(true)
+    setDaysError(null)
+    try {
+      const res = await fetch(`/api/suivi/${token}/creneaux`, { cache: 'no-store' })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(d.error ?? 'Créneaux indisponibles.')
+      setDays(d.days ?? [])
+    } catch (e) {
+      setDaysError(e instanceof Error ? e.message : 'Créneaux indisponibles.')
+    } finally {
+      setDaysLoading(false)
+    }
+  }
+
   async function send(action: ClientAction) {
     setErrors([])
-    if ((action === 'autre_dispo' || action === 'modification') && (!date || period === null)) {
-      setErrors(['Indiquez le jour souhaité et le moment de la journée.'])
+    if (action === 'autre_creneau' && !slot) {
+      setErrors(['Choisissez un créneau.'])
       return
     }
     setBusy(true)
@@ -88,193 +82,149 @@ export default function TrackingView({ token, initial }: { token: string; initia
         body: JSON.stringify({
           action,
           message,
-          preferredDate: date || undefined,
-          preferredPeriod: period && period !== 'indifferent' ? period : null,
           expectedProposal: view.proposal?.iso,
+          startAt: action === 'autre_creneau' ? slot : undefined,
         }),
       })
       const data = await res.json().catch(() => ({}))
-      if (res.ok && data.view) {
-        setView(data.view)
-        setMode(null)
-        setMessage('')
-        setDone(
-          action === 'accepter'
-            ? (data.view.status === 'confirme' ? 'Merci ! Votre rendez-vous est confirmé.' : 'Merci ! Votre accord a été transmis à COM\'9.')
-            : 'Votre réponse a bien été transmise à COM\'9.',
-        )
-        window.scrollTo({ top: 0, behavior: 'smooth' })
+      if (!res.ok) {
+        setErrors(Array.isArray(data.errors) && data.errors.length ? data.errors : [data.error ?? 'Envoi impossible.'])
+        if (data.view) setView(data.view)
+        if (res.status === 409 && action === 'autre_creneau') await openSlots()
         return
       }
-      setErrors(Array.isArray(data.errors) && data.errors.length ? data.errors : [data.error ?? "La réponse n'a pas pu être envoyée."])
-      if (res.status === 409) {
-        // La situation a changé : on recharge la vue à jour.
-        setTimeout(() => window.location.reload(), 2500)
-      }
+      setView(data.view)
+      setMode(null)
+      setMessage('')
+      setDone(
+        action === 'accepter'
+          ? (data.view.status === 'confirme' ? 'Rendez-vous confirmé. À bientôt !' : 'Votre accord a été transmis à COM’9.')
+          : action === 'autre_creneau' ? 'Votre nouveau créneau a été transmis à COM’9.'
+          : 'Votre demande d’annulation a été transmise à COM’9.',
+      )
     } catch {
-      setErrors(["La réponse n'a pas pu être envoyée. Vérifiez votre connexion."])
+      setErrors(['Connexion impossible. Vérifiez le réseau puis réessayez.'])
     } finally {
       setBusy(false)
     }
   }
 
-  const travel = view.onQuote ? 'Sur devis' : view.travelFee === null ? 'À confirmer' : `${view.travelFee} €`
+  const travelLabel = view.outOfArea ? 'Hors zone' : view.travelFeeCents !== null ? euros(view.travelFeeCents) : 'À confirmer'
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* État */}
-      <Card accent={view.status === 'creneau_propose' || view.status === 'confirme'}>
-        <span className="inline-flex items-center gap-2 self-start rounded-full px-3 py-1.5 font-space text-[0.8125rem] font-medium"
-          style={{ color: TONE[view.status], border: `1px solid ${TONE[view.status]}55`, background: 'rgba(255,255,255,0.04)' }}>
-          <span className="h-1.5 w-1.5 rounded-full" style={{ background: TONE[view.status] }} />
+    <div className="flex flex-col gap-5" data-tracking>
+      {/* ── État ── */}
+      <Card accent={view.status === 'creneau_propose'}>
+        <span className="inline-flex items-center gap-2 text-[0.8125rem] font-semibold" style={{ color: TONE[view.status] }}>
+          <span className="h-2 w-2 rounded-full" style={{ background: TONE[view.status] }} />
           {view.title}
         </span>
-        {view.slot && (
-          <p className="font-space text-[1.375rem] font-semibold leading-snug" style={{ color: 'var(--c9-text)' }}>{view.slot}</p>
+        {view.slot && <p className="text-[1.375rem] font-semibold leading-snug tracking-[-0.02em]">{view.slot}</p>}
+        {view.requestedSlot && (
+          <p className="text-[1.125rem] font-medium leading-snug">Créneau demandé : <b>{view.requestedSlot}</b></p>
         )}
-        <p className="font-space text-[0.9375rem] leading-relaxed" style={{ color: 'var(--c9-text-2)' }}>{view.text}</p>
-        {done && (
-          <p role="status" className="font-space text-[0.9375rem] font-semibold" style={{ color: '#4ade80' }}>{done}</p>
+        {view.proposal && (
+          <div className="flex flex-col gap-1">
+            <p className="text-[1.375rem] font-semibold leading-snug tracking-[-0.02em]">{view.proposal.label}</p>
+            {view.proposal.reason && <p style={{ color: 'var(--c9-text-2)' }}>Motif : {view.proposal.reason}</p>}
+          </div>
         )}
-        {view.pendingRequest && !done && (
-          <p className="font-space text-[0.875rem]" style={{ color: '#f5c46e' }}>{view.pendingRequest}</p>
+        <p style={{ color: 'var(--c9-text-2)' }}>{view.text}</p>
+        {view.clientSlot && (
+          <Notice tone="warn" title="Changement demandé">Vous avez demandé : {view.clientSlot}. COM&apos;9 va vous répondre.</Notice>
         )}
+        {view.pendingRequest && !view.clientSlot && <Notice tone="info">{view.pendingRequest}</Notice>}
+        {view.partNote && <Notice tone="warn">{view.partNote}</Notice>}
       </Card>
 
-      {/* Proposition de COM'9 */}
-      {view.proposal && (
-        <Card>
-          <Kicker>Créneau proposé par COM&apos;9</Kicker>
-          <p className="font-space text-[1.25rem] font-semibold" style={{ color: 'var(--c9-text)' }}>{view.proposal.label}</p>
-          {view.proposal.reason && (
-            <p className="font-space text-[0.9375rem]" style={{ color: 'var(--c9-text-2)' }}>Motif : {view.proposal.reason}</p>
-          )}
-          <p className="font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>
-            {view.proposal.firm
-              ? 'Si vous acceptez, votre rendez-vous est confirmé à ce créneau.'
-              : 'Si vous acceptez, COM\'9 vous confirmera ensuite le rendez-vous.'}
-          </p>
-          {mode === null && (
-            <div className="mt-1 flex flex-col gap-2.5">
-              {can('accepter') && <Button variant="primary" disabled={busy} onClick={() => send('accepter')}>{busy ? 'Envoi…' : 'Accepter ce créneau'}</Button>}
-              {can('autre_dispo') && <Button disabled={busy} onClick={() => setMode('autre_dispo')}>Demander une autre disponibilité</Button>}
-              {can('refuser') && <Button disabled={busy} onClick={() => setMode('refuser')}>Refuser ce créneau</Button>}
-            </div>
-          )}
-        </Card>
-      )}
+      {done && <Notice tone="ok" role="status" title={done} />}
 
-      {/* Formulaires de réponse */}
-      {(mode === 'autre_dispo' || mode === 'modification') && (
-        <Card>
-          <Kicker>{mode === 'modification' ? 'Demander un autre créneau' : 'Autre disponibilité'}</Kicker>
-          {mode === 'modification' && (
-            <p className="font-space text-[0.875rem]" style={{ color: 'var(--c9-text-2)' }}>
-              Votre rendez-vous actuel reste prévu tant que COM&apos;9 ne l&apos;a pas modifié.
-            </p>
-          )}
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="t-date">Jour souhaité</Label>
-            <input id="t-date" type="date" className={inputCls} style={inputStyle} min={today}
-              max={addDaysToDay(today, BOOKING_HORIZON_DAYS)} value={date} onChange={(e) => setDate(e.target.value)} />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label>Moment de la journée</Label>
-            <Choice name="Moment de la journée" columns={2} value={period} onChange={setPeriod}
-              options={[
-                ...PREFERRED_PERIODS.map((p) => ({ id: p as PreferredPeriod | 'indifferent', label: PREFERRED_PERIOD_LABEL[p] })),
-                { id: 'indifferent' as const, label: 'Indifférent' },
-              ]} />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="t-msg" optional>Précisions</Label>
-            <textarea id="t-msg" rows={2} maxLength={300} className={`${inputCls} py-3`} style={{ ...inputStyle, minHeight: '76px' }}
-              placeholder="Ex. : plutôt après 17 h" value={message} onChange={(e) => setMessage(e.target.value)} />
-          </div>
-          <div className="flex flex-col gap-2.5">
-            <Button variant="primary" disabled={busy} onClick={() => send(mode)}>{busy ? 'Envoi…' : 'Envoyer ma demande'}</Button>
-            <Button disabled={busy} onClick={() => { setMode(null); setErrors([]) }}>Retour</Button>
-          </div>
-        </Card>
-      )}
-
-      {(mode === 'refuser' || mode === 'annulation') && (
-        <Card>
-          <Kicker>{mode === 'refuser' ? 'Refuser le créneau proposé' : 'Demander l’annulation'}</Kicker>
-          <p className="font-space text-[0.9375rem]" style={{ color: 'var(--c9-text-2)' }}>
-            {mode === 'refuser'
-              ? 'COM\'9 vous proposera une autre disponibilité.'
-              : 'Votre demande est transmise à COM\'9, qui vous confirmera l’annulation.'}
-          </p>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="t-msg2" optional>Message</Label>
-            <textarea id="t-msg2" rows={2} maxLength={300} className={`${inputCls} py-3`} style={{ ...inputStyle, minHeight: '76px' }}
-              value={message} onChange={(e) => setMessage(e.target.value)} />
-          </div>
-          <div className="flex flex-col gap-2.5">
-            <Button variant="danger" disabled={busy} onClick={() => send(mode)}>
-              {busy ? 'Envoi…' : mode === 'refuser' ? 'Confirmer le refus' : 'Confirmer la demande d’annulation'}
-            </Button>
-            <Button disabled={busy} onClick={() => { setMode(null); setErrors([]) }}>Retour</Button>
-          </div>
-        </Card>
-      )}
-
-      {errors.length > 0 && (
-        <div role="alert" className="rounded-2xl px-5 py-4 font-space text-[0.9375rem]"
-          style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.35)', color: '#fecaca' }}>
-          <ul className="list-disc space-y-1 pl-5">{errors.map((e) => <li key={e}>{e}</li>)}</ul>
-        </div>
-      )}
-
-      {/* Prestation et prix */}
-      <Card>
-        <Kicker>Votre réparation</Kicker>
-        <p className="font-space text-[1.0625rem] font-semibold" style={{ color: 'var(--c9-text)' }}>{view.model} · {view.repairLabel}</p>
-        <p className="font-space text-[0.9375rem]" style={{ color: 'var(--c9-text-2)' }}>{view.quality}</p>
-        <div className="c9-divider my-1" />
-        <Line label="Réparation" value={`${view.repairPrice} €`} />
-        <Line label="Déplacement" value={travel} />
-        {view.zoneToConfirm && (
-          <p className="text-right font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>Zone à confirmer par COM&apos;9</p>
-        )}
-        <div className="c9-divider my-1" />
-        {view.total !== null
-          ? <Line label={view.zoneToConfirm ? 'Total indicatif' : 'Total'} value={`${view.total} €`} strong />
-          : <Line label="Total" value={view.onQuote ? 'Sur devis' : 'À confirmer'} />}
-        {view.partNote && (
-          <p className="font-space text-[0.875rem]" style={{ color: '#f5c46e' }}>
-            {view.partNote} <span style={{ color: 'var(--c9-text-3)' }}>Estimation, pas une garantie.</span>
-          </p>
-        )}
-        {view.wish && !view.slot && (
-          <>
-            <div className="c9-divider my-1" />
-            <Line label="Votre souhait" value={view.wish} />
-          </>
-        )}
-      </Card>
-
-      {/* Demandes possibles hors proposition */}
-      {mode === null && !view.proposal && (can('autre_dispo') || can('modification') || can('annulation')) && (
+      {/* ── Actions ── */}
+      {view.actions.length > 0 && !mode && (
         <div className="flex flex-col gap-2.5">
-          {can('autre_dispo') && <Button onClick={() => setMode('autre_dispo')}>Indiquer une autre disponibilité</Button>}
-          {can('modification') && <Button onClick={() => setMode('modification')}>Demander un autre créneau</Button>}
-          {can('annulation') && <Button variant="danger" onClick={() => setMode('annulation')}>Demander l&apos;annulation</Button>}
+          {can('accepter') && (
+            <Btn variant="primary" size="lg" disabled={busy} onClick={() => send('accepter')}>
+              {busy ? '…' : 'Accepter'}
+            </Btn>
+          )}
+          {can('autre_creneau') && (
+            <Btn variant={can('accepter') ? 'secondary' : 'primary'} size="lg" disabled={busy} onClick={openSlots}>
+              Choisir un autre créneau
+            </Btn>
+          )}
+          {can('annulation') && (
+            <button type="button" className="self-center rounded-xl px-3 text-[0.9375rem] font-medium underline underline-offset-4"
+              style={{ color: 'var(--c9-text-3)', minHeight: 44 }} onClick={() => { setMode('annulation'); setErrors([]); setDone(null) }}>
+              Demander l&apos;annulation
+            </button>
+          )}
         </div>
       )}
 
-      <p className="text-center font-space text-[0.8125rem] leading-relaxed" style={{ color: 'var(--c9-text-3)' }}>
-        Aucun paiement ni acompte n&apos;est demandé en ligne. Ce lien est personnel : ne le partagez pas.
-        <br />
-        Une question ?{' '}
-        <a href={LINKS.whatsapp} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--c9-text-2)' }}>
-          WhatsApp
-        </a>
-        {' · '}
-        <a href={LINKS.phone} className="underline tabular-nums" style={{ color: 'var(--c9-text-2)' }}>
-          {PHONE.display}
-        </a>
+      {mode === 'autre_creneau' && (
+        <Card>
+          <p className="text-[1.0625rem] font-semibold">Choisir un autre créneau</p>
+          {view.status === 'confirme' && (
+            <p style={{ color: 'var(--c9-text-2)' }}>Votre rendez-vous actuel reste prévu tant que COM&apos;9 n&apos;a pas validé le changement.</p>
+          )}
+          <SlotPicker days={days} loading={daysLoading} error={daysError} value={slot} onChange={setSlot} />
+          <Field label="Message" htmlFor="t-msg" optional>
+            <input id="t-msg" className={inputCls} style={inputStyle} maxLength={300} value={message} onChange={(e) => setMessage(e.target.value)} />
+          </Field>
+          {errors.length > 0 && <ErrorBox message={errors[0]} errors={errors.slice(1)} />}
+          <div className="flex flex-col gap-2 sm:flex-row-reverse">
+            <Btn variant="primary" size="lg" className="sm:flex-1" disabled={busy || !slot} onClick={() => send('autre_creneau')}>
+              {busy ? 'Envoi…' : 'Envoyer ce créneau'}
+            </Btn>
+            <Btn variant="ghost" size="lg" onClick={() => setMode(null)}>Retour</Btn>
+          </div>
+        </Card>
+      )}
+
+      {mode === 'annulation' && (
+        <Card>
+          <p className="text-[1.0625rem] font-semibold">Demander l&apos;annulation</p>
+          <p style={{ color: 'var(--c9-text-2)' }}>COM&apos;9 recevra votre demande et vous confirmera l&apos;annulation.</p>
+          <Field label="Message" htmlFor="t-cancel" optional>
+            <input id="t-cancel" className={inputCls} style={inputStyle} maxLength={300} value={message} onChange={(e) => setMessage(e.target.value)} />
+          </Field>
+          {errors.length > 0 && <ErrorBox message={errors[0]} />}
+          <div className="flex flex-col gap-2 sm:flex-row-reverse">
+            <Btn variant="danger" size="lg" className="sm:flex-1" disabled={busy} onClick={() => send('annulation')}>
+              {busy ? 'Envoi…' : 'Envoyer la demande d’annulation'}
+            </Btn>
+            <Btn variant="ghost" size="lg" onClick={() => setMode(null)}>Retour</Btn>
+          </div>
+        </Card>
+      )}
+
+      {errors.length > 0 && !mode && <ErrorBox message={errors[0]} />}
+
+      {/* ── Prestation ── */}
+      <Card>
+        <p className="text-[1.0625rem] font-semibold">{view.model} · {view.repairLabel}</p>
+        {view.quality && <p className="-mt-2" style={{ color: 'var(--c9-text-2)' }}>{view.quality}</p>}
+        {view.symptomLabel && <p className="-mt-2" style={{ color: 'var(--c9-text-2)' }}>{view.symptomLabel}</p>}
+        <div className="c9-divider" />
+        <Line label="Réparation" value={view.repairPriceCents !== null ? euros(view.repairPriceCents) : 'Prix sur place'} />
+        <Line label="Déplacement" value={travelLabel} />
+        {view.zoneToConfirm && (
+          <p className="-mt-2 text-right text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>confirmé par COM&apos;9 avec votre adresse</p>
+        )}
+        <div className="c9-divider" />
+        <Line label="Total" strong value={view.totalCents !== null ? euros(view.totalCents) : view.repairPriceCents === null ? 'Après diagnostic' : 'À confirmer'} />
+        {view.diagnosticRule && <p className="text-[0.875rem] leading-relaxed" style={{ color: 'var(--c9-text-3)' }}>{view.diagnosticRule}</p>}
+        <p className="text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>
+          Paiement après l&apos;intervention : carte bancaire, espèces ou virement. Aucun acompte.
+        </p>
+      </Card>
+
+      <div className="flex flex-col gap-3">
+        <p style={{ color: 'var(--c9-text-2)' }}>Une question ?</p>
+        <ContactActions compact />
+      </div>
+      <p className="text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>
+        Ce lien est personnel : ne le partagez pas.
       </p>
     </div>
   )

@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // /api/auth/deblocage            (responsable connecté uniquement)
 //   GET                          → état des compteurs (nombres seulement)
-//   POST { acces }               → efface les échecs : 'diagnostic' | 'responsable' | 'tous'
+//   POST { acces }               → efface les échecs : 'responsable' | 'tous'
 //
 //  Procédure complète, y compris sans accès à l'espace : docs/SECURITE-CONNEXIONS.md
 // ─────────────────────────────────────────────────────────────────────────────
@@ -42,7 +42,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Requête invalide.' }, { status: 400 })
   }
   const targets =
-    acces === 'diagnostic' ? ['diagnostic'] :
     acces === 'responsable' ? ['responsable', 'responsable-appareil'] :
     acces === 'tous' ? [...COUNTER_SCOPES] : null
   if (!targets) return NextResponse.json({ error: 'Accès inconnu.' }, { status: 400 })

@@ -3,7 +3,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { ActionId, ApptInput } from '@/lib/agenda/logic'
-import type { AgendaSettings, ApptEvent, Appointment, MessageKind } from '@/lib/agenda/types'
+import type { AgendaSettings, ApptEvent, Appointment, Block, BlockReason, MessageKind } from '@/lib/agenda/types'
+import type { PaiementMode } from '@/config/com9'
 
 export type ApptLite = Omit<Appointment, 'trackToken'>
 
@@ -50,9 +51,11 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
 
 export type Storage = 'durable' | 'memoire'
 
+export type Payment = { finalAmountCents: number; paymentMode: PaiementMode | null; paid: boolean }
+
 export const api = {
   range: (from: string, to: string) =>
-    call<{ items: ApptLite[]; storage: Storage }>(
+    call<{ items: ApptLite[]; blocks: Block[]; storage: Storage }>(
       `/api/agenda?view=range&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
     ),
 
@@ -66,7 +69,7 @@ export const api = {
   update: (id: string, patch: Partial<ApptInput>) =>
     call<{ appt: Appointment }>(`/api/agenda/${id}`, { method: 'PATCH', body: JSON.stringify({ patch }) }),
 
-  action: (id: string, action: ActionId, payload?: { proposedStartAt?: string; reason?: string; firm?: boolean }) =>
+  action: (id: string, action: ActionId, payload?: { proposedStartAt?: string; reason?: string; firm?: boolean } & Partial<Payment>) =>
     call<{ appt: Appointment }>(`/api/agenda/${id}`, {
       method: 'POST',
       body: JSON.stringify({ action, payload: payload ?? {} }),
@@ -75,6 +78,16 @@ export const api = {
   /** 'traiter_demande' : demande du client traitée · 'regenerer_lien' : nouveau lien de suivi */
   special: (id: string, action: 'traiter_demande' | 'regenerer_lien') =>
     call<{ appt: Appointment }>(`/api/agenda/${id}`, { method: 'POST', body: JSON.stringify({ action }) }),
+
+  /** Paiement d'une intervention terminée */
+  payment: (id: string, payload: Payment) =>
+    call<{ appt: Appointment }>(`/api/agenda/${id}`, { method: 'POST', body: JSON.stringify({ action: 'paiement', payload }) }),
+
+  addBlock: (b: { startAt: string; endAt: string; reason: BlockReason; note: string }) =>
+    call<{ block: Block }>('/api/agenda/blocks', { method: 'POST', body: JSON.stringify(b) }),
+
+  removeBlock: (id: string) =>
+    call<{ ok: true }>(`/api/agenda/blocks?id=${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
   followups: () => call<{ reminders: ApptLite[]; aftercare: ApptLite[]; storage: Storage }>('/api/agenda?view=followups'),
 

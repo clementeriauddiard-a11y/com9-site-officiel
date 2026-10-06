@@ -13,8 +13,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           '/responsable',
           '/responsable/',
-          '/diagnostic-premium',
-          '/diagnostic-premium/',
           '/suivi/',
           '/api/',
         ],

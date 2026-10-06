@@ -1,7 +1,6 @@
 'use client'
 
-import { PhonesProvider } from '@/context/PhonesContext'
-
+/** Fournisseurs globaux de l'application (aucun pour l'instant). */
 export default function Providers({ children }: { children: React.ReactNode }) {
-  return <PhonesProvider>{children}</PhonesProvider>
+  return <>{children}</>
 }

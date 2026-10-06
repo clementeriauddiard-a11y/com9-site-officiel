@@ -9,11 +9,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
+  ALL_REPAIRS,
   MODELS,
-  REPAIRS,
   ZONES,
   findModel,
   getOptions,
+  isGridRepair,
+  zoneFeeCents,
   type RepairId,
   type ZoneId,
 } from '@/data/tarifs'
@@ -23,7 +25,9 @@ import {
   ORIGINS,
   PART_STATUSES,
   PREFERRED_PERIODS,
+  SYMPTOMS,
   type AgendaSettings,
+  type Symptom,
   type ApptStatus,
   type Appointment,
   type Origin,
@@ -31,6 +35,7 @@ import {
   type PreferredPeriod,
 } from './types'
 import { findCommune } from '@/lib/communes'
+import { CRENEAUX } from '@/config/com9'
 
 // ─── Transitions de statut ───────────────────────────────────────────────────
 
@@ -41,6 +46,7 @@ export type ActionId =
   | 'en_route'
   | 'en_cours'
   | 'terminer'
+  | 'valider_choix_client'
   | 'annuler'
   | 'rouvrir'
 
@@ -77,9 +83,14 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
     to: 'en_cours',
   },
   terminer: {
-    label: 'Terminé',
-    from: ['en_cours'],
+    label: "Terminer l'intervention",
+    from: ['confirme', 'en_route', 'en_cours'],
     to: 'termine',
+  },
+  valider_choix_client: {
+    label: 'Valider le créneau choisi par le client',
+    from: ['confirme'],
+    to: 'confirme',
   },
   annuler: {
     label: 'Annuler le rendez-vous',
@@ -150,21 +161,18 @@ export function qualitiesFor(model: string, repair: RepairId) {
   return m ? getOptions(repair, m) : []
 }
 
-/** Prix de la grille, ou null si la combinaison n'existe pas. */
-export function gridPrice(model: string, repair: RepairId, quality: string): number | null {
+/** Prix de la grille en centimes, ou null si la combinaison n'existe pas. */
+export function gridPriceCents(model: string, repair: RepairId, quality: string): number | null {
   const opt = qualitiesFor(model, repair).find((o) => o.label === quality)
-  return opt ? opt.price : null
+  return opt ? opt.priceCents : null
 }
 
-/** Forfait de la zone. null = sur devis ou zone inconnue. */
-export function zoneFee(zone: ZoneId | null): number | null {
-  if (!zone) return null
-  return ZONES.find((z) => z.id === zone)?.fee ?? null
-}
+/** Forfait de la zone en centimes. null = hors zone ou zone inconnue. */
+export const zoneFee = (zone: ZoneId | null): number | null => zoneFeeCents(zone)
 
-/** Total à payer. null tant que le déplacement n'est pas chiffré (sur devis). */
-export function apptTotal(a: Pick<Appointment, 'repairPrice' | 'travelFee'>): number | null {
-  return a.travelFee === null ? null : a.repairPrice + a.travelFee
+/** Total à payer (centimes). null tant que réparation ou déplacement ne sont pas chiffrés. */
+export function apptTotal(a: Pick<Appointment, 'repairPriceCents' | 'travelFeeCents'>): number | null {
+  return a.travelFeeCents === null || a.repairPriceCents === null ? null : a.repairPriceCents + a.travelFeeCents
 }
 
 // ─── Téléphone ───────────────────────────────────────────────────────────────
@@ -200,15 +208,19 @@ export function waHref(raw: string, text?: string): string | null {
 export type ApptInput = {
   clientName: string
   clientPhone: string
+  email?: string
   address: string
   model: string
   repair: RepairId
   quality: string
   description?: string
-  repairPrice: number
+  symptom?: Symptom | null
+  /** Centimes ; null = à déterminer (petite pièce, diagnostic) */
+  repairPriceCents: number | null
   zone: ZoneId | null
   zoneVerified?: boolean
-  travelFee: number | null
+  /** Centimes ; null = pas encore défini */
+  travelFeeCents: number | null
   startAt: string | null
   durationMin: number
   origin: Origin
@@ -221,7 +233,11 @@ export type ApptInput = {
 }
 
 const isRepair = (v: unknown): v is RepairId =>
-  typeof v === 'string' && REPAIRS.some((r) => r.id === v)
+  typeof v === 'string' && (ALL_REPAIRS as string[]).includes(v)
+export const isSymptom = (v: unknown): v is Symptom =>
+  typeof v === 'string' && (SYMPTOMS as readonly string[]).includes(v)
+/** Adresse e-mail plausible (facultative). */
+export const isEmail = (v: string) => /^[^\s@]{1,64}@[^\s@]{1,190}\.[a-z]{2,}$/i.test(v)
 const isZone = (v: unknown): v is ZoneId =>
   typeof v === 'string' && ZONES.some((z) => z.id === v)
 const isInt = (v: unknown, min: number, max: number) =>
@@ -239,19 +255,29 @@ export function validateInput(i: Partial<ApptInput>): string[] {
     e.push('Le numéro de téléphone est obligatoire et doit être valide.')
   if (!str(i.address, 300)) e.push("L'adresse d'intervention est obligatoire.")
 
-  if (typeof i.model !== 'string' || !MODELS.some((m) => m.model === i.model))
-    e.push('Le modèle doit être choisi dans la grille.')
-  if (!isRepair(i.repair)) e.push('La prestation est invalide.')
-  if (typeof i.model === 'string' && isRepair(i.repair)) {
-    const q = qualitiesFor(i.model, i.repair)
-    if (!q.some((o) => o.label === i.quality))
-      e.push("La qualité de pièce n'est pas proposée pour ce modèle.")
-  }
+  if (i.email !== undefined && (typeof i.email !== 'string' || (i.email.trim() !== '' && !isEmail(i.email.trim()))))
+    e.push("L'adresse e-mail est invalide.")
 
-  if (!isInt(i.repairPrice, 0, 10_000)) e.push('Le prix de réparation doit être un nombre entier positif.')
+  if (!isRepair(i.repair)) e.push('La prestation est invalide.')
+  else if (isGridRepair(i.repair)) {
+    // Prestations de la grille : modèle et qualité de la grille.
+    if (typeof i.model !== 'string' || !MODELS.some((m) => m.model === i.model))
+      e.push('Le modèle doit être choisi dans la grille.')
+    else if (!qualitiesFor(i.model, i.repair).some((o) => o.label === i.quality))
+      e.push("La qualité de pièce n'est pas proposée pour ce modèle.")
+  } else {
+    // Petite pièce / diagnostic : tout modèle, détail libre.
+    if (!str(i.model, 80)) e.push('Le modèle du téléphone est obligatoire.')
+    if (typeof i.quality !== 'string' || i.quality.length > 80) e.push('Le détail de la pièce est trop long.')
+  }
+  if (i.symptom !== undefined && i.symptom !== null && !isSymptom(i.symptom)) e.push('Le symptôme est invalide.')
+
+  if (i.repairPriceCents === null || i.repairPriceCents === undefined) {
+    if (isRepair(i.repair) && isGridRepair(i.repair)) e.push('Le prix de réparation est obligatoire.')
+  } else if (!isInt(i.repairPriceCents, 0, 1_000_000)) e.push('Le prix de réparation est invalide.')
   if (i.zone !== null && i.zone !== undefined && !isZone(i.zone)) e.push('La zone de déplacement est invalide.')
-  if (i.travelFee !== null && i.travelFee !== undefined && !isInt(i.travelFee, 0, 1_000))
-    e.push('Le déplacement doit être un nombre entier positif.')
+  if (i.travelFeeCents !== null && i.travelFeeCents !== undefined && !isInt(i.travelFeeCents, 0, 100_000))
+    e.push('Le déplacement est invalide.')
 
   if (i.startAt !== null && i.startAt !== undefined && !isIso(i.startAt)) e.push('La date est invalide.')
   if (!isInt(i.durationMin, 10, 600)) e.push('La durée doit être comprise entre 10 et 600 minutes.')
@@ -298,86 +324,89 @@ export function addDaysToDay(day: string, n: number): string {
 }
 
 /** Jusqu'où un client peut demander une date. */
-export const BOOKING_HORIZON_DAYS = 60
+export const BOOKING_HORIZON_DAYS = CRENEAUX.horizonJours
+
+export type RequestKind = 'reparation' | 'autre'
 
 /** Seuls ces champs sont acceptés depuis le site. Le prix n'en fait pas partie. */
 export type PublicRequestInput = {
+  kind: RequestKind
   clientName: string
   clientPhone: string
+  email: string
   address: string
+  /** Code INSEE de la commune (proposition d'adresse), pour la zone de secours */
+  citycode: string | null
   model: string
   repair: RepairId
   quality: string
-  zone: ZoneId | null
+  symptom: Symptom | null
   description: string
-  preferredDate: string
-  preferredPeriod: PreferredPeriod | null
-  availabilityNote: string
-  /** Commune choisie dans la liste COM'9 (null : hors liste ou non précisée) */
-  communeId: string | null
-  communeNom: string
-  /** Le client a indiqué que sa commune n'est pas dans la liste */
-  horsListe: boolean
+  /** Créneau demandé (ISO) — une demande, jamais un rendez-vous confirmé */
+  startAt: string
 }
 
 /**
  * Valide et nettoie une demande venant du site public.
- * Si une commune de la liste est fournie, SA zone s'impose (la zone envoyée est ignorée).
- * Tout champ inconnu est ignoré ; le prix est toujours recalculé depuis la grille.
+ * Tout champ inconnu est ignoré ; le prix et le déplacement sont recalculés
+ * par le serveur, la disponibilité du créneau aussi.
  */
 export function parsePublicRequest(
   raw: unknown,
-  today: string,
+  now = new Date(),
 ): { ok: true; value: PublicRequestInput } | { ok: false; errors: string[] } {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
   const e: string[] = []
   const txt = (k: string) => (typeof r[k] === 'string' ? (r[k] as string).trim().replace(/\s+/g, ' ') : '')
   const longTxt = (k: string) => (typeof r[k] === 'string' ? (r[k] as string).trim() : '')
 
+  const kind: RequestKind = r.kind === 'autre' ? 'autre' : 'reparation'
   const clientName = txt('clientName')
   const clientPhone = txt('clientPhone')
+  const email = txt('email')
   const address = txt('address')
+  const citycodeRaw = txt('citycode')
   const model = txt('model')
-  const repair = txt('repair') as RepairId
-  const quality = txt('quality')
-  const zoneRaw = r.zone === null || r.zone === '' || r.zone === undefined ? null : txt('zone')
   const description = longTxt('description')
-  const preferredDate = txt('preferredDate')
-  const periodRaw = r.preferredPeriod === null || r.preferredPeriod === '' || r.preferredPeriod === undefined
-    ? null : txt('preferredPeriod')
-  const availabilityNote = longTxt('availabilityNote')
-  const communeRaw = txt('commune')
-  const commune = communeRaw && communeRaw !== 'hors-liste' ? findCommune(communeRaw) : null
+  const startRaw = txt('startAt')
+  let repair = txt('repair') as RepairId
+  let quality = txt('quality')
+  let symptom: Symptom | null = null
+
+  if (kind === 'reparation') {
+    if (!isRepair(repair) || !isGridRepair(repair)) e.push('Choisissez la réparation.')
+    if (!MODELS.some((m) => m.model === model)) e.push('Choisissez votre modèle.')
+    else if (isRepair(repair) && !qualitiesFor(model, repair).some((o) => o.label === quality))
+      e.push('Choisissez la qualité de la pièce.')
+  } else {
+    repair = 'diagnostic'
+    quality = ''
+    const sy = txt('symptom')
+    if (!isSymptom(sy)) e.push('Choisissez le problème rencontré.')
+    else symptom = sy
+    if (model.length < 2 || model.length > 80) e.push('Indiquez le modèle de votre téléphone.')
+    if (sy === 'autre' && description.length < 5) e.push('Décrivez le problème en quelques mots.')
+  }
 
   if (clientName.length < 2 || clientName.length > 80) e.push('Indiquez votre nom (2 à 80 caractères).')
   if (!phoneDigits(clientPhone) || clientPhone.length > 30) e.push('Indiquez un numéro de téléphone valide.')
+  if (email && (email.length > 200 || !isEmail(email))) e.push("L'adresse e-mail est invalide.")
   if (address.length < 5 || address.length > 200) e.push("Indiquez l'adresse de l'intervention.")
-  if (!MODELS.some((m) => m.model === model)) e.push('Choisissez votre modèle.')
-  if (!isRepair(repair)) e.push('Choisissez la réparation.')
-  else if (MODELS.some((m) => m.model === model) && !qualitiesFor(model, repair).some((o) => o.label === quality))
-    e.push('Choisissez la qualité de la pièce.')
-  if (communeRaw && communeRaw !== 'hors-liste' && !commune) e.push('La commune choisie est inconnue.')
-  if (!commune && zoneRaw !== null && !isZone(zoneRaw)) e.push('La zone choisie est invalide.')
   if (description.length > 1000) e.push('La description dépasse 1 000 caractères.')
-  if (!isDay(preferredDate)) e.push('Choisissez le jour souhaité.')
-  else if (preferredDate < today) e.push('Le jour souhaité est déjà passé.')
-  else if (preferredDate > addDaysToDay(today, BOOKING_HORIZON_DAYS))
-    e.push(`Choisissez un jour dans les ${BOOKING_HORIZON_DAYS} prochains jours.`)
-  if (periodRaw !== null && !isPeriod(periodRaw)) e.push('Le moment souhaité est invalide.')
-  if (availabilityNote.length > 300) e.push('Les autres disponibilités dépassent 300 caractères.')
+  const startMs = new Date(startRaw).getTime()
+  if (!startRaw || Number.isNaN(startMs)) e.push('Choisissez un créneau.')
+  else if (startMs < now.getTime()) e.push('Ce créneau est déjà passé.')
+  else if (startMs > now.getTime() + (BOOKING_HORIZON_DAYS + 1) * 86_400_000)
+    e.push(`Choisissez un créneau dans les ${BOOKING_HORIZON_DAYS} prochains jours.`)
 
   if (e.length) return { ok: false, errors: e }
   return {
     ok: true,
     value: {
-      clientName, clientPhone, address, model, repair, quality,
-      zone: commune ? commune.zone : communeRaw === 'hors-liste' ? null : (zoneRaw as ZoneId | null),
-      communeId: commune ? commune.id : null,
-      communeNom: commune ? commune.nom : '',
-      horsListe: communeRaw === 'hors-liste',
-      description, preferredDate,
-      preferredPeriod: periodRaw as PreferredPeriod | null,
-      availabilityNote,
+      kind, clientName, clientPhone, email, address,
+      citycode: /^(\d{5}|2[AB]\d{3})$/.test(citycodeRaw) ? citycodeRaw : null,
+      model, repair, quality, symptom, description,
+      startAt: new Date(startMs).toISOString(),
     },
   }
 }
@@ -391,7 +420,7 @@ export function isApptStatus(v: unknown): v is ApptStatus {
 export function validateSettings(s: Partial<AgendaSettings>): string[] {
   const e: string[] = []
   const d = s.durations
-  if (!d || !REPAIRS.every((r) => isInt(d[r.id], 10, 600)))
+  if (!d || !ALL_REPAIRS.every((r) => isInt(d[r], 10, 600)))
     e.push('Chaque durée doit être comprise entre 10 et 600 minutes.')
   if (!isInt(s.marginMin, 0, 240)) e.push('La marge doit être comprise entre 0 et 240 minutes.')
   if (!isInt(s.dayStartHour, 0, 23) || !isInt(s.dayEndHour, 1, 24) ||

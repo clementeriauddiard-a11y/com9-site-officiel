@@ -12,21 +12,18 @@ module.exports = {
         xs: '380px',
       },
       colors: {
-        // ── Base ardoise lumineuse ──
-        'space-black':   '#0f1929',   // fond principal
-        'space-deep':    '#0b1220',   // fond bas de page
-        'slate-lift':    '#16233a',   // surface élevée opaque
-
-        // ── Accent Com'9 ──
-        'neon-blue':     '#3ad9ff',
-        'electric-blue': '#1aa9ff',
-
-        // ── Texte ──
-        'cold-white':    '#ffffff',
+        // Anciens noms conservés, alignés sur la nouvelle palette (charbon / cuivre).
+        'space-black':   '#0f0f11',
+        'space-deep':    '#0a0a0b',
+        'slate-lift':    '#17171a',
+        'neon-blue':     '#c9895c',
+        'electric-blue': '#c9895c',
+        'cold-white':    '#f5f2ec',
       },
       fontFamily: {
-        space: ['var(--font-space-grotesk)', 'sans-serif'],
-        mono:  ['var(--font-space-mono)', 'monospace'],
+        space: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        sans:  ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        mono:  ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       transitionTimingFunction: {
         c9: 'cubic-bezier(0.22, 1, 0.36, 1)',

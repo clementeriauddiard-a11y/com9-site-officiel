@@ -1,41 +1,34 @@
-import type { Metadata } from 'next'
-import { Space_Grotesk, Space_Mono } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
+// Polices Geist livrées avec le site (aucun appel externe au chargement).
+import { GeistSans } from 'geist/font/sans'
+import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import Providers from '@/components/Providers'
+import { HORAIRES_TEXTE } from '@/config/com9'
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-space-grotesk',
-  weight: ['300', '400', '500', '600', '700'],
-  display: 'swap',
-})
-
-const spaceMono = Space_Mono({
-  subsets: ['latin'],
-  variable: '--font-space-mono',
-  weight: ['400', '700'],
-  display: 'swap',
-})
+const DESCRIPTION =
+  `Réparation de smartphone à domicile autour de Nogent-le-Rotrou, ${HORAIRES_TEXTE.accroche.toLowerCase()}. ` +
+  'Écran, batterie, vitre arrière : choisissez votre réparation, voyez le prix total et réservez votre créneau. COM\'9 vient chez vous.'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://com9.fr'),
 
   title: {
-    default: "COM'9 — Réparation & Reconditionnement Mobile | Nogent-le-Rotrou",
+    default: "COM'9 — Votre smartphone réparé chez vous | Nogent-le-Rotrou",
     template: "%s | COM'9",
   },
 
-  description:
-    "Réparation d'écrans, batteries et reconditionnement de smartphones à Nogent-le-Rotrou (28). Diagnostic officiel sur 100 points. iPhone · Samsung · Tous modèles.",
+  description: DESCRIPTION,
 
   keywords: [
+    'réparation smartphone à domicile',
+    'réparation iPhone à domicile',
     'réparation téléphone Nogent-le-Rotrou',
-    'réparation iPhone 28',
-    'réparation écran smartphone',
+    'réparation écran iPhone',
     'remplacement batterie iPhone',
-    'reconditionnement téléphone',
-    'diagnostic smartphone',
-    'réparation mobile Eure-et-Loir',
+    'réparation le soir',
+    'Perche',
+    'Eure-et-Loir',
     'COM9',
   ],
 
@@ -43,26 +36,18 @@ export const metadata: Metadata = {
   creator:  "COM'9",
 
   openGraph: {
-    title:       "COM'9 — Réparation & Reconditionnement Mobile",
-    description: "Réparation d'écrans, batteries et reconditionnement de smartphones à Nogent-le-Rotrou. Diagnostic officiel sur 100 points.",
+    title:       "COM'9 — Votre smartphone réparé chez vous",
+    description: DESCRIPTION,
     type:        'website',
     locale:      'fr_FR',
     url:         'https://com9.fr',
     siteName:    "COM'9",
-    images: [
-      {
-        url:    '/og-image.png',   // à créer : 1200×630px
-        width:  1200,
-        height: 630,
-        alt:    "COM'9 — Next Generation Mobile Systems",
-      },
-    ],
   },
 
   twitter: {
-    card:        'summary_large_image',
-    title:       "COM'9 — Réparation Mobile | Nogent-le-Rotrou",
-    description: "Réparation écrans & batteries · Reconditionnement · Diagnostic 100 points.",
+    card:        'summary',
+    title:       "COM'9 — Votre smartphone réparé chez vous",
+    description: `Réparation à domicile ${HORAIRES_TEXTE.accroche.toLowerCase()}. On vient à vous.`,
   },
 
   icons: {
@@ -78,10 +63,17 @@ export const metadata: Metadata = {
   },
 }
 
+export const viewport: Viewport = {
+  themeColor: '#0f0f11',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${spaceGrotesk.variable} ${spaceMono.variable}`}>
-      <body className="text-cold-white antialiased">
+    <html lang="fr" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+      <body className="antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

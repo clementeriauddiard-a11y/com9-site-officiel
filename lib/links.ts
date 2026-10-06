@@ -25,6 +25,9 @@ export const LINKS = {
   /** Appel téléphonique */
   phone: `tel:${PHONE.e164}`,
 
+  /** WhatsApp Web (ordinateur) */
+  whatsappWeb: `https://web.whatsapp.com/send?phone=${PHONE.wa}`,
+
   /** Page TikTok */
   tiktok: 'https://www.tiktok.com/@utu.electronics?_r=1&_t=ZN-96CBv2eSbgs',
 

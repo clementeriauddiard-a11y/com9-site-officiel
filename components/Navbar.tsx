@@ -1,232 +1,111 @@
 'use client'
 
-import { AnimatePresence, motion } from 'framer-motion'
+// ─────────────────────────────────────────────────────────────────────────────
+// COM'9 — Barre de navigation
+// Sobre, toujours accessible : la réservation reste à un geste.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { HORAIRES_TEXTE } from '@/config/com9'
 
-const EASE = [0.22, 1, 0.36, 1] as const
-
-// Ordre aligné sur la hiérarchie de l'accueil :
-// Tarification (réparer) → Marketplace (acheter) → Diagnostic (analyser)
-const links = [
-  { href: '/#tarifs',     label: 'Tarifs'      },
-  { href: '/marketplace', label: 'Marketplace' },
-  { href: '/#diagnostic', label: 'Diagnostic'  },
+const LINKS = [
+  { href: '/#fonctionnement', label: 'Comment ça marche' },
+  { href: '/#tarifs',         label: 'Tarifs' },
+  { href: '/#autre-probleme', label: 'Autre problème' },
+  { href: '/#contact',        label: 'Contact' },
 ]
 
-export default function Navbar() {
-  const pathname = usePathname()
-  const [scrolled, setScrolled] = useState(false)
+export function Wordmark({ className = '' }: { className?: string }) {
+  return (
+    <span className={`text-[1.25rem] font-semibold tracking-[-0.04em] ${className}`} style={{ color: 'var(--c9-text)' }}>
+      COM&apos;<span style={{ color: 'var(--c9-accent)' }}>9</span>
+    </span>
+  )
+}
+
+/** `hideCta` : sur la page de réservation, le bouton « Réserver » est inutile. */
+export default function Navbar({ hideCta = false }: { hideCta?: boolean }) {
   const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 24)
-    window.addEventListener('scroll', fn, { passive: true })
-    fn()
-    return () => window.removeEventListener('scroll', fn)
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   useEffect(() => {
-    const fn = () => { if (window.innerWidth >= 768) setOpen(false) }
-    window.addEventListener('resize', fn)
-    return () => window.removeEventListener('resize', fn)
-  }, [])
-
-  /**
-   * Navigation mobile universelle (comportement conservé — fiable Android + iOS).
-   *
-   * A) Lien de page pure (ex: /marketplace) → ferme le menu, navigation native.
-   * B) Ancre absolue depuis l'accueil → scroll programmatique après fermeture
-   *    du menu (Android Chrome abandonne l'ancre native pendant la mutation DOM).
-   * C) Ancre absolue depuis une autre page → redirection vers /#section.
-   */
-  function handleMobileNav(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
-    if (!href.startsWith('#') && !href.startsWith('/#')) {
-      setOpen(false)
-      return
-    }
-
-    e.preventDefault()
-    setOpen(false)
-
-    if (href.startsWith('/#')) {
-      const sectionId = href.slice(2)
-
-      if (pathname === '/') {
-        setTimeout(() => {
-          const el = document.getElementById(sectionId)
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }, 320)
-      } else {
-        setTimeout(() => { window.location.href = href }, 280)
-      }
-      return
-    }
-
-    const id = href.slice(1)
-    setTimeout(() => {
-      const el = document.getElementById(id)
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 320)
-  }
+    document.body.style.overflow = open ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [open])
 
   return (
-    <motion.header
-      initial={{ y: -70, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.8, ease: EASE }}
-      className="fixed inset-x-0 top-0 z-50 transition-all duration-500"
-      style={
-        scrolled
-          ? {
-              background: 'rgba(15,25,41,0.72)',
-              backdropFilter: 'blur(24px) saturate(160%)',
-              WebkitBackdropFilter: 'blur(24px) saturate(160%)',
-              borderBottom: '1px solid var(--c9-hairline-soft)',
-            }
-          : { borderBottom: '1px solid transparent' }
-      }
-    >
-      <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-4 px-5 md:px-10">
-        {/* Logo */}
-        <motion.a
-          href="/"
-          whileHover={{ y: -1 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.25, ease: EASE }}
-          className="flex shrink-0 select-none items-center gap-2.5"
-        >
-          <span
-            className="font-space text-[1.15rem] font-bold tracking-tight"
-            style={{ color: 'var(--c9-text)' }}
-          >
-            COM<span className="gradient-text">&apos;9</span>
+    <header className="fixed inset-x-0 top-0 z-50 transition-[background-color,border-color] duration-300"
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        background: scrolled || open ? 'var(--c9-header)' : 'transparent',
+        backdropFilter: scrolled || open ? 'blur(18px) saturate(140%)' : undefined,
+        WebkitBackdropFilter: scrolled || open ? 'blur(18px) saturate(140%)' : undefined,
+        borderBottom: `1px solid ${scrolled || open ? 'var(--c9-hairline-soft)' : 'transparent'}`,
+      }}>
+      <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 md:px-8" aria-label="Navigation principale">
+        <Link href="/" className="c9-back -ml-2 flex items-center gap-3 rounded-xl px-2 py-2" onClick={() => setOpen(false)}
+          aria-label="COM'9 — accueil">
+          <Wordmark />
+          <span className="hidden text-[0.75rem] sm:inline" style={{ color: 'var(--c9-text-3)' }}>
+            Réparation à domicile · {HORAIRES_TEXTE.accroche.toLowerCase()}
           </span>
-          <span className="hidden items-center gap-2 sm:flex">
-            <span className="h-3 w-px" style={{ background: 'var(--c9-hairline)' }} />
-            <span
-              className="font-mono text-[7.5px] uppercase tracking-[0.24em]"
-              style={{ color: 'var(--c9-text-3)' }}
-            >
-              Mobile Systems
-            </span>
-          </span>
-        </motion.a>
+        </Link>
 
-        {/* Navigation desktop */}
-        <nav className="hidden items-center gap-1 md:flex">
-          {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="rounded-lg px-3.5 py-2 font-space text-[0.875rem] transition-colors duration-300"
-              style={{ color: 'var(--c9-text-2)' }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--c9-text)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--c9-text-2)' }}
-            >
+        <div className="hidden items-center gap-1 lg:flex">
+          {LINKS.map((l) => (
+            <Link key={l.href} href={l.href} className="c9-back rounded-xl px-3 py-2 text-[0.9375rem]" style={{ color: 'var(--c9-text-2)' }}>
               {l.label}
-            </a>
+            </Link>
           ))}
+          {!hideCta && (
+            <Link href="/reservation" className="c9-btn c9-btn-primary ml-3" style={{ minHeight: 44, padding: '0 1.1rem', fontSize: '0.9375rem' }}>
+              Réserver
+            </Link>
+          )}
+        </div>
 
-          <span className="mx-2 h-3.5 w-px" style={{ background: 'var(--c9-hairline)' }} />
+        <div className="flex items-center gap-2 lg:hidden">
+          {!hideCta && (
+            <Link href="/reservation" className="c9-btn c9-btn-primary" style={{ minHeight: 44, padding: '0 1rem', fontSize: '0.9375rem' }}
+              onClick={() => setOpen(false)}>
+              Réserver
+            </Link>
+          )}
+          <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="menu-mobile"
+            aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
+            className="c9-back flex h-11 w-11 items-center justify-center rounded-xl" style={{ border: '1px solid var(--c9-hairline)' }}>
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+              {open ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 8h16M4 16h16" />}
+            </svg>
+          </button>
+        </div>
+      </nav>
 
-          {/* Accès espace responsable — discret */}
-          <a
-            href="/login"
-            className="rounded-lg px-3 py-2 font-space text-[0.875rem] transition-colors duration-300"
-            style={{ color: 'var(--c9-text-3)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--c9-text)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--c9-text-3)' }}
-          >
-            Connexion
-          </a>
-
-          <a
-            href="/#contact"
-            className="ml-1.5 flex items-center rounded-full px-5 font-space text-[0.875rem] font-medium transition-all duration-300"
-            style={{
-              minHeight: '40px',
-              border: '1px solid var(--c9-hairline-lit)',
-              background: 'rgba(255,255,255,0.05)',
-              color: 'var(--c9-text)',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
-          >
-            Contact
-          </a>
-        </nav>
-
-        {/* Bouton menu mobile */}
-        <button
-          aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          className="-mr-1 flex h-11 w-11 flex-col justify-center gap-[5px] rounded-xl transition-colors duration-300 md:hidden"
-          style={{ background: open ? 'rgba(255,255,255,0.07)' : 'transparent' }}
-        >
-          {[0, 1, 2].map((i) => (
-            <motion.span
-              key={i}
-              animate={
-                open
-                  ? i === 0
-                    ? { rotate: 45, y: 7, width: '48%' }
-                    : i === 1
-                      ? { opacity: 0, scaleX: 0 }
-                      : { rotate: -45, y: -7, width: '48%' }
-                  : { rotate: 0, y: 0, opacity: 1, scaleX: 1, width: i === 2 ? '32%' : '48%' }
-              }
-              transition={{ duration: 0.24, ease: EASE }}
-              className="mx-auto block h-[1.5px] origin-center rounded-full"
-              style={{ background: 'var(--c9-text)' }}
-            />
-          ))}
-        </button>
-      </div>
-
-      {/* Menu mobile */}
-      <AnimatePresence>
-        {open && (
-          <motion.nav
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease: EASE }}
-            className="overflow-hidden md:hidden"
-            style={{
-              background: 'rgba(15,25,41,0.96)',
-              backdropFilter: 'blur(24px) saturate(160%)',
-              WebkitBackdropFilter: 'blur(24px) saturate(160%)',
-              borderTop: '1px solid var(--c9-hairline-soft)',
-            }}
-          >
-            <div className="flex flex-col px-5 py-3">
-              {[...links, { href: '/#contact', label: 'Contact' }, { href: '/login', label: 'Connexion' }].map(
-                (l, i, arr) => (
-                  <motion.a
-                    key={l.href}
-                    href={l.href}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.24, delay: i * 0.035, ease: EASE }}
-                    onClick={(e) => handleMobileNav(e, l.href)}
-                    className="flex items-center font-space text-[0.9375rem] transition-colors duration-300"
-                    style={{
-                      color: l.label === 'Connexion' ? 'var(--c9-text-3)' : 'var(--c9-text-2)',
-                      borderBottom:
-                        i < arr.length - 1 ? '1px solid var(--c9-hairline-soft)' : 'none',
-                      minHeight: '54px',
-                    }}
-                  >
-                    {l.label}
-                  </motion.a>
-                ),
-              )}
-            </div>
-          </motion.nav>
-        )}
-      </AnimatePresence>
-    </motion.header>
+      {open && (
+        <div id="menu-mobile" className="lg:hidden" style={{ height: 'calc(100dvh - 64px - env(safe-area-inset-top, 0px))', overflowY: 'auto' }}>
+          <div className="flex flex-col gap-1 px-5 pb-10 pt-4">
+            {LINKS.map((l) => (
+              <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
+                className="c9-back rounded-2xl px-3 py-4 text-[1.375rem] font-medium tracking-[-0.02em]"
+                style={{ color: 'var(--c9-text)', borderBottom: '1px solid var(--c9-hairline-soft)' }}>
+                {l.label}
+              </Link>
+            ))}
+            <Link href="/reservation" onClick={() => setOpen(false)} className="c9-btn c9-btn-primary mt-6 w-full">
+              Réserver une intervention
+            </Link>
+            <p className="mt-4 text-center text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>{HORAIRES_TEXTE.detail}</p>
+          </div>
+        </div>
+      )}
+    </header>
   )
 }

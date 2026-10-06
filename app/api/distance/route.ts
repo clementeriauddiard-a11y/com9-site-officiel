@@ -62,13 +62,13 @@ export async function POST(req: Request) {
       counts.sameSourceDay >= DISTANCE_LIMITS.perSourceDay ||
       counts.allDay >= DISTANCE_LIMITS.allDay
     ) {
-      return fail('rate_limited', 'Trop de calculs demandés. Choisissez votre commune dans la liste.', 429)
+      return fail('rate_limited', 'Trop de calculs demandés. Réessayez dans quelques minutes.', 429)
     }
 
     const r = await routeDistance(address)
     const zone = ZONES.find((z) => z.id === r.zone) ?? null
     return NextResponse.json(
-      { ok: true, km: r.km, zone: r.zone, zoneLabel: zone?.full ?? null, fee: zone?.fee ?? null, precise: r.precise },
+      { ok: true, km: r.km, zone: r.zone, zoneLabel: zone?.full ?? null, feeCents: zone?.feeCents ?? null, outOfArea: r.zone === 'hors', precise: r.precise },
       { headers: NO_STORE },
     )
   } catch (err) {

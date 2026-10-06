@@ -20,6 +20,7 @@ import {
   DEFAULT_SETTINGS,
   PENDING_STATUSES,
   type AgendaSettings,
+  type Block,
   type ApptEvent,
   type Appointment,
 } from './types'
@@ -172,6 +173,54 @@ const DDL = [
    )`,
   `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS distance_km NUMERIC(6,1)`,
   `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS distance_source TEXT`,
+  // ── Refonte « à domicile » (oct. 2026) — migration NON destructive ──
+  // Montants en centimes : nouvelles colonnes, anciennes (euros) conservées.
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS repair_price_cents INTEGER
+     CHECK (repair_price_cents IS NULL OR repair_price_cents >= 0)`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS travel_fee_cents INTEGER
+     CHECK (travel_fee_cents IS NULL OR travel_fee_cents >= 0)`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS money_v2 BOOLEAN NOT NULL DEFAULT FALSE`,
+  // Fiches antérieures : conversion euros → centimes, une seule fois par fiche.
+  `UPDATE rdv_appointments
+     SET repair_price_cents = repair_price * 100,
+         travel_fee_cents = CASE WHEN travel_fee IS NULL THEN NULL ELSE travel_fee * 100 END,
+         money_v2 = TRUE
+     WHERE money_v2 = FALSE`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS email TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS symptom TEXT`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS final_amount_cents INTEGER
+     CHECK (final_amount_cents IS NULL OR final_amount_cents >= 0)`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS payment_mode TEXT
+     CHECK (payment_mode IS NULL OR payment_mode IN ('cb','especes','virement'))`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS paid BOOLEAN NOT NULL DEFAULT FALSE`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ`,
+  // Nouvelles prestations, origine « manuel », zone « hors » (> 30 km).
+  `IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'rdv_repair_v2') THEN
+     ALTER TABLE rdv_appointments DROP CONSTRAINT IF EXISTS rdv_appointments_repair_check;
+     ALTER TABLE rdv_appointments ADD CONSTRAINT rdv_repair_v2
+       CHECK (repair IN ('ecran','batterie','vitre','module','diagnostic'));
+   END IF`,
+  `IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'rdv_zone_v2') THEN
+     ALTER TABLE rdv_appointments DROP CONSTRAINT IF EXISTS rdv_appointments_zone_check;
+     ALTER TABLE rdv_appointments ADD CONSTRAINT rdv_zone_v2
+       CHECK (zone IS NULL OR zone IN ('z5','z15','z30','hors','devis'));
+   END IF`,
+  `IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'rdv_origin_v2') THEN
+     ALTER TABLE rdv_appointments DROP CONSTRAINT IF EXISTS rdv_appointments_origin_check;
+     ALTER TABLE rdv_appointments ADD CONSTRAINT rdv_origin_v2
+       CHECK (origin IN ('site','telephone','whatsapp','manuel'));
+   END IF`,
+  // Plages bloquées par COM'9 (jamais proposées aux clients).
+  `CREATE TABLE IF NOT EXISTS rdv_blocks (
+     id         TEXT        PRIMARY KEY,
+     start_at   TIMESTAMPTZ NOT NULL,
+     end_at     TIMESTAMPTZ NOT NULL CHECK (end_at > start_at),
+     reason     TEXT        NOT NULL CHECK (reason IN ('indisponible','personnel','trajet','piece','autre')),
+     note       TEXT        NOT NULL DEFAULT '',
+     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+   )`,
+  `CREATE INDEX IF NOT EXISTS rdv_blocks_start_idx ON rdv_blocks (start_at)`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS client_slot TIMESTAMPTZ`,
   `CREATE TABLE IF NOT EXISTS rdv_settings (
      id    INTEGER PRIMARY KEY CHECK (id = 1),
      data  JSONB   NOT NULL
@@ -205,7 +254,71 @@ function ensureTables(db: SqlDriver): Promise<void> {
 const iso = (v: any): string | null =>
   v === null || v === undefined ? null : (v instanceof Date ? v : new Date(v)).toISOString()
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const num = (v: any): number | null => (v === null || v === undefined ? null : Number(v))
+
+/** Une colonne DATE lue par le pilote devient un Date à minuit UTC : on garde le jour. */
+function dateOnly(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+/**
+ * Correspondance colonne ⇄ champ, utilisée pour lire, insérer et modifier.
+ * Une seule liste : impossible de décaler un paramètre en ajoutant un champ.
+ */
+type Field = { col: string; put: (a: Appointment) => unknown; insertOnly?: boolean }
+const FIELDS: Field[] = [
+  { col: 'id', put: (a) => a.id, insertOnly: true },
+  { col: 'track_token', put: (a) => a.trackToken, insertOnly: true },
+  { col: 'created_at', put: (a) => a.createdAt, insertOnly: true },
+  { col: 'updated_at', put: (a) => a.updatedAt },
+  { col: 'client_name', put: (a) => a.clientName },
+  { col: 'client_phone', put: (a) => a.clientPhone },
+  { col: 'email', put: (a) => a.email ?? '' },
+  { col: 'address', put: (a) => a.address },
+  { col: 'model', put: (a) => a.model },
+  { col: 'repair', put: (a) => a.repair },
+  { col: 'quality', put: (a) => a.quality },
+  { col: 'description', put: (a) => a.description },
+  { col: 'symptom', put: (a) => a.symptom ?? null },
+  // Anciennes colonnes en euros, toujours remplies pour les versions précédentes.
+  { col: 'repair_price', put: (a) => Math.round((a.repairPriceCents ?? 0) / 100) },
+  { col: 'travel_fee', put: (a) => (a.travelFeeCents === null ? null : Math.round(a.travelFeeCents / 100)) },
+  { col: 'repair_price_cents', put: (a) => a.repairPriceCents },
+  { col: 'travel_fee_cents', put: (a) => a.travelFeeCents },
+  { col: 'money_v2', put: () => true },
+  { col: 'zone', put: (a) => a.zone },
+  { col: 'zone_verified', put: (a) => a.zoneVerified },
+  { col: 'start_at', put: (a) => a.startAt },
+  { col: 'duration_min', put: (a) => a.durationMin },
+  { col: 'proposed_start_at', put: (a) => a.proposedStartAt },
+  { col: 'proposed_reason', put: (a) => a.proposedReason },
+  { col: 'proposal_firm', put: (a) => a.proposalFirm },
+  { col: 'origin', put: (a) => a.origin },
+  { col: 'status', put: (a) => a.status },
+  { col: 'part_status', put: (a) => a.partStatus },
+  { col: 'internal_notes', put: (a) => a.internalNotes },
+  { col: 'preferred_date', put: (a) => a.preferredDate },
+  { col: 'preferred_period', put: (a) => a.preferredPeriod },
+  { col: 'availability_note', put: (a) => a.availabilityNote },
+  { col: 'client_request', put: (a) => a.clientRequest },
+  { col: 'client_message', put: (a) => a.clientMessage },
+  { col: 'client_request_at', put: (a) => a.clientRequestAt },
+  { col: 'client_slot', put: (a) => a.clientSlot ?? null },
+  { col: 'messages_log', put: (a) => JSON.stringify(a.messagesLog ?? {}) },
+  { col: 'commune_id', put: (a) => a.communeId ?? null },
+  { col: 'commune_nom', put: (a) => a.communeNom ?? '' },
+  { col: 'distance_km', put: (a) => a.distanceKm ?? null },
+  { col: 'distance_source', put: (a) => a.distanceSource ?? null },
+  { col: 'final_amount_cents', put: (a) => a.finalAmountCents ?? null },
+  { col: 'payment_mode', put: (a) => a.paymentMode ?? null },
+  { col: 'paid', put: (a) => Boolean(a.paid) },
+  { col: 'paid_at', put: (a) => a.paidAt ?? null },
+]
+
+const COLS = FIELDS.map((f) => f.col).join(', ')
+
 function rowToAppt(r: any): Appointment {
   return {
     id: String(r.id),
@@ -214,15 +327,21 @@ function rowToAppt(r: any): Appointment {
     updatedAt: iso(r.updated_at) as string,
     clientName: String(r.client_name),
     clientPhone: String(r.client_phone),
+    email: String(r.email ?? ''),
     address: String(r.address),
     model: String(r.model),
     repair: r.repair,
     quality: String(r.quality),
     description: String(r.description ?? ''),
-    repairPrice: Number(r.repair_price),
-    zone: r.zone ?? null,
+    symptom: r.symptom ?? null,
+    repairPriceCents: r.money_v2 ? num(r.repair_price_cents) : num(r.repair_price) === null ? null : Number(r.repair_price) * 100,
+    zone: r.zone === 'devis' ? 'hors' : (r.zone ?? null),
     zoneVerified: Boolean(r.zone_verified),
-    travelFee: r.travel_fee === null || r.travel_fee === undefined ? null : Number(r.travel_fee),
+    travelFeeCents: r.money_v2 ? num(r.travel_fee_cents) : num(r.travel_fee) === null ? null : Number(r.travel_fee) * 100,
+    finalAmountCents: num(r.final_amount_cents),
+    paymentMode: r.payment_mode ?? null,
+    paid: Boolean(r.paid),
+    paidAt: iso(r.paid_at),
     startAt: iso(r.start_at),
     durationMin: Number(r.duration_min),
     proposedStartAt: iso(r.proposed_start_at),
@@ -242,26 +361,15 @@ function rowToAppt(r: any): Appointment {
     clientRequest: r.client_request ?? null,
     clientMessage: String(r.client_message ?? ''),
     clientRequestAt: iso(r.client_request_at),
+    clientSlot: iso(r.client_slot),
     messagesLog: (typeof r.messages_log === 'string' ? JSON.parse(r.messages_log) : r.messages_log) ?? {},
     communeId: r.commune_id ?? null,
     communeNom: String(r.commune_nom ?? ''),
-    distanceKm: r.distance_km === null || r.distance_km === undefined ? null : Number(r.distance_km),
+    distanceKm: num(r.distance_km),
     distanceSource: r.distance_source ?? null,
   }
 }
-
-/** Une colonne DATE lue par le pilote devient un Date à minuit UTC : on garde le jour. */
-function dateOnly(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
-}
-
-const COLS = `id, track_token, created_at, updated_at, client_name, client_phone, address,
-  model, repair, quality, description, repair_price, zone, zone_verified, travel_fee,
-  start_at, duration_min, proposed_start_at, proposed_reason, proposal_firm,
-  origin, status, part_status, internal_notes, preferred_date, preferred_period, availability_note,
-  client_request, client_message, client_request_at, messages_log, commune_id, commune_nom,
-  distance_km, distance_source`
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // ─── Mémoire (développement local uniquement) ────────────────────────────────
 
@@ -271,6 +379,7 @@ const mem = {
   appts: [] as Appointment[],
   events: [] as ApptEvent[],
   settings: null as AgendaSettings | null,
+  blocks: [] as Block[],
   seq: 0,
 }
 
@@ -285,19 +394,8 @@ export async function insertAppt(a: Appointment): Promise<void> {
   }
   const db = await driver()
   await ensureTables(db)
-  await db.query(
-    `INSERT INTO rdv_appointments (${COLS}) VALUES
-     ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35)`,
-    [
-      a.id, a.trackToken, a.createdAt, a.updatedAt, a.clientName, a.clientPhone, a.address,
-      a.model, a.repair, a.quality, a.description, a.repairPrice, a.zone, a.zoneVerified,
-      a.travelFee, a.startAt, a.durationMin, a.proposedStartAt, a.proposedReason,
-      a.proposalFirm, a.origin, a.status, a.partStatus, a.internalNotes,
-      a.preferredDate, a.preferredPeriod, a.availabilityNote,
-      a.clientRequest, a.clientMessage, a.clientRequestAt, JSON.stringify(a.messagesLog ?? {}),
-      a.communeId ?? null, a.communeNom ?? '', a.distanceKm ?? null, a.distanceSource ?? null,
-    ],
-  )
+  const ph = FIELDS.map((_, i) => `$${i + 1}`).join(',')
+  await db.query(`INSERT INTO rdv_appointments (${COLS}) VALUES (${ph})`, FIELDS.map((f) => f.put(a)))
 }
 
 export async function updateAppt(a: Appointment): Promise<void> {
@@ -307,26 +405,9 @@ export async function updateAppt(a: Appointment): Promise<void> {
   }
   const db = await driver()
   await ensureTables(db)
-  await db.query(
-    `UPDATE rdv_appointments SET
-       updated_at=$2, client_name=$3, client_phone=$4, address=$5, model=$6, repair=$7,
-       quality=$8, description=$9, repair_price=$10, zone=$11, zone_verified=$12,
-       travel_fee=$13, start_at=$14, duration_min=$15, proposed_start_at=$16,
-       proposed_reason=$17, proposal_firm=$18, origin=$19, status=$20, part_status=$21,
-       internal_notes=$22, preferred_date=$23, preferred_period=$24, availability_note=$25,
-       client_request=$26, client_message=$27, client_request_at=$28, messages_log=$29,
-       commune_id=$30, commune_nom=$31, distance_km=$32, distance_source=$33
-     WHERE id=$1`,
-    [
-      a.id, a.updatedAt, a.clientName, a.clientPhone, a.address, a.model, a.repair,
-      a.quality, a.description, a.repairPrice, a.zone, a.zoneVerified, a.travelFee,
-      a.startAt, a.durationMin, a.proposedStartAt, a.proposedReason, a.proposalFirm,
-      a.origin, a.status, a.partStatus, a.internalNotes,
-      a.preferredDate, a.preferredPeriod, a.availabilityNote,
-      a.clientRequest, a.clientMessage, a.clientRequestAt, JSON.stringify(a.messagesLog ?? {}),
-      a.communeId ?? null, a.communeNom ?? '', a.distanceKm ?? null, a.distanceSource ?? null,
-    ],
-  )
+  const upd = FIELDS.filter((f) => !f.insertOnly)
+  const sets = upd.map((f, i) => `${f.col}=$${i + 2}`).join(', ')
+  await db.query(`UPDATE rdv_appointments SET ${sets} WHERE id=$1`, [a.id, ...upd.map((f) => f.put(a))])
 }
 
 /** Remplace le jeton du lien de suivi : l'ancien lien cesse aussitôt de fonctionner. */
@@ -434,6 +515,65 @@ export async function listBlockingAround(centerIso: string): Promise<Appointment
     [from, to],
   )
   return rows.map(rowToAppt)
+}
+
+/** Rendez-vous non annulés/terminés ayant un créneau (fixé ou proposé) dans [from, to[. */
+export async function listActiveRange(fromIso: string, toIso: string): Promise<Appointment[]> {
+  const all = await listRange(fromIso, toIso)
+  return all.filter((a) => a.status !== 'annule' && a.status !== 'termine')
+}
+
+// ─── Plages bloquées ─────────────────────────────────────────────────────────
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const rowToBlock = (r: any): Block => ({
+  id: String(r.id),
+  startAt: iso(r.start_at) as string,
+  endAt: iso(r.end_at) as string,
+  reason: r.reason,
+  note: String(r.note ?? ''),
+})
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+/** Plages qui chevauchent [from, to[. */
+export async function listBlocks(fromIso: string, toIso: string): Promise<Block[]> {
+  if (resolveMode() === 'memory') {
+    return clone(mem.blocks.filter((b) => b.startAt < toIso && b.endAt > fromIso)
+      .sort((a, b) => a.startAt.localeCompare(b.startAt)))
+  }
+  const db = await driver()
+  await ensureTables(db)
+  const { rows } = await db.query(
+    `SELECT id, start_at, end_at, reason, note FROM rdv_blocks
+     WHERE start_at < $2 AND end_at > $1 ORDER BY start_at ASC`,
+    [fromIso, toIso],
+  )
+  return rows.map(rowToBlock)
+}
+
+export async function insertBlock(b: Block): Promise<void> {
+  if (resolveMode() === 'memory') {
+    mem.blocks.push(clone(b))
+    return
+  }
+  const db = await driver()
+  await ensureTables(db)
+  await db.query(
+    `INSERT INTO rdv_blocks (id, start_at, end_at, reason, note) VALUES ($1,$2,$3,$4,$5)`,
+    [b.id, b.startAt, b.endAt, b.reason, b.note],
+  )
+}
+
+export async function deleteBlock(id: string): Promise<boolean> {
+  if (resolveMode() === 'memory') {
+    const n = mem.blocks.length
+    mem.blocks = mem.blocks.filter((b) => b.id !== id)
+    return mem.blocks.length < n
+  }
+  const db = await driver()
+  await ensureTables(db)
+  const r = await db.query(`DELETE FROM rdv_blocks WHERE id=$1 RETURNING id`, [id])
+  return r.rows.length > 0
 }
 
 // ─── Historique ──────────────────────────────────────────────────────────────

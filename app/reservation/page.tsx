@@ -1,51 +1,46 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// COM'9 — Page publique : demande de rendez-vous
-// Route : /reservation
+// COM'9 — Réservation d'une intervention à domicile
+// Route : /reservation   (?reparation=ecran · ?parcours=autre&symptome=charge)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import BackLink from '@/components/ui/BackLink'
-import BookingForm from '@/components/booking/BookingForm'
+import BookingFlow from '@/components/booking/BookingFlow'
+import { HORAIRES_TEXTE } from '@/config/com9'
 import { distanceConfigured } from '@/lib/distance'
 
 export const metadata: Metadata = {
-  title: "Demander un rendez-vous — Com'9",
+  title: 'Réserver une intervention',
   description:
-    "Demandez une intervention Com'9 à domicile : réparation d'écran, de batterie ou de vitre arrière d'iPhone. Com'9 confirme le créneau ou propose une autre disponibilité.",
+    "Choisissez votre réparation, votre smartphone, indiquez votre adresse et un créneau : COM'9 vient chez vous. Prix total affiché avant d'envoyer la demande.",
   alternates: { canonical: '/reservation' },
 }
 
 export default function ReservationPage() {
   return (
-    <main className="relative min-h-screen" style={{ background: 'var(--c9-bg)' }}>
-      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute left-1/2 top-0 -translate-x-1/2"
-          style={{ width: '900px', height: '500px', background: 'radial-gradient(ellipse, rgba(26,169,255,0.08) 0%, transparent 70%)' }} />
-      </div>
-
-      <Navbar />
-
-      <div className="relative z-10 mx-auto w-full max-w-2xl px-5 pb-24 pt-24 sm:px-8">
-        <BackLink href="/#tarifs" label="Tarifs" />
-
-        <header className="mb-10 mt-8 flex flex-col gap-4">
-          <span className="section-label">Intervention à domicile</span>
-          <h1 className="c9-title font-space">Rendez-vous</h1>
-          <p className="c9-subtitle max-w-xl font-space">
-            Envoyez votre demande en quelques instants. COM&apos;9 vous confirme le créneau ou vous propose une autre disponibilité.
+    <>
+    <main className="c9-light relative min-h-screen">
+      <Navbar hideCta />
+      <div className="mx-auto w-full max-w-6xl px-5 pb-32 md:px-8 lg:pb-24"
+        style={{ paddingTop: 'calc(64px + env(safe-area-inset-top, 0px) + 2.5rem)' }}>
+        <header className="mb-10 flex max-w-2xl flex-col gap-3">
+          <span className="section-label">Réparation à domicile · {HORAIRES_TEXTE.accroche.toLowerCase()}</span>
+          <h1 className="c9-title">Réserver une intervention</h1>
+          <p className="c9-subtitle">
+            Votre réparation, votre adresse, votre créneau : le prix total s&apos;affiche avant d&apos;envoyer la demande.
+            COM&apos;9 confirme ensuite le rendez-vous.
           </p>
         </header>
 
         <Suspense fallback={null}>
           {/* Calcul par la route seulement si la clé Google Maps est configurée sur Vercel */}
-          <BookingForm distanceEnabled={distanceConfigured()} />
+          <BookingFlow distanceEnabled={distanceConfigured()} />
         </Suspense>
       </div>
-
-      <Footer />
     </main>
+    <Footer />
+    </>
   )
 }
