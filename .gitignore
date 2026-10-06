@@ -9,12 +9,12 @@ node_modules/
 /build
 
 # ─── Variables d'environnement ────────────────────────────────────────────────
-# Ne jamais committer les fichiers .env — ils peuvent contenir des secrets
+# Ne jamais committer les fichiers .env — ils peuvent contenir des secrets.
+# Tout fichier .env* est ignoré (.env, .env.local, .env.production.local,
+# .env.vercel-fresh…). Seul .env.example, SANS valeur réelle, est autorisé.
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env*
+!.env.example
 
 # ─── Vercel ───────────────────────────────────────────────────────────────────
 .vercel
@@ -36,6 +36,3 @@ next-env.d.ts
 
 # ─── Claude Code (outil de développement) ─────────────────────────────────────
 .claude/
-
-.vercel
-.env*.local
