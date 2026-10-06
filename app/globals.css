@@ -4,7 +4,7 @@
 
 /* ─────────────────────────────────────────────────────────────────────────────
    COM'9 — Direction artistique « réparation à domicile »
-   Charbon profond · blanc cassé · graphite · accent bleu (couleur du logo COM'9).
+   Noir bleuté (bleu nuit) · blanc cassé · accent bleu (couleur du logo COM'9).
    Premium, minimal, rassurant. Le bleu se réserve aux actions et aux
    détails importants — jamais en aplat criard.
 
@@ -18,22 +18,22 @@
   --font-mono:        var(--font-geist-mono);
 
   /* Surfaces */
-  --c9-bg:            #0f0f11;   /* charbon profond */
-  --c9-bg-deep:       #0a0a0b;   /* pied de page */
-  --c9-surface:       #17171a;   /* carte opaque */
-  --c9-surface-2:     #1f1f23;   /* carte élevée */
-  --c9-elev-1:        rgba(255, 255, 255, 0.035);
-  --c9-elev-2:        rgba(255, 255, 255, 0.065);
+  --c9-bg:            #0a1626;   /* noir bleuté (bleu nuit) */
+  --c9-bg-deep:       #07101d;   /* pied de page */
+  --c9-surface:       #112038;   /* carte opaque */
+  --c9-surface-2:     #182b48;   /* carte élevée */
+  --c9-elev-1:        rgba(150, 190, 255, 0.05);
+  --c9-elev-2:        rgba(150, 190, 255, 0.09);
 
-  /* Traits — graphite */
-  --c9-hairline:      rgba(255, 255, 255, 0.10);
-  --c9-hairline-soft: rgba(255, 255, 255, 0.06);
-  --c9-hairline-lit:  rgba(255, 255, 255, 0.20);
+  /* Traits — bleutés */
+  --c9-hairline:      rgba(150, 190, 255, 0.14);
+  --c9-hairline-soft: rgba(150, 190, 255, 0.08);
+  --c9-hairline-lit:  rgba(150, 190, 255, 0.28);
 
   /* Texte — blanc cassé */
-  --c9-text:          #f5f2ec;
-  --c9-text-2:        #c6c1b8;
-  --c9-text-3:        #928d85;
+  --c9-text:          #f2f5fa;
+  --c9-text-2:        #c2cbd9;
+  --c9-text-3:        #8e9bb0;
 
   /* Accent bleu — couleur de la mascotte COM'9 */
   --c9-accent:        #0a74d6;   /* actions, détails importants */
@@ -55,8 +55,13 @@
   --c9-danger-line:   rgba(240, 149, 138, 0.38);
 
   /* Fond de calque (feuilles, menus) */
-  --c9-scrim:         rgba(5, 5, 6, 0.62);
-  --c9-header:        rgba(15, 15, 17, 0.82);
+  --c9-scrim:         rgba(3, 9, 18, 0.62);
+  --c9-header:        rgba(10, 22, 38, 0.84);
+
+  /* Dégradé des sections sombres : bleu nuit + halo bleu, comme l'accueil */
+  --c9-dark-gradient: radial-gradient(70% 55% at 100% 0%, rgba(0, 150, 255, 0.16) 0%, transparent 70%),
+                      radial-gradient(60% 50% at 0% 100%, rgba(0, 110, 230, 0.10) 0%, transparent 70%),
+                      linear-gradient(180deg, #0a1626 0%, #0c1b31 100%);
 
   /* Rythme */
   --section-py:       clamp(5rem, 9vw, 8.5rem);
@@ -124,6 +129,9 @@ body {
 
 /* ─── Ancres sous la barre fixe ───────────────────────────────────────────── */
 section[id] { scroll-margin-top: 80px; }
+
+/* Fond dégradé bleu nuit des sections sombres */
+.c9-dark { background: var(--c9-dark-gradient); }
 
 /* ─── Scrollbar, sélection, focus ─────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }

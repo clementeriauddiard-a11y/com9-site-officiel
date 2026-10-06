@@ -59,7 +59,7 @@ export function HowItWorks() {
 export function Tarifs() {
   const travel = ZONES.filter((z) => z.feeCents !== null)
   return (
-    <section id="tarifs" style={py}>
+    <section id="tarifs" className="c9-dark" style={py}>
       <div className={wrap}>
         <Head label="Tarifs" title="Le prix total, avant de réserver."
           sub={`${PRICE_NOTE} Vous voyez la réparation, le déplacement et le total avant d'envoyer votre demande.`} />
@@ -159,7 +159,7 @@ export function Trust() {
     { t: 'Pièce disponible, intervention rapide', d: `Pièce à commander : délai estimé de ${DELAI_COMMANDE_JOURS} jours, COM’9 vous propose un créneau adapté.` },
   ]
   return (
-    <section id="confiance" style={py}>
+    <section id="confiance" className="c9-dark" style={py}>
       <div className={`${wrap} grid gap-12 lg:grid-cols-[1fr_1.3fr]`}>
         <div className="flex flex-col gap-8">
           <Head label="Horaires" title={<>Le soir et le week-end, <span className="c9-copper">{HORAIRES_TEXTE.accroche.toLowerCase()}</span>.</>} />

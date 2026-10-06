@@ -54,7 +54,7 @@ function LoginForm() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center px-5"
+    <main className="c9-dark relative flex min-h-screen items-center justify-center px-5"
       style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="absolute left-4 top-4" style={{ marginTop: 'env(safe-area-inset-top, 0px)' }}>
         <BackLink href="/" label="Accueil" />

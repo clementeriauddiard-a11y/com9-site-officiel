@@ -30,7 +30,7 @@ const SOCIAL = [
 
 export default function Footer() {
   return (
-    <footer style={{ background: 'var(--c9-bg-deep)', borderTop: '1px solid var(--c9-hairline-soft)' }}>
+    <footer style={{ background: 'radial-gradient(60% 80% at 100% 0%, rgba(0, 150, 255, 0.10) 0%, transparent 70%), linear-gradient(180deg, #0b192d 0%, var(--c9-bg-deep) 100%)', borderTop: '1px solid var(--c9-hairline-soft)' }}>
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr] md:px-8"
         style={{ paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))' }}>
         <div className="flex flex-col gap-3">

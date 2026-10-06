@@ -21,7 +21,7 @@ function example() {
 export default function Hero() {
   const ex = example()
   return (
-    <section id="accueil" className="relative overflow-hidden" style={{ paddingTop: 'calc(64px + env(safe-area-inset-top, 0px))' }}>
+    <section id="accueil" className="c9-dark relative overflow-hidden" style={{ paddingTop: 'calc(64px + env(safe-area-inset-top, 0px))' }}>
       {/* Lumière unique, très diffuse */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0"
         style={{ background: 'radial-gradient(60% 50% at 85% 10%, rgba(0,168,248,0.16) 0%, transparent 70%), radial-gradient(50% 40% at 0% 100%, rgba(255,255,255,0.04) 0%, transparent 70%)' }} />
