@@ -326,7 +326,7 @@ export async function createPublicRequest(raw: unknown, ip: string): Promise<Pub
     (measured
       ? `Distance calculée par Google Maps : ${fmtKm(measured.km)} par la route` +
         (measured.precise ? '.' : ' (adresse reconnue approximativement : zone à vérifier).')
-      : v.communeNom ? `Commune : ${v.communeNom} (zone d'après la liste COM'9), adresse à vérifier.`
+      : v.communeNom ? `Commune : ${v.communeNom} (zone indicative d'après la liste des communes), à vérifier avec l'adresse.`
       : 'Distance non calculée : zone à vérifier.'))
 
   const zoneDef = zone ? ZONES.find((z) => z.id === zone) ?? null : null

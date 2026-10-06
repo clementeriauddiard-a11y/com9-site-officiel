@@ -2,7 +2,7 @@
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COM'9 — Champ « Votre commune » : recherche par nom ou code postal,
-// zone de déplacement d'après la liste validée par COM'9.
+// zone de déplacement indicative d'après la liste des communes.
 // Accessible au clavier (liste déroulante ARIA « combobox »).
 // ─────────────────────────────────────────────────────────────────────────────
 

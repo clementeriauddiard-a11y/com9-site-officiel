@@ -337,7 +337,7 @@ export default function BookingForm({ distanceEnabled = false }: { distanceEnabl
       <Step n="02" title="Lieu de l'intervention"
         hint={distanceEnabled && !useList
           ? "Le déplacement est calculé par la route depuis l'atelier COM'9 (place Saint-Pol, Nogent-le-Rotrou)."
-          : "Indiquez votre commune : la zone de déplacement s'affiche d'après la liste établie par COM'9 depuis son atelier (place Saint-Pol, Nogent-le-Rotrou). COM'9 la confirme avec votre adresse."}>
+          : "Indiquez votre commune : une zone de déplacement indicative s'affiche, estimée depuis l'atelier COM'9 (place Saint-Pol, Nogent-le-Rotrou). COM'9 la confirme avec votre adresse."}>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="b-address">{distanceEnabled ? 'Adresse complète' : 'Adresse'}</Label>
           <input id="b-address" className={inputCls} style={inputStyle} autoComplete="street-address"
@@ -389,7 +389,7 @@ export default function BookingForm({ distanceEnabled = false }: { distanceEnabl
               inputClassName={inputCls} inputStyle={inputStyle} />
             {communeObj && zoneObj && (
               <p className="font-space text-[0.875rem]" style={{ color: 'var(--c9-text-2)' }} data-zone-result>
-                Zone : <b style={{ color: 'var(--c9-text)' }}>{zoneObj.full}</b> — {zoneObj.fee === null ? 'déplacement sur devis' : `déplacement ${zoneObj.fee} €`}
+                Zone indicative : <b style={{ color: 'var(--c9-text)' }}>{zoneObj.full}</b> — {zoneObj.fee === null ? 'déplacement sur devis' : `déplacement ${zoneObj.fee} €`}
               </p>
             )}
             {commune === NOT_LISTED && (
