@@ -8,6 +8,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { HORAIRES_TEXTE } from '@/config/com9'
+import Logo from '@/components/ui/Logo'
 
 const LINKS = [
   { href: '/#fonctionnement', label: 'Comment ça marche' },
@@ -19,7 +20,7 @@ const LINKS = [
 export function Wordmark({ className = '' }: { className?: string }) {
   return (
     <span className={`text-[1.25rem] font-semibold tracking-[-0.04em] ${className}`} style={{ color: 'var(--c9-text)' }}>
-      COM&apos;<span style={{ color: 'var(--c9-accent)' }}>9</span>
+      COM&apos;<span style={{ color: 'var(--c9-accent-text)' }}>9</span>
     </span>
   )
 }
@@ -51,8 +52,9 @@ export default function Navbar({ hideCta = false }: { hideCta?: boolean }) {
         borderBottom: `1px solid ${scrolled || open ? 'var(--c9-hairline-soft)' : 'transparent'}`,
       }}>
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 md:px-8" aria-label="Navigation principale">
-        <Link href="/" className="c9-back -ml-2 flex items-center gap-3 rounded-xl px-2 py-2" onClick={() => setOpen(false)}
+        <Link href="/" className="c9-back -ml-2 flex items-center gap-2.5 rounded-xl px-2 py-1" onClick={() => setOpen(false)}
           aria-label="COM'9 — accueil">
+          <Logo size={44} priority decorative />
           <Wordmark />
           <span className="hidden text-[0.75rem] sm:inline" style={{ color: 'var(--c9-text-3)' }}>
             Réparation à domicile · {HORAIRES_TEXTE.accroche.toLowerCase()}

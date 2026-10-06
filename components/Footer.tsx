@@ -7,6 +7,7 @@ import { HORAIRES_TEXTE } from '@/config/com9'
 import { LINKS, PHONE } from '@/lib/links'
 import { WaIcon } from '@/components/ui/Wa'
 import { Wordmark } from '@/components/Navbar'
+import Logo from '@/components/ui/Logo'
 
 const NAV = [
   { href: '/reservation', label: 'Réserver une intervention' },
@@ -33,7 +34,7 @@ export default function Footer() {
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr] md:px-8"
         style={{ paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))' }}>
         <div className="flex flex-col gap-3">
-          <Wordmark className="text-[1.5rem]" />
+          <span className="flex items-center gap-3"><Logo size={64} decorative /><Wordmark className="text-[1.5rem]" /></span>
           <p className="text-[1.0625rem] font-medium">Votre smartphone réparé chez vous. On vient à vous.</p>
           <p className="text-[0.9375rem]" style={{ color: 'var(--c9-text-3)' }}>
             Réparation à domicile depuis Nogent-le-Rotrou · {HORAIRES_TEXTE.detail}, {HORAIRES_TEXTE.accroche.toLowerCase()}.

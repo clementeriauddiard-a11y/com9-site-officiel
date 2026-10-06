@@ -4,8 +4,8 @@
 
 /* ─────────────────────────────────────────────────────────────────────────────
    COM'9 — Direction artistique « réparation à domicile »
-   Charbon profond · blanc cassé · graphite · accent cuivre.
-   Premium, minimal, rassurant. Le cuivre se réserve aux actions et aux
+   Charbon profond · blanc cassé · graphite · accent bleu (couleur du logo COM'9).
+   Premium, minimal, rassurant. Le bleu se réserve aux actions et aux
    détails importants — jamais en aplat criard.
 
    Thème sombre par défaut. Une section claire se déclare avec .c9-light :
@@ -35,13 +35,13 @@
   --c9-text-2:        #c6c1b8;
   --c9-text-3:        #928d85;
 
-  /* Accent cuivre */
-  --c9-accent:        #c9895c;   /* actions, détails importants */
-  --c9-accent-hi:     #d99b6e;   /* survol */
-  --c9-accent-text:   #d9a27a;   /* texte cuivré lisible sur fond sombre */
-  --c9-accent-ink:    #1a120c;   /* texte posé sur le cuivre */
-  --c9-accent-soft:   rgba(201, 137, 92, 0.12);
-  --c9-accent-line:   rgba(201, 137, 92, 0.38);
+  /* Accent bleu — couleur de la mascotte COM'9 */
+  --c9-accent:        #0a74d6;   /* actions, détails importants */
+  --c9-accent-hi:     #1683e8;   /* survol */
+  --c9-accent-text:   #4db2ff;   /* texte bleu lisible sur fond sombre */
+  --c9-accent-ink:    #ffffff;   /* texte posé sur le bleu */
+  --c9-accent-soft:   rgba(0, 168, 248, 0.12);
+  --c9-accent-line:   rgba(0, 168, 248, 0.40);
 
   /* États */
   --c9-warn:          #e2b469;
@@ -80,9 +80,9 @@
   --c9-text:          #151517;
   --c9-text-2:        #47443f;
   --c9-text-3:        #6c6862;
-  --c9-accent-text:   #8f532a;
-  --c9-accent-soft:   rgba(201, 137, 92, 0.12);
-  --c9-accent-line:   rgba(160, 99, 58, 0.40);
+  --c9-accent-text:   #0063c4;
+  --c9-accent-soft:   rgba(0, 120, 220, 0.08);
+  --c9-accent-line:   rgba(10, 116, 214, 0.40);
   --c9-warn:          #8a5d10;
   --c9-warn-soft:     rgba(176, 124, 30, 0.10);
   --c9-warn-line:     rgba(176, 124, 30, 0.40);
@@ -129,7 +129,7 @@ section[id] { scroll-margin-top: 80px; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.35); border-radius: 6px; }
-::selection { background: rgba(201, 137, 92, 0.32); }
+::selection { background: rgba(0, 168, 248, 0.32); }
 
 :focus-visible {
   outline: 2px solid var(--c9-accent);
@@ -166,7 +166,7 @@ section[id] { scroll-margin-top: 80px; }
 .c9-btn-primary {
   background: var(--c9-accent);
   color: var(--c9-accent-ink);
-  box-shadow: 0 10px 30px -14px rgba(201, 137, 92, 0.55);
+  box-shadow: 0 10px 30px -14px rgba(10, 116, 214, 0.65);
 }
 @media (hover: hover) { .c9-btn-primary:hover { background: var(--c9-accent-hi); } }
 
@@ -197,7 +197,7 @@ section[id] { scroll-margin-top: 80px; }
   box-shadow: 0 1px 2px rgba(21, 21, 23, 0.04), 0 18px 44px -30px rgba(21, 21, 23, 0.25);
 }
 
-/* Variante mise en avant — liseré cuivre, jamais d'aplat */
+/* Variante mise en avant — liseré bleu, jamais d'aplat */
 .c9-surface-accent {
   background: linear-gradient(170deg, var(--c9-accent-soft) 0%, transparent 60%), var(--c9-surface);
   border: 1px solid var(--c9-accent-line);

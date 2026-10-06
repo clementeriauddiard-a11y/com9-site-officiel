@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { HORAIRES_TEXTE, ZONES } from '@/config/com9'
 import { findModel, getOptions } from '@/data/tarifs'
 import { euros } from '@/lib/money'
+import Logo from '@/components/ui/Logo'
 
 /** Exemple réel tiré de la grille (aucun prix écrit en dur ici). */
 function example() {
@@ -23,11 +24,16 @@ export default function Hero() {
     <section id="accueil" className="relative overflow-hidden" style={{ paddingTop: 'calc(64px + env(safe-area-inset-top, 0px))' }}>
       {/* Lumière unique, très diffuse */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0"
-        style={{ background: 'radial-gradient(60% 50% at 85% 10%, rgba(201,137,92,0.14) 0%, transparent 70%), radial-gradient(50% 40% at 0% 100%, rgba(255,255,255,0.04) 0%, transparent 70%)' }} />
+        style={{ background: 'radial-gradient(60% 50% at 85% 10%, rgba(0,168,248,0.16) 0%, transparent 70%), radial-gradient(50% 40% at 0% 100%, rgba(255,255,255,0.04) 0%, transparent 70%)' }} />
 
       <div className="relative mx-auto grid max-w-6xl gap-14 px-5 pb-20 pt-12 md:px-8 md:pb-28 md:pt-20 lg:grid-cols-[1.25fr_1fr] lg:items-center lg:gap-16">
         <div className="flex flex-col gap-7">
-          <span className="section-label c9-rise">Réparation smartphone à domicile</span>
+          {/* Téléphone : le logo d'abord, pour reconnaître COM'9 tout de suite */}
+          <div className="c9-rise flex items-center gap-4 lg:hidden">
+            <Logo size={112} priority />
+            <span className="section-label">Réparation smartphone à domicile</span>
+          </div>
+          <span className="section-label c9-rise hidden lg:inline-flex">Réparation smartphone à domicile</span>
 
           <h1 className="c9-display c9-rise" style={{ animationDelay: '60ms' }}>
             Votre smartphone réparé chez vous.
@@ -52,6 +58,7 @@ export default function Hero() {
 
         {/* Signature + exemple concret */}
         <div className="c9-rise flex flex-col gap-4" style={{ animationDelay: '260ms' }}>
+          <Logo size={220} priority className="mx-auto -mb-2 hidden lg:block" />
           <div className="c9-surface rounded-[24px] p-6 sm:p-7">
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-full" style={{ background: 'var(--c9-accent-soft)', color: 'var(--c9-accent-text)' }}>

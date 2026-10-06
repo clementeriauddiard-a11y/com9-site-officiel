@@ -9,6 +9,7 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import BackLink from '@/components/ui/BackLink'
 import { Wordmark } from '@/components/Navbar'
+import Logo from '@/components/ui/Logo'
 import { Btn, ErrorBox, inputCls, inputStyle } from '@/components/ui/kit'
 
 function LoginForm() {
@@ -61,7 +62,7 @@ function LoginForm() {
 
       <form onSubmit={submit} className="c9-surface flex w-full max-w-sm flex-col gap-6 rounded-[24px] p-7" noValidate>
         <div className="flex flex-col gap-2">
-          <Wordmark className="text-[1.75rem]" />
+          <span className="flex items-center gap-3"><Logo size={56} priority decorative /><Wordmark className="text-[1.75rem]" /></span>
           <h1 className="text-[1.25rem] font-semibold tracking-[-0.02em]">Espace COM&apos;9</h1>
           <p className="text-[0.9375rem]" style={{ color: 'var(--c9-text-3)' }}>Agenda et rendez-vous. Accès réservé.</p>
         </div>

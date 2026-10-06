@@ -12,12 +12,12 @@ module.exports = {
         xs: '380px',
       },
       colors: {
-        // Anciens noms conservés, alignés sur la nouvelle palette (charbon / cuivre).
+        // Anciens noms conservés, alignés sur la nouvelle palette (charbon / bleu COM'9).
         'space-black':   '#0f0f11',
         'space-deep':    '#0a0a0b',
         'slate-lift':    '#17171a',
-        'neon-blue':     '#c9895c',
-        'electric-blue': '#c9895c',
+        'neon-blue':     '#0a74d6',
+        'electric-blue': '#0a74d6',
         'cold-white':    '#f5f2ec',
       },
       fontFamily: {
