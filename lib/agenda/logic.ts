@@ -22,11 +22,13 @@ import {
   BLOCKING_STATUSES,
   ORIGINS,
   PART_STATUSES,
+  PREFERRED_PERIODS,
   type AgendaSettings,
   type ApptStatus,
   type Appointment,
   type Origin,
   type PartStatus,
+  type PreferredPeriod,
 } from './types'
 
 // ─── Transitions de statut ───────────────────────────────────────────────────
@@ -211,6 +213,9 @@ export type ApptInput = {
   origin: Origin
   partStatus: PartStatus | null
   internalNotes?: string
+  preferredDate?: string | null
+  preferredPeriod?: PreferredPeriod | null
+  availabilityNote?: string
 }
 
 const isRepair = (v: unknown): v is RepairId =>
@@ -259,8 +264,106 @@ export function validateInput(i: Partial<ApptInput>): string[] {
     e.push('La description est trop longue.')
   if (i.internalNotes !== undefined && (typeof i.internalNotes !== 'string' || i.internalNotes.length > 4000))
     e.push('Les notes internes sont trop longues.')
+  if (i.preferredDate !== undefined && i.preferredDate !== null && !isDay(i.preferredDate))
+    e.push('Le jour souhaité est invalide.')
+  if (i.preferredPeriod !== undefined && i.preferredPeriod !== null && !isPeriod(i.preferredPeriod))
+    e.push('Le moment souhaité est invalide.')
+  if (i.availabilityNote !== undefined && (typeof i.availabilityNote !== 'string' || i.availabilityNote.length > 300))
+    e.push('Les autres disponibilités sont trop longues.')
 
   return e
+}
+
+const isDay = (v: unknown): v is string =>
+  typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(new Date(v + 'T12:00:00Z').getTime()) &&
+  new Date(v + 'T12:00:00Z').toISOString().slice(0, 10) === v
+const isPeriod = (v: unknown): v is PreferredPeriod =>
+  typeof v === 'string' && (PREFERRED_PERIODS as readonly string[]).includes(v)
+
+// ─── Demande publique (formulaire du site) ───────────────────────────────────
+
+/** Jour courant à Paris, AAAA-MM-JJ, quel que soit le fuseau du serveur. */
+export function todayInParis(now = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(now)
+}
+
+export function addDaysToDay(day: string, n: number): string {
+  const d = new Date(day + 'T12:00:00Z')
+  d.setUTCDate(d.getUTCDate() + n)
+  return d.toISOString().slice(0, 10)
+}
+
+/** Jusqu'où un client peut demander une date. */
+export const BOOKING_HORIZON_DAYS = 60
+
+/** Seuls ces champs sont acceptés depuis le site. Le prix n'en fait pas partie. */
+export type PublicRequestInput = {
+  clientName: string
+  clientPhone: string
+  address: string
+  model: string
+  repair: RepairId
+  quality: string
+  zone: ZoneId | null
+  description: string
+  preferredDate: string
+  preferredPeriod: PreferredPeriod | null
+  availabilityNote: string
+}
+
+/**
+ * Valide et nettoie une demande venant du site public.
+ * Tout champ inconnu est ignoré ; le prix est toujours recalculé depuis la grille.
+ */
+export function parsePublicRequest(
+  raw: unknown,
+  today: string,
+): { ok: true; value: PublicRequestInput } | { ok: false; errors: string[] } {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  const e: string[] = []
+  const txt = (k: string) => (typeof r[k] === 'string' ? (r[k] as string).trim().replace(/\s+/g, ' ') : '')
+  const longTxt = (k: string) => (typeof r[k] === 'string' ? (r[k] as string).trim() : '')
+
+  const clientName = txt('clientName')
+  const clientPhone = txt('clientPhone')
+  const address = txt('address')
+  const model = txt('model')
+  const repair = txt('repair') as RepairId
+  const quality = txt('quality')
+  const zoneRaw = r.zone === null || r.zone === '' || r.zone === undefined ? null : txt('zone')
+  const description = longTxt('description')
+  const preferredDate = txt('preferredDate')
+  const periodRaw = r.preferredPeriod === null || r.preferredPeriod === '' || r.preferredPeriod === undefined
+    ? null : txt('preferredPeriod')
+  const availabilityNote = longTxt('availabilityNote')
+
+  if (clientName.length < 2 || clientName.length > 80) e.push('Indiquez votre nom (2 à 80 caractères).')
+  if (!phoneDigits(clientPhone) || clientPhone.length > 30) e.push('Indiquez un numéro de téléphone valide.')
+  if (address.length < 5 || address.length > 200) e.push("Indiquez l'adresse de l'intervention.")
+  if (!MODELS.some((m) => m.model === model)) e.push('Choisissez votre modèle.')
+  if (!isRepair(repair)) e.push('Choisissez la réparation.')
+  else if (MODELS.some((m) => m.model === model) && !qualitiesFor(model, repair).some((o) => o.label === quality))
+    e.push('Choisissez la qualité de la pièce.')
+  if (zoneRaw !== null && !isZone(zoneRaw)) e.push('La zone choisie est invalide.')
+  if (description.length > 1000) e.push('La description dépasse 1 000 caractères.')
+  if (!isDay(preferredDate)) e.push('Choisissez le jour souhaité.')
+  else if (preferredDate < today) e.push('Le jour souhaité est déjà passé.')
+  else if (preferredDate > addDaysToDay(today, BOOKING_HORIZON_DAYS))
+    e.push(`Choisissez un jour dans les ${BOOKING_HORIZON_DAYS} prochains jours.`)
+  if (periodRaw !== null && !isPeriod(periodRaw)) e.push('Le moment souhaité est invalide.')
+  if (availabilityNote.length > 300) e.push('Les autres disponibilités dépassent 300 caractères.')
+
+  if (e.length) return { ok: false, errors: e }
+  return {
+    ok: true,
+    value: {
+      clientName, clientPhone, address, model, repair, quality,
+      zone: zoneRaw as ZoneId | null,
+      description, preferredDate,
+      preferredPeriod: periodRaw as PreferredPeriod | null,
+      availabilityNote,
+    },
+  }
 }
 
 export function isApptStatus(v: unknown): v is ApptStatus {

@@ -80,6 +80,26 @@ export const ORIGIN_LABEL: Record<Origin, string> = {
   whatsapp:  'WhatsApp',
 }
 
+// ─── Souhait du client (demande depuis le site) ───────────────────────────────
+
+/**
+ * Moment de la journée souhaité par le client. Volontairement sans heures :
+ * les plages horaires d'intervention ne sont pas encore fixées par COM'9.
+ * C'est un souhait, jamais un créneau réservé.
+ */
+export const PREFERRED_PERIODS = ['matin', 'apres_midi', 'fin_journee'] as const
+export type PreferredPeriod = (typeof PREFERRED_PERIODS)[number]
+
+export const PREFERRED_PERIOD_LABEL: Record<PreferredPeriod, string> = {
+  matin:       'Matin',
+  apres_midi:  'Après-midi',
+  fin_journee: 'Fin de journée',
+}
+
+/** Message affiché au client après l'envoi d'une demande (texte validé par COM'9). */
+export const REQUEST_RECEIVED_MESSAGE =
+  'Votre demande a bien été reçue. COM\'9 vous confirmera le créneau ou vous proposera une autre disponibilité.'
+
 // ─── Rendez-vous ─────────────────────────────────────────────────────────────
 
 export type Appointment = {
@@ -121,6 +141,14 @@ export type Appointment = {
   proposedReason: string
   /** Proposition ferme : son acceptation confirme le rendez-vous. */
   proposalFirm: boolean
+
+  // Souhait exprimé par le client (demandes du site). Jamais un créneau réservé.
+  /** Jour souhaité (AAAA-MM-JJ, heure de Paris) */
+  preferredDate: string | null
+  /** Moment souhaité ; null = indifférent */
+  preferredPeriod: PreferredPeriod | null
+  /** Autres disponibilités indiquées par le client */
+  availabilityNote: string
 
   origin: Origin
   status: ApptStatus

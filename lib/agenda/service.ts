@@ -7,12 +7,16 @@
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { randomBytes, randomUUID } from 'crypto'
+import { createHmac, randomBytes, randomUUID } from 'crypto'
 import { REPAIRS, ZONES } from '@/data/tarifs'
 import {
   ACTIONS,
   findConflicts,
+  gridPrice,
+  parsePublicRequest,
+  todayInParis,
   validateInput,
+  zoneFee,
   validateSettings,
   type ActionId,
   type ApptInput,
@@ -23,6 +27,7 @@ import {
   BLOCKING_STATUSES,
   ORIGIN_LABEL,
   PART_STATUS_LABEL,
+  PREFERRED_PERIOD_LABEL,
   type AgendaSettings,
   type ApptEvent,
   type Appointment,
@@ -34,7 +39,7 @@ export type ConflictInfo = { id: string; clientName: string; startAt: string; du
 
 export class AgendaError extends Error {
   constructor(
-    public code: 'invalid' | 'not_found' | 'conflict' | 'transition',
+    public code: 'invalid' | 'not_found' | 'conflict' | 'transition' | 'rate_limited',
     message: string,
     public details?: { errors?: string[]; conflicts?: ConflictInfo[] },
   ) {
@@ -105,6 +110,9 @@ function clean(input: ApptInput) {
     origin: input.origin,
     partStatus: input.partStatus ?? null,
     internalNotes: (input.internalNotes ?? '').trim(),
+    preferredDate: input.preferredDate ?? null,
+    preferredPeriod: input.preferredPeriod ?? null,
+    availabilityNote: (input.availabilityNote ?? '').trim(),
   }
 }
 
@@ -144,6 +152,108 @@ export async function createAppointment(
     `Fiche créée (${ORIGIN_LABEL[appt.origin]}) — ${APPT_STATUS_LABEL[appt.status]}, ${fmtSlot(appt.startAt)}.`,
   )
   return appt
+}
+
+// ─── Demande publique (formulaire du site) ───────────────────────────────────
+
+/** Souhait du client, lisible : « mardi 13 octobre, matin ». */
+export function fmtWish(day: string | null, period: Appointment['preferredPeriod']): string {
+  if (!day) return 'sans souhait de date'
+  const d = new Intl.DateTimeFormat('fr-FR', {
+    timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long',
+  }).format(new Date(day + 'T12:00:00Z'))
+  return period ? `${d}, ${PREFERRED_PERIOD_LABEL[period].toLowerCase()}` : `${d}, moment indifférent`
+}
+
+/** Empreinte non réversible de la source (adresse IP) pour limiter les abus. */
+export function sourceHash(ip: string): string {
+  const key = process.env.ADMIN_PASSWORD || 'com9-reservation'
+  return createHmac('sha256', key).update('rdv-source:' + ip).digest('hex').slice(0, 32)
+}
+
+/** Limites d'envoi, volontairement larges pour un vrai client. */
+export const REQUEST_LIMITS = { shortWindowMin: 10, perSourceShort: 3, perSourceDay: 8, allDay: 150 }
+
+export type PublicRecap = {
+  model: string
+  repairLabel: string
+  quality: string
+  repairPrice: number
+  zoneLabel: string | null
+  travelFee: number | null
+  total: number | null
+  onQuote: boolean
+  wish: string
+}
+
+/**
+ * Enregistre une demande du site. Ce n'est JAMAIS un rendez-vous confirmé :
+ * statut « demande reçue », aucun créneau réservé, zone à vérifier par COM'9.
+ */
+export async function createPublicRequest(raw: unknown, ip: string): Promise<PublicRecap> {
+  const parsed = parsePublicRequest(raw, todayInParis())
+  if (!parsed.ok) throw new AgendaError('invalid', 'La demande est incomplète.', { errors: parsed.errors })
+  const v = parsed.value
+
+  const counts = await store.countAndLogRequest(sourceHash(ip), REQUEST_LIMITS.shortWindowMin)
+  if (
+    counts.sameSourceShort >= REQUEST_LIMITS.perSourceShort ||
+    counts.sameSourceDay >= REQUEST_LIMITS.perSourceDay ||
+    counts.allDay >= REQUEST_LIMITS.allDay
+  ) {
+    throw new AgendaError('rate_limited', 'Trop de demandes envoyées. Réessayez plus tard ou contactez COM\'9 sur WhatsApp.')
+  }
+
+  const price = gridPrice(v.model, v.repair, v.quality) as number // validé par parsePublicRequest
+  const settings = await store.getSettings()
+  const travelFee = zoneFee(v.zone) // null si sur devis ou zone inconnue
+
+  const now = new Date().toISOString()
+  const appt: Appointment = {
+    id: randomUUID(),
+    trackToken: randomBytes(24).toString('base64url'),
+    createdAt: now,
+    updatedAt: now,
+    clientName: v.clientName,
+    clientPhone: v.clientPhone,
+    address: v.address,
+    model: v.model,
+    repair: v.repair,
+    quality: v.quality,
+    description: v.description,
+    repairPrice: price,
+    zone: v.zone,
+    zoneVerified: false, // choisie par le client : provisoire
+    travelFee,
+    startAt: null, // aucun créneau tant que COM'9 n'a pas confirmé
+    durationMin: settings.durations[v.repair],
+    proposedStartAt: null,
+    proposedReason: '',
+    proposalFirm: false,
+    preferredDate: v.preferredDate,
+    preferredPeriod: v.preferredPeriod,
+    availabilityNote: v.availabilityNote,
+    origin: 'site',
+    status: 'demande_recue',
+    partStatus: null,
+    internalNotes: '',
+  }
+  await store.insertAppt(appt)
+  await store.addEvent(appt.id, 'creation',
+    `Demande reçue depuis le site — souhait : ${fmtWish(v.preferredDate, v.preferredPeriod)}. Zone indiquée par le client, à vérifier.`)
+
+  const zone = v.zone ? ZONES.find((z) => z.id === v.zone) ?? null : null
+  return {
+    model: v.model,
+    repairLabel: repairLabel(v.repair),
+    quality: v.quality,
+    repairPrice: price,
+    zoneLabel: zone ? zone.full : null,
+    travelFee,
+    total: travelFee === null ? null : price + travelFee,
+    onQuote: v.zone === 'devis',
+    wish: fmtWish(v.preferredDate, v.preferredPeriod),
+  }
 }
 
 // ─── Modification ────────────────────────────────────────────────────────────
@@ -198,6 +308,9 @@ export async function updateAppointment(id: string, patch: Partial<ApptInput>): 
     origin: current.origin,
     partStatus: current.partStatus,
     internalNotes: current.internalNotes,
+    preferredDate: current.preferredDate,
+    preferredPeriod: current.preferredPeriod,
+    availabilityNote: current.availabilityNote,
     ...patch,
   }
 

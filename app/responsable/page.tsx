@@ -14,7 +14,7 @@ import {
 } from '@/data/phones'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -940,6 +940,7 @@ function Dashboard({ onLogout }: { onLogout: () => Promise<void> }) {
                 <rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/>
               </svg>
               Agenda
+              <PendingBadge />
             </a>
 
             <a href="/marketplace" target="_blank"
@@ -1067,4 +1068,31 @@ export default function ResponsablePage() {
   }
 
   return <Dashboard onLogout={logout} />
+}
+
+// ─── Nombre de demandes à traiter (agenda) ───────────────────────────────────
+// Aucune notification n'est envoyée automatiquement : ce compteur rappelle
+// les demandes reçues depuis le site à chaque ouverture de l'espace.
+
+function PendingBadge() {
+  const [count, setCount] = useState<number | null>(null)
+  useEffect(() => {
+    let alive = true
+    fetch('/api/agenda?view=pending', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!alive || !d || !Array.isArray(d.items)) return
+        setCount(d.items.filter((a: { status: string }) => a.status === 'demande_recue').length)
+      })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [])
+  if (!count) return null
+  return (
+    <span aria-label={`${count} demande${count > 1 ? 's' : ''} à traiter`}
+      className="ml-0.5 inline-flex min-w-[20px] items-center justify-center rounded-full px-1.5 text-[0.75rem] font-bold leading-[20px]"
+      style={{ background: '#06131f', color: '#3ad9ff' }}>
+      {count}
+    </span>
+  )
 }

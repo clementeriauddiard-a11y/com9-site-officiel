@@ -27,7 +27,7 @@ import {
 } from '@/lib/agenda/types'
 import ApptForm from './ApptForm'
 import { ApiError, api, type ConflictInfo } from './api'
-import { endIso, fmtDuration, fmtSlotFull, fmtTime, isoToParis, parisToIso } from './time'
+import { endIso, fmtDuration, fmtSlotFull, fmtTime, fmtWish, isoToParis, parisToIso } from './time'
 import { Btn, Chip, ErrorBox, Field, PartChip, StatusChip, copyText, inputCls, inputStyle } from './ui'
 
 type Props = {
@@ -297,6 +297,24 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
             <p className="font-space text-[0.9375rem]" style={{ color: 'var(--c9-text-3)' }}>
               Aucun créneau fixé · durée prévue {fmtDuration(appt.durationMin)}
             </p>
+          )}
+          {appt.preferredDate && (
+            <div className="mt-1 rounded-2xl px-4 py-3"
+              style={{ background: 'rgba(245,185,74,0.07)', border: '1px solid rgba(245,185,74,0.35)' }}>
+              <p className="font-space text-[0.875rem] font-semibold" style={{ color: '#f5c46e' }}>
+                Souhait du client : {fmtWish(appt.preferredDate, appt.preferredPeriod)}
+              </p>
+              {appt.availabilityNote && (
+                <p className="mt-0.5 font-space text-[0.8125rem]" style={{ color: 'var(--c9-text-2)' }}>
+                  Autres disponibilités : {appt.availabilityNote}
+                </p>
+              )}
+              {!appt.startAt && (
+                <p className="mt-1 font-space text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }}>
+                  Rien n&apos;est réservé. Fixez l&apos;heure avec « Modifier », puis confirmez — ou proposez un autre créneau.
+                </p>
+              )}
+            </div>
           )}
           {appt.proposedStartAt && (
             <div className="mt-1 rounded-2xl px-4 py-3"

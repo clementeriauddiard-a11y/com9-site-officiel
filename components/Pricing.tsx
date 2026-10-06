@@ -20,7 +20,8 @@ import {
   type Zone,
   type ZoneId,
 } from '@/data/tarifs'
-import { WaCta, WaIcon } from '@/components/ui/Wa'
+import Link from 'next/link'
+import { WaCta } from '@/components/ui/Wa'
 import { waLink } from '@/lib/links'
 import { scrollToElement } from '@/lib/scroll'
 
@@ -452,10 +453,23 @@ function QuoteRecap({
         </div>
       )}
 
-      <div className="mt-6">
+      <div className="mt-6 flex flex-col gap-2.5">
+        <Link
+          href={bookingHref(repair, model, option, zone)}
+          className="flex w-full items-center justify-center rounded-2xl px-5 text-center font-space text-[0.9375rem] font-semibold transition-transform duration-200 active:scale-[0.985]"
+          style={{
+            minHeight: '54px',
+            background: 'linear-gradient(118deg, #6fe6ff 0%, #3ad9ff 42%, #1aa9ff 100%)',
+            color: '#06131f',
+            boxShadow: '0 14px 40px -18px rgba(26,169,255,0.75)',
+          }}
+        >
+          {q.onQuote ? 'Demander un devis et un rendez-vous' : 'Demander un rendez-vous'}
+        </Link>
         <WaCta
+          variant="secondary"
           message={buildQuoteMessage(repair, model, option, zone)}
-          label={q.onQuote ? 'Demander un devis' : 'Prendre rendez-vous'}
+          label="Écrire sur WhatsApp"
         />
       </div>
 
@@ -467,6 +481,13 @@ function QuoteRecap({
       </p>
     </motion.div>
   )
+}
+
+/** Lien vers la demande de rendez-vous, pré-remplie avec le choix du client. */
+function bookingHref(repair: RepairId, model: string, option: PriceOption, zone: Zone | null): string {
+  const p = new URLSearchParams({ model, repair, quality: option.label })
+  if (zone) p.set('zone', zone.id)
+  return `/reservation?${p.toString()}`
 }
 
 // ─── Barre de prix — toujours sous les yeux, la page ne bouge jamais ─────────
@@ -558,13 +579,11 @@ function PriceBar({
           )}
         </div>
 
-        {/* Une offre prête et une zone chiffrée → réservation directe.
+        {/* Une offre prête et une zone chiffrée → demande de rendez-vous pré-remplie.
             Sinon on renvoie vers le détail pour compléter le choix. */}
         {q && selected && q.total !== null ? (
-          <a
-            href={waLink(buildQuoteMessage(repair, model, selected, zone))}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href={bookingHref(repair, model, selected, zone)}
             className="c9-back flex shrink-0 items-center justify-center gap-2 rounded-full px-5 font-space text-[0.875rem] font-semibold"
             style={{
               minHeight: '48px',
@@ -573,10 +592,9 @@ function PriceBar({
               boxShadow: '0 12px 32px -18px rgba(26,169,255,0.9)',
             }}
           >
-            <WaIcon className="h-4 w-4" />
             <span className="hidden xs:inline">Rendez-vous</span>
             <span className="xs:hidden">RDV</span>
-          </a>
+          </Link>
         ) : (
           <button
             onClick={onDetail}

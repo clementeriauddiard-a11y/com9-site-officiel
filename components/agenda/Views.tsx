@@ -7,7 +7,7 @@
 import { useMemo } from 'react'
 import { REPAIRS } from '@/data/tarifs'
 import { apptTotal, telHref, waHref } from '@/lib/agenda/logic'
-import { BLOCKING_STATUSES, type AgendaSettings } from '@/lib/agenda/types'
+import { BLOCKING_STATUSES, PREFERRED_PERIOD_LABEL, type AgendaSettings } from '@/lib/agenda/types'
 import type { ApptLite } from './api'
 import {
   addDays,
@@ -97,6 +97,16 @@ export function ApptCard({ a, onOpen, showDate = false }: { a: ApptLite; onOpen:
                 {fmtDayShort(isoToParis(iso).date).dow} {fmtDayShort(isoToParis(iso).date).num}
               </span>
             )}
+          </>
+        ) : a.preferredDate ? (
+          <>
+            <span className="font-mono text-[9px] uppercase tracking-[0.12em]" style={{ color: '#f5b94a' }}>Souhait</span>
+            <span className="mt-1 font-space text-[0.9375rem] font-semibold leading-none">
+              {fmtDayShort(a.preferredDate).dow} {fmtDayShort(a.preferredDate).num}
+            </span>
+            <span className="mt-1 whitespace-normal font-space text-[0.75rem] leading-tight" style={{ color: 'var(--c9-text-3)' }}>
+              {a.preferredPeriod ? PREFERRED_PERIOD_LABEL[a.preferredPeriod] : 'Indifférent'}
+            </span>
           </>
         ) : (
           <span className="font-space text-[0.8125rem] leading-tight" style={{ color: 'var(--c9-text-3)' }}>Sans créneau</span>

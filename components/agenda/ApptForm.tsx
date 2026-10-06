@@ -63,7 +63,7 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
   const [travelTouched, setTravelTouched] = useState(Boolean(init))
   const [zoneVerified, setZoneVerified] = useState(init ? init.zoneVerified : true)
 
-  const [date, setDate] = useState(initSlot?.date ?? defaultDate ?? todayParis())
+  const [date, setDate] = useState(initSlot?.date ?? init?.preferredDate ?? defaultDate ?? todayParis())
   const [time, setTime] = useState(initSlot?.time ?? '')
   const [duration, setDuration] = useState(String(init?.durationMin ?? settings.durations.ecran))
   const [durationTouched, setDurationTouched] = useState(Boolean(init))

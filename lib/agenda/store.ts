@@ -107,8 +107,17 @@ const DDL = [
                          ('demande_recue','creneau_propose','confirme','en_route','en_cours','termine','annule')),
      part_status       TEXT        CHECK (part_status IS NULL OR part_status IN
                          ('en_stock','a_commander','commandee','recue','indisponible')),
-     internal_notes    TEXT        NOT NULL DEFAULT ''
+     internal_notes    TEXT        NOT NULL DEFAULT '',
+     preferred_date    DATE,
+     preferred_period  TEXT        CHECK (preferred_period IS NULL OR preferred_period IN
+                         ('matin','apres_midi','fin_journee')),
+     availability_note TEXT        NOT NULL DEFAULT ''
    )`,
+  // Bases créées par l'étape 1 : ajout des colonnes du souhait client.
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS preferred_date DATE`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS preferred_period TEXT
+     CHECK (preferred_period IS NULL OR preferred_period IN ('matin','apres_midi','fin_journee'))`,
+  `ALTER TABLE rdv_appointments ADD COLUMN IF NOT EXISTS availability_note TEXT NOT NULL DEFAULT ''`,
   `CREATE INDEX IF NOT EXISTS rdv_appointments_start_idx  ON rdv_appointments (start_at)`,
   `CREATE INDEX IF NOT EXISTS rdv_appointments_status_idx ON rdv_appointments (status)`,
   `CREATE TABLE IF NOT EXISTS rdv_events (
@@ -119,6 +128,14 @@ const DDL = [
      summary  TEXT        NOT NULL
    )`,
   `CREATE INDEX IF NOT EXISTS rdv_events_appt_idx ON rdv_events (appt_id, at)`,
+  // Journal anonyme des demandes publiques (limitation des envois abusifs).
+  // Seule une empreinte non réversible de l'adresse IP est conservée, 48 h maximum.
+  `CREATE TABLE IF NOT EXISTS rdv_request_log (
+     id       BIGSERIAL   PRIMARY KEY,
+     ip_hash  TEXT        NOT NULL,
+     at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+   )`,
+  `CREATE INDEX IF NOT EXISTS rdv_request_log_idx ON rdv_request_log (ip_hash, at)`,
   `CREATE TABLE IF NOT EXISTS rdv_settings (
      id    INTEGER PRIMARY KEY CHECK (id = 1),
      data  JSONB   NOT NULL
@@ -179,17 +196,31 @@ function rowToAppt(r: any): Appointment {
     status: r.status,
     partStatus: r.part_status ?? null,
     internalNotes: String(r.internal_notes ?? ''),
+    preferredDate: r.preferred_date
+      ? (r.preferred_date instanceof Date
+          ? dateOnly(r.preferred_date)
+          : String(r.preferred_date).slice(0, 10))
+      : null,
+    preferredPeriod: r.preferred_period ?? null,
+    availabilityNote: String(r.availability_note ?? ''),
   }
+}
+
+/** Une colonne DATE lue par le pilote devient un Date à minuit UTC : on garde le jour. */
+function dateOnly(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
 const COLS = `id, track_token, created_at, updated_at, client_name, client_phone, address,
   model, repair, quality, description, repair_price, zone, zone_verified, travel_fee,
   start_at, duration_min, proposed_start_at, proposed_reason, proposal_firm,
-  origin, status, part_status, internal_notes`
+  origin, status, part_status, internal_notes, preferred_date, preferred_period, availability_note`
 
 // ─── Mémoire (développement local uniquement) ────────────────────────────────
 
 const mem = {
+  requests: [] as { ipHash: string; at: number }[],
   appts: [] as Appointment[],
   events: [] as ApptEvent[],
   settings: null as AgendaSettings | null,
@@ -209,12 +240,13 @@ export async function insertAppt(a: Appointment): Promise<void> {
   await ensureTables(db)
   await db.query(
     `INSERT INTO rdv_appointments (${COLS}) VALUES
-     ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)`,
+     ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)`,
     [
       a.id, a.trackToken, a.createdAt, a.updatedAt, a.clientName, a.clientPhone, a.address,
       a.model, a.repair, a.quality, a.description, a.repairPrice, a.zone, a.zoneVerified,
       a.travelFee, a.startAt, a.durationMin, a.proposedStartAt, a.proposedReason,
       a.proposalFirm, a.origin, a.status, a.partStatus, a.internalNotes,
+      a.preferredDate, a.preferredPeriod, a.availabilityNote,
     ],
   )
 }
@@ -232,13 +264,14 @@ export async function updateAppt(a: Appointment): Promise<void> {
        quality=$8, description=$9, repair_price=$10, zone=$11, zone_verified=$12,
        travel_fee=$13, start_at=$14, duration_min=$15, proposed_start_at=$16,
        proposed_reason=$17, proposal_firm=$18, origin=$19, status=$20, part_status=$21,
-       internal_notes=$22
+       internal_notes=$22, preferred_date=$23, preferred_period=$24, availability_note=$25
      WHERE id=$1`,
     [
       a.id, a.updatedAt, a.clientName, a.clientPhone, a.address, a.model, a.repair,
       a.quality, a.description, a.repairPrice, a.zone, a.zoneVerified, a.travelFee,
       a.startAt, a.durationMin, a.proposedStartAt, a.proposedReason, a.proposalFirm,
       a.origin, a.status, a.partStatus, a.internalNotes,
+      a.preferredDate, a.preferredPeriod, a.availabilityNote,
     ],
   )
 }
@@ -393,4 +426,42 @@ export async function saveSettings(s: AgendaSettings): Promise<void> {
      ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
     [JSON.stringify(s)],
   )
+}
+
+// ─── Journal des demandes publiques (anti-abus) ──────────────────────────────
+
+export type RequestCounts = { sameSourceShort: number; sameSourceDay: number; allDay: number }
+
+/**
+ * Compte les demandes récentes, puis enregistre la nouvelle tentative.
+ * shortMin : fenêtre courte (minutes) pour une même source.
+ */
+export async function countAndLogRequest(ipHash: string, shortMin: number): Promise<RequestCounts> {
+  const now = Date.now()
+  const shortSince = now - shortMin * 60_000
+  const daySince = now - 24 * 3_600_000
+  if (resolveMode() === 'memory') {
+    mem.requests = mem.requests.filter((r) => r.at >= now - 48 * 3_600_000)
+    const counts = {
+      sameSourceShort: mem.requests.filter((r) => r.ipHash === ipHash && r.at >= shortSince).length,
+      sameSourceDay: mem.requests.filter((r) => r.ipHash === ipHash && r.at >= daySince).length,
+      allDay: mem.requests.filter((r) => r.at >= daySince).length,
+    }
+    mem.requests.push({ ipHash, at: now })
+    return counts
+  }
+  const db = await driver()
+  await ensureTables(db)
+  await db.query(`DELETE FROM rdv_request_log WHERE at < NOW() - INTERVAL '48 hours'`)
+  const { rows } = await db.query(
+    `SELECT
+       COUNT(*) FILTER (WHERE ip_hash = $1 AND at >= $2)::int AS short,
+       COUNT(*) FILTER (WHERE ip_hash = $1 AND at >= $3)::int AS day,
+       COUNT(*) FILTER (WHERE at >= $3)::int                  AS all_day
+     FROM rdv_request_log`,
+    [ipHash, new Date(shortSince).toISOString(), new Date(daySince).toISOString()],
+  )
+  await db.query(`INSERT INTO rdv_request_log (ip_hash) VALUES ($1)`, [ipHash])
+  const r = rows[0] ?? {}
+  return { sameSourceShort: Number(r.short ?? 0), sameSourceDay: Number(r.day ?? 0), allDay: Number(r.all_day ?? 0) }
 }

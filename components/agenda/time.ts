@@ -8,6 +8,8 @@
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { PREFERRED_PERIOD_LABEL, type PreferredPeriod } from '@/lib/agenda/types'
+
 export const TZ = 'Europe/Paris'
 
 type Parts = { y: number; m: number; d: number; h: number; mi: number }
@@ -101,6 +103,11 @@ export function fmtDayShort(date: string): { dow: string; num: string } {
     dow: cap(new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', weekday: 'short' }).format(t).replace('.', '')),
     num: String(d),
   }
+}
+
+/** Souhait du client : « Mardi 13 octobre · matin » (ou « · moment indifférent »). */
+export function fmtWish(date: string, period: PreferredPeriod | null): string {
+  return `${fmtDayLong(date)} · ${period ? PREFERRED_PERIOD_LABEL[period].toLowerCase() : 'moment indifférent'}`
 }
 
 export function fmtSlotFull(iso: string): string {

@@ -41,6 +41,7 @@ export function errorResponse(err: unknown): NextResponse {
     const status =
       err.code === 'not_found' ? 404 :
       err.code === 'invalid' ? 400 :
+      err.code === 'rate_limited' ? 429 :
       409 // conflict, transition
     return NextResponse.json({ error: err.message, code: err.code, ...err.details }, { status })
   }
