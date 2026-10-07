@@ -10,15 +10,13 @@
 
 import {
   ALL_REPAIRS,
-  MODELS,
   ZONES,
-  findModel,
-  getOptions,
   isGridRepair,
   zoneFeeCents,
   type RepairId,
   type ZoneId,
 } from '@/data/tarifs'
+import { findCatalogModel, priceOptions } from '@/data/catalogue'
 import {
   APPT_STATUSES,
   BLOCKING_STATUSES,
@@ -155,10 +153,9 @@ export function findConflicts(
 
 // ─── Prix ────────────────────────────────────────────────────────────────────
 
-/** Qualités réellement proposées pour un couple modèle / prestation. */
+/** Qualités à prix validé pour un couple modèle / prestation (catalogue multimarque). [] = sur devis ou hors catalogue. */
 export function qualitiesFor(model: string, repair: RepairId) {
-  const m = findModel(model)
-  return m ? getOptions(repair, m) : []
+  return priceOptions(model, repair)
 }
 
 /** Prix de la grille en centimes, ou null si la combinaison n'existe pas. */
@@ -260,10 +257,11 @@ export function validateInput(i: Partial<ApptInput>): string[] {
 
   if (!isRepair(i.repair)) e.push('La prestation est invalide.')
   else if (isGridRepair(i.repair)) {
-    // Prestations de la grille : modèle et qualité de la grille.
-    if (typeof i.model !== 'string' || !MODELS.some((m) => m.model === i.model))
-      e.push('Le modèle doit être choisi dans la grille.')
-    else if (!qualitiesFor(i.model, i.repair).some((o) => o.label === i.quality))
+    // Écran / batterie / vitre : tout modèle. Si le catalogue a des prix validés
+    // pour ce modèle, la qualité doit en faire partie ; sinon « sur devis ».
+    if (!str(i.model, 80)) e.push('Le modèle du téléphone est obligatoire.')
+    else if (typeof i.quality !== 'string' || i.quality.length > 80) e.push('Le détail de la pièce est trop long.')
+    else if (qualitiesFor(i.model as string, i.repair).length > 0 && !qualitiesFor(i.model as string, i.repair).some((o) => o.label === i.quality))
       e.push("La qualité de pièce n'est pas proposée pour ce modèle.")
   } else {
     // Petite pièce / diagnostic : tout modèle, détail libre.
@@ -273,7 +271,9 @@ export function validateInput(i: Partial<ApptInput>): string[] {
   if (i.symptom !== undefined && i.symptom !== null && !isSymptom(i.symptom)) e.push('Le symptôme est invalide.')
 
   if (i.repairPriceCents === null || i.repairPriceCents === undefined) {
-    if (isRepair(i.repair) && isGridRepair(i.repair)) e.push('Le prix de réparation est obligatoire.')
+    // Obligatoire seulement quand le catalogue fixe un prix ; sinon « sur devis » (à définir).
+    if (isRepair(i.repair) && isGridRepair(i.repair) && typeof i.model === 'string' && qualitiesFor(i.model, i.repair).length > 0)
+      e.push('Le prix de réparation est obligatoire.')
   } else if (!isInt(i.repairPriceCents, 0, 1_000_000)) e.push('Le prix de réparation est invalide.')
   if (i.zone !== null && i.zone !== undefined && !isZone(i.zone)) e.push('La zone de déplacement est invalide.')
   if (i.travelFeeCents !== null && i.travelFeeCents !== undefined && !isInt(i.travelFeeCents, 0, 100_000))
@@ -326,7 +326,8 @@ export function addDaysToDay(day: string, n: number): string {
 /** Jusqu'où un client peut demander une date. */
 export const BOOKING_HORIZON_DAYS = CRENEAUX.horizonJours
 
-export type RequestKind = 'reparation' | 'autre'
+/** reparation : prix validé · devis : « Sur devis » (demande de tarif) · autre : pré-diagnostic */
+export type RequestKind = 'reparation' | 'devis' | 'autre'
 
 /** Seuls ces champs sont acceptés depuis le site. Le prix n'en fait pas partie. */
 export type PublicRequestInput = {
@@ -342,6 +343,8 @@ export type PublicRequestInput = {
   quality: string
   symptom: Symptom | null
   description: string
+  /** Référence exacte du téléphone si le client la connaît (demande de tarif) */
+  reference: string
   /** Créneau demandé (ISO) — une demande, jamais un rendez-vous confirmé */
   startAt: string
 }
@@ -360,7 +363,8 @@ export function parsePublicRequest(
   const txt = (k: string) => (typeof r[k] === 'string' ? (r[k] as string).trim().replace(/\s+/g, ' ') : '')
   const longTxt = (k: string) => (typeof r[k] === 'string' ? (r[k] as string).trim() : '')
 
-  const kind: RequestKind = r.kind === 'autre' ? 'autre' : 'reparation'
+  const kind: RequestKind = r.kind === 'autre' ? 'autre' : r.kind === 'devis' ? 'devis' : 'reparation'
+  const reference = txt('reference').slice(0, 60)
   const clientName = txt('clientName')
   const clientPhone = txt('clientPhone')
   const email = txt('email')
@@ -374,10 +378,16 @@ export function parsePublicRequest(
   let symptom: Symptom | null = null
 
   if (kind === 'reparation') {
+    // Prix validé : le modèle et la qualité doivent exister dans le catalogue.
     if (!isRepair(repair) || !isGridRepair(repair)) e.push('Choisissez la réparation.')
-    if (!MODELS.some((m) => m.model === model)) e.push('Choisissez votre modèle.')
+    if (!findCatalogModel(model)) e.push('Choisissez votre modèle.')
     else if (isRepair(repair) && !qualitiesFor(model, repair).some((o) => o.label === quality))
       e.push('Choisissez la qualité de la pièce.')
+  } else if (kind === 'devis') {
+    // Demande de tarif : tout modèle (référencé ou saisi), aucun prix accepté.
+    if (!isRepair(repair) || !isGridRepair(repair)) e.push('Choisissez la réparation.')
+    if (model.length < 2 || model.length > 80) e.push('Indiquez le modèle de votre téléphone.')
+    quality = ''
   } else {
     repair = 'diagnostic'
     quality = ''
@@ -405,7 +415,7 @@ export function parsePublicRequest(
     value: {
       kind, clientName, clientPhone, email, address,
       citycode: /^(\d{5}|2[AB]\d{3})$/.test(citycodeRaw) ? citycodeRaw : null,
-      model, repair, quality, symptom, description,
+      model, repair, quality, symptom, description, reference,
       startAt: new Date(startMs).toISOString(),
     },
   }

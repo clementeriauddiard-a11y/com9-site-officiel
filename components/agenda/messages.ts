@@ -7,7 +7,7 @@
 //  délai, garantie ou frais qui n'existe pas dans la fiche.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { REPAIR_LABEL, findZone } from '@/data/tarifs'
+import { REPAIR_LABEL, findZone, isGridRepair } from '@/data/tarifs'
 import { DIAGNOSTIC } from '@/config/com9'
 import { euros } from '@/lib/money'
 import { ORDER_DELAY_NOTE, partNeedsOrder, type Appointment, type MessageKind } from '@/lib/agenda/types'
@@ -43,6 +43,11 @@ export function whenPhrase(iso: string, today = todayParis()): string {
 function amountPhrase(a: Msg): string {
   const zone = findZone(a.zone)
   const caveat = zone && !a.zoneVerified ? ' (zone à confirmer)' : ''
+  if (a.repairPriceCents === null && isGridRepair(a.repair)) {
+    // Demande de tarif (sur devis) : COM'9 complète le prix dans la fiche avant d'envoyer.
+    const travel = a.travelFeeCents === null ? 'déplacement à confirmer' : `déplacement ${euros(a.travelFeeCents)}${caveat}`
+    return `Réparation sur devis : COM'9 vous communique le prix avant l'intervention ; ${travel}.`
+  }
   if (a.repairPriceCents === null) {
     // Diagnostic / petite pièce : prix connu après le diagnostic.
     const travel = a.travelFeeCents === null ? 'déplacement à confirmer' : `déplacement ${euros(a.travelFeeCents)}${caveat}`

@@ -14,7 +14,7 @@ import { messagePending } from './messages-state'
 import { findCommune } from '@/lib/communes'
 export { messagePending } from './messages-state'
 import { CRENEAUX, DIAGNOSTIC, DISTANCE_MAX_KM, PAIEMENT_LABEL, PAIEMENT_MODES, type PaiementMode } from '@/config/com9'
-import { REPAIR_LABEL, ZONES, findZone, type RepairId, type ZoneId } from '@/data/tarifs'
+import { REPAIR_LABEL, ZONES, findZone, isGridRepair, type RepairId, type ZoneId } from '@/data/tarifs'
 import { DistanceError, distanceConfigured, routeDistance } from '@/lib/distance'
 import { euros } from '@/lib/money'
 import {
@@ -334,6 +334,8 @@ export type PublicRecap = {
   distanceKm: number | null
   /** true : adresse reconnue précisément, zone définitive */
   zoneVerified: boolean
+  /** true : demande de tarif (« Sur devis ») — aucun prix de réparation affiché */
+  quote: boolean
 }
 
 /**
@@ -355,8 +357,9 @@ export async function createPublicRequest(raw: unknown, ip: string): Promise<Pub
     throw new AgendaError('rate_limited', 'Trop de demandes envoyées. Réessayez plus tard ou appelez COM\'9.')
   }
 
-  // Prix : toujours recalculé depuis la grille (null pour un diagnostic).
+  // Prix : toujours recalculé depuis le catalogue (null pour un diagnostic ou une demande de tarif).
   const repairPriceCents = v.kind === 'reparation' ? gridPriceCents(v.model, v.repair, v.quality) : null
+  const description = [v.reference ? `Référence : ${v.reference}` : '', v.description].filter(Boolean).join('\n')
 
   // Zone : distance par la route (Google) si possible, sinon commune de la
   // liste (zone indicative). La distance du navigateur est toujours ignorée.
@@ -382,7 +385,7 @@ export async function createPublicRequest(raw: unknown, ip: string): Promise<Pub
       model: v.model,
       repair: v.repair,
       quality: v.quality,
-      description: v.description,
+      description,
       symptom: v.symptom,
       repairPriceCents,
       zone,
@@ -405,6 +408,7 @@ export async function createPublicRequest(raw: unknown, ip: string): Promise<Pub
     await store.insertAppt(a)
     await store.addEvent(a.id, 'creation',
       `Demande reçue depuis le site — créneau demandé : ${fmtSlot(v.startAt)}. ` +
+      (v.kind === 'devis' ? 'Demande de tarif (sur devis) : prix à communiquer au client. ' : '') +
       (v.symptom ? `Problème : ${SYMPTOM_LABEL[v.symptom]}. ` : '') +
       (measured
         ? `Distance calculée par Google Maps : ${fmtKm(measured.km)} par la route` +
@@ -428,6 +432,7 @@ export async function createPublicRequest(raw: unknown, ip: string): Promise<Pub
     trackPath: `/suivi/${appt.trackToken}`,
     distanceKm: appt.distanceKm,
     zoneVerified,
+    quote: v.kind === 'devis',
   }
 }
 
@@ -825,6 +830,8 @@ export type ClientView = {
   outOfArea: boolean
   zoneToConfirm: boolean
   diagnosticRule: string | null
+  /** Écran / batterie / vitre sans prix fixé : « Sur devis » */
+  quote: boolean
   /** Rendez-vous confirmé (lisible) */
   slot: string | null
   /** Créneau demandé, pas encore confirmé (lisible) */
@@ -875,6 +882,7 @@ export function toClientView(a: Appointment): ClientView {
     outOfArea: a.zone === 'hors',
     zoneToConfirm: Boolean(zone) && !a.zoneVerified,
     diagnosticRule: a.repair === 'diagnostic' ? DIAGNOSTIC_RULE : null,
+    quote: isGridRepair(a.repair) && a.repairPriceCents === null,
     slot: a.startAt && confirmed ? capFirst(fmtSlot(a.startAt)) : null,
     requestedSlot: a.startAt && a.status === 'demande_recue' ? capFirst(fmtSlot(a.startAt)) : null,
     clientSlot: a.clientSlot && a.status === 'confirme' ? capFirst(fmtSlot(a.clientSlot)) : null,

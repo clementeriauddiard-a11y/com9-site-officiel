@@ -5,7 +5,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useCallback, useEffect, useState } from 'react'
-import { REPAIR_LABEL, findZone } from '@/data/tarifs'
+import { REPAIR_LABEL, findZone, isGridRepair } from '@/data/tarifs'
 import { DIAGNOSTIC, PAIEMENT_LABEL, PAIEMENT_MODES, type PaiementMode } from '@/config/com9'
 import { centsToInput, euros, parseEuros } from '@/lib/money'
 import { withinPublicHours } from '@/lib/agenda/slots'
@@ -413,7 +413,7 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
             </p>
           )}
           <div className="c9-divider my-1" />
-          <Row label="Réparation">{appt.repairPriceCents !== null ? euros(appt.repairPriceCents) : 'Après diagnostic'}</Row>
+          <Row label="Réparation">{appt.repairPriceCents !== null ? euros(appt.repairPriceCents) : isGridRepair(appt.repair) ? 'Sur devis — à compléter' : 'Après diagnostic'}</Row>
           <Row label="Déplacement">
             {appt.travelFeeCents !== null ? euros(appt.travelFeeCents) : zone?.id === 'hors' ? 'Hors zone (> 30 km)' : 'Non défini'}
           </Row>

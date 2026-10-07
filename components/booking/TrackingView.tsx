@@ -206,13 +206,18 @@ export default function TrackingView({ token, initial }: { token: string; initia
         {view.quality && <p className="-mt-2" style={{ color: 'var(--c9-text-2)' }}>{view.quality}</p>}
         {view.symptomLabel && <p className="-mt-2" style={{ color: 'var(--c9-text-2)' }}>{view.symptomLabel}</p>}
         <div className="c9-divider" />
-        <Line label="Réparation" value={view.repairPriceCents !== null ? euros(view.repairPriceCents) : 'Prix sur place'} />
+        <Line label="Réparation" value={view.repairPriceCents !== null ? euros(view.repairPriceCents) : view.quote ? 'Sur devis' : 'Prix sur place'} />
         <Line label="Déplacement" value={travelLabel} />
         {view.zoneToConfirm && (
           <p className="-mt-2 text-right text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>confirmé par COM&apos;9 avec votre adresse</p>
         )}
         <div className="c9-divider" />
-        <Line label="Total" strong value={view.totalCents !== null ? euros(view.totalCents) : view.repairPriceCents === null ? 'Après diagnostic' : 'À confirmer'} />
+        <Line label="Total" strong value={view.totalCents !== null ? euros(view.totalCents) : view.quote ? 'Sur devis' : view.repairPriceCents === null ? 'Après diagnostic' : 'À confirmer'} />
+        {view.quote && (
+          <p className="text-[0.875rem] leading-relaxed" style={{ color: 'var(--c9-text-3)' }}>
+            COM&apos;9 vous communique le prix de la réparation avant toute intervention.
+          </p>
+        )}
         {view.diagnosticRule && <p className="text-[0.875rem] leading-relaxed" style={{ color: 'var(--c9-text-3)' }}>{view.diagnosticRule}</p>}
         <p className="text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>
           Paiement après l&apos;intervention : carte bancaire, espèces ou virement. Aucun acompte.

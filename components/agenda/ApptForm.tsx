@@ -5,7 +5,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useMemo, useState } from 'react'
-import { ALL_REPAIRS, MODELS, REPAIR_LABEL, SERIES, ZONES, isGridRepair, type RepairId, type ZoneId } from '@/data/tarifs'
+import { ALL_REPAIRS, REPAIR_LABEL, ZONES, isGridRepair, type RepairId, type ZoneId } from '@/data/tarifs'
+import { BRANDS, CATALOG } from '@/data/catalogue'
 import { DIAGNOSTIC } from '@/config/com9'
 import { centsToInput, euros, parseEuros } from '@/lib/money'
 import {
@@ -116,14 +117,18 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
 
   useEffect(() => {
     if (!grid || !model) return
+    if (!qualities.length) return // hors grille : pièce / qualité saisie librement
     if (quality && qualities.some((q) => q.label === quality)) return
     setQuality(qualities.length === 1 ? qualities[0].label : null)
   }, [model, repair, qualities, quality, grid])
 
   // ─── Prix de la grille ───
   const gridCents = grid && model && quality ? gridPriceCents(model, repair, quality) : null
+  /** true : le catalogue a un prix validé pour ce modèle et cette prestation */
+  const gridKnown = qualities.length > 0
   useEffect(() => {
-    if (!priceTouched && gridCents !== null) setRepairPrice(centsToInput(gridCents))
+    // Prix non saisi à la main : prix du catalogue, ou vide si le modèle est sur devis.
+    if (!priceTouched) setRepairPrice(gridCents !== null ? centsToInput(gridCents) : '')
   }, [gridCents, priceTouched])
 
   // ─── Déplacement selon la zone ───
@@ -242,23 +247,19 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
             onChange={(r) => { setRepair(r); if (!isGridRepair(r)) { setQuality(''); setPriceTouched(false); setRepairPrice('') } }}
             options={ALL_REPAIRS.map((r) => ({ id: r, label: REPAIR_LABEL[r] }))} />
         </Field>
-        {grid ? (
-          <Field label="Modèle" htmlFor="f-model">
-            <select id="f-model" className={inputCls} style={inputStyle} value={model}
-              onChange={(e) => setModel(e.target.value)}>
-              <option value="">Choisir un modèle</option>
-              {SERIES.map((s) => (
-                <optgroup key={s.serie} label={s.serie}>
-                  {s.models.map((m) => <option key={m.model} value={m.model}>{m.model}</option>)}
-                </optgroup>
-              ))}
-            </select>
-          </Field>
-        ) : (
-          <Field label="Modèle" htmlFor="f-model" hint="Tout modèle (iPhone, Samsung, Pixel…).">
-            <input id="f-model" className={inputCls} style={inputStyle} value={model} list="f-models"
-              onChange={(e) => setModel(e.target.value)} maxLength={80} autoComplete="off" />
-            <datalist id="f-models">{MODELS.map((m) => <option key={m.model} value={m.model} />)}</datalist>
+        <Field label="Modèle" htmlFor="f-model"
+          hint={grid && model && !gridKnown ? 'Hors grille tarifaire : sur devis, indiquez le prix convenu ci-dessous.' : 'Tout modèle (iPhone, Samsung, Pixel…) : suggestions du catalogue en tapant.'}>
+          <input id="f-model" className={inputCls} style={inputStyle} value={model} list="f-models"
+            onChange={(e) => setModel(e.target.value)} maxLength={80} autoComplete="off" placeholder="Ex. iPhone 13, Samsung Galaxy A55" />
+          <datalist id="f-models">
+            {BRANDS.filter((b) => b.catalogue).flatMap((b) => CATALOG.filter((m) => m.brand === b.id))
+              .map((m) => <option key={m.id} value={m.label} />)}
+          </datalist>
+        </Field>
+        {grid && model && !gridKnown && (
+          <Field label="Pièce / qualité" htmlFor="f-quality" optional>
+            <input id="f-quality" className={inputCls} style={inputStyle} value={quality ?? ''} maxLength={80}
+              placeholder="Ex. Service Pack Samsung" onChange={(e) => setQuality(e.target.value)} />
           </Field>
         )}
         {grid && qualities.length > 1 && (
@@ -350,7 +351,7 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
           style={{ background: 'var(--c9-elev-1)', border: '1px solid var(--c9-hairline-soft)' }}>
           <span className="font-space text-[0.9375rem] font-semibold">Total</span>
           <span className="font-space text-lg font-semibold tabular-nums">
-            {total !== null ? euros(total) : priceC === null && !grid ? 'Après diagnostic' : '—'}
+            {total !== null ? euros(total) : priceC === null && !grid ? 'Après diagnostic' : priceC === null && grid && !gridKnown ? 'Sur devis' : '—'}
           </span>
         </div>
       </div>
