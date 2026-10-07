@@ -105,7 +105,10 @@ export const DUREES_MIN = {
 
 // ─── Pièces ──────────────────────────────────────────────────────────────────
 
-export const DELAI_COMMANDE_JOURS = 3
+/** Délai de livraison estimé d'une pièce à commander */
+export const DELAI_COMMANDE = { min: 1, max: 2, texte: '1 à 2 jours' } as const
+/** Décalage utilisé pour proposer un nouveau créneau (borne haute du délai) */
+export const DELAI_COMMANDE_JOURS = DELAI_COMMANDE.max
 
 // ─── Diagnostic à domicile ───────────────────────────────────────────────────
 

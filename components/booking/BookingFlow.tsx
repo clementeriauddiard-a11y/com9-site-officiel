@@ -19,7 +19,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { DELAI_COMMANDE_JOURS, DIAGNOSTIC, DISTANCE_MAX_KM, SYMPTOME_PRESTATION } from '@/config/com9'
+import { DELAI_COMMANDE, DIAGNOSTIC, DISTANCE_MAX_KM, SYMPTOME_PRESTATION } from '@/config/com9'
 import { REPAIRS, findZone, type GridRepairId, type ZoneId } from '@/data/tarifs'
 import { SERVICES, findBrand, findCatalogModel, modelPriceFrom, serviceOf } from '@/data/catalogue'
 import { findCommune } from '@/lib/communes'
@@ -500,9 +500,15 @@ export default function BookingFlow({ distanceEnabled = false }: { distanceEnabl
           {/* Une seule explication, en encadré */}
           <div data-slot-note>
             <Notice tone="accent" title={isQuote ? 'Créneau souhaité' : 'C’est une demande'}>
-              {isQuote
-                ? `${QUOTE_SLOT_NOTE} Si la pièce doit être commandée (délai estimé de ${DELAI_COMMANDE_JOURS} jours), nous vous proposons un nouveau créneau. Aucun acompte.`
-                : `COM’9 confirme le créneau ou vous en propose un autre. Si la pièce doit être commandée (délai estimé de ${DELAI_COMMANDE_JOURS} jours), COM’9 vous propose un nouveau rendez-vous. Aucun acompte.`}
+              {isQuote ? (
+                <ul className="mt-1 flex flex-col gap-1" data-quote-points>
+                  <li>• Prix communiqué avant tout</li>
+                  <li>• Créneau confirmé après votre accord</li>
+                  <li>{`• Pièce à commander : ${DELAI_COMMANDE.texte} estimés · Aucun acompte`}</li>
+                </ul>
+              ) : (
+                `COM’9 confirme le créneau ou vous en propose un autre. Si la pièce doit être commandée (délai estimé de ${DELAI_COMMANDE.texte}), COM’9 vous propose un nouveau rendez-vous. Aucun acompte.`
+              )}
             </Notice>
           </div>
           {slot && <Btn variant="primary" size="lg" onClick={() => advance('creneau')}>Continuer</Btn>}

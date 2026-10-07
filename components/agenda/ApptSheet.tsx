@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { REPAIR_LABEL, findZone, isGridRepair } from '@/data/tarifs'
-import { DIAGNOSTIC, PAIEMENT_LABEL, PAIEMENT_MODES, type PaiementMode } from '@/config/com9'
+import { DELAI_COMMANDE_JOURS, DIAGNOSTIC, PAIEMENT_LABEL, PAIEMENT_MODES, type PaiementMode } from '@/config/com9'
 import { centsToInput, euros, parseEuros } from '@/lib/money'
 import { withinPublicHours } from '@/lib/agenda/slots'
 import {
@@ -230,9 +230,9 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
 
   function openPropose() {
     if (!appt) return
-    // Pré-remplit avec le créneau actuel décalé de 3 jours (délai de commande estimé)
+    // Pré-remplit avec le créneau actuel décalé du délai de commande estimé (borne haute)
     const base = appt.startAt ?? new Date().toISOString()
-    const shifted = new Date(new Date(base).getTime() + 3 * 86_400_000).toISOString()
+    const shifted = new Date(new Date(base).getTime() + DELAI_COMMANDE_JOURS * 86_400_000).toISOString()
     const s = isoToParis(shifted)
     setPDate(s.date)
     setPTime(appt.startAt ? s.time : '09:00')

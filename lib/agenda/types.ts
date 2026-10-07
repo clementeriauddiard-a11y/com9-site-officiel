@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { RepairId, ZoneId } from '@/data/tarifs'
-import { DELAI_COMMANDE_JOURS, DUREES_MIN, type PaiementMode } from '@/config/com9'
+import { DELAI_COMMANDE, DUREES_MIN, type PaiementMode } from '@/config/com9'
 
 // ─── Statut du rendez-vous ───────────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ export const PART_STATUS_LABEL: Record<PartStatus, string> = {
 }
 
 /** Mention affichée quand la pièce n'est pas encore là. Estimation, pas garantie. */
-export const ORDER_DELAY_NOTE = `Pièce sur commande — délai estimé ${DELAI_COMMANDE_JOURS} jours.`
+export const ORDER_DELAY_NOTE = `Pièce sur commande — délai estimé ${DELAI_COMMANDE.texte}.`
 
 export function partNeedsOrder(p: PartStatus | null): boolean {
   return p === 'a_commander' || p === 'commandee'
@@ -126,8 +126,7 @@ export const REQUEST_RECEIVED_MESSAGE =
 /** Demande de tarif (« Sur devis ») : message après envoi et rappel sur le créneau. */
 export const QUOTE_RECEIVED_MESSAGE =
   'Votre demande de tarif a bien été reçue.'
-export const QUOTE_SLOT_NOTE =
-  'COM’9 vous communique d’abord le prix de la réparation. Après votre accord, nous confirmons le créneau souhaité ou vous en proposons un autre.'
+export const QUOTE_SLOT_NOTE = 'Prix communiqué avant tout, créneau confirmé après votre accord.'
 
 // ─── Réponse du client (lien de suivi) ───────────────────────────────────────
 

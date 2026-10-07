@@ -7,7 +7,7 @@
 
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { DELAI_COMMANDE_JOURS, DIAGNOSTIC, GARANTIE, DISTANCE_MAX_KM, HORAIRES_TEXTE, PAIEMENT_LABEL, PAIEMENT_MODES, ZONES } from '@/config/com9'
+import { DELAI_COMMANDE, DIAGNOSTIC, GARANTIE, DISTANCE_MAX_KM, HORAIRES_TEXTE, PAIEMENT_LABEL, PAIEMENT_MODES, ZONES } from '@/config/com9'
 import { PRICE_NOTE, REPAIRS, type GridRepairId } from '@/data/tarifs'
 import { priceFrom } from '@/data/catalogue'
 import { SYMPTOMS, SYMPTOM_LABEL } from '@/lib/agenda/types'
@@ -229,7 +229,7 @@ export function Trust() {
     { icon: IconShield, t: GARANTIE.titre, d: GARANTIE.detail },
     { icon: IconCard, t: 'Paiement après intervention', d: PAIEMENT_MODES.map((m) => PAIEMENT_LABEL[m]).join(', ') + '. Aucun paiement en ligne.' },
     { icon: IconBox, t: 'Aucun acompte', d: 'Même quand une pièce doit être commandée.' },
-    { icon: IconBolt, t: 'Pièce disponible, intervention rapide', d: `Pièce en stock : intervention selon l’agenda. Sur commande : délai estimé de ${DELAI_COMMANDE_JOURS} jours.` },
+    { icon: IconBolt, t: 'Pièce disponible, intervention rapide', d: `Pièce en stock : intervention selon l’agenda. Sur commande : délai estimé de ${DELAI_COMMANDE.texte}.` },
   ]
   return (
     <section id="confiance" style={{ ...py, background: 'var(--c9-bg)' }}>
