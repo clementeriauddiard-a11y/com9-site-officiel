@@ -4,29 +4,17 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import Link from 'next/link'
-import { HORAIRES_TEXTE, ZONES } from '@/config/com9'
-import { findModel, getOptions } from '@/data/tarifs'
-import { euros } from '@/lib/money'
-
-/** Exemple réel tiré de la grille (aucun prix écrit en dur ici). */
-function example() {
-  const m = findModel('iPhone 13')
-  const opt = m ? getOptions('ecran', m).find((o) => o.recommended) ?? getOptions('ecran', m)[0] : null
-  const zone = ZONES[0]
-  if (!m || !opt || zone.feeCents === null) return null
-  return { model: m.model, quality: opt.label, repair: opt.priceCents, travel: zone.feeCents, zone: zone.full }
-}
+import { DISTANCE_MAX_KM, HORAIRES_TEXTE } from '@/config/com9'
 
 export default function Hero() {
-  const ex = example()
   return (
     <section id="accueil" className="relative overflow-hidden" style={{ paddingTop: 'calc(64px + env(safe-area-inset-top, 0px))' }}>
       {/* Lumière unique, très diffuse */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0"
         style={{ background: 'radial-gradient(60% 50% at 85% 10%, rgba(201,137,92,0.14) 0%, transparent 70%), radial-gradient(50% 40% at 0% 100%, rgba(255,255,255,0.04) 0%, transparent 70%)' }} />
 
-      <div className="relative mx-auto grid max-w-6xl gap-14 px-5 pb-20 pt-12 md:px-8 md:pb-28 md:pt-20 lg:grid-cols-[1.25fr_1fr] lg:items-center lg:gap-16">
-        <div className="flex flex-col gap-7">
+      <div className="relative mx-auto max-w-6xl px-5 pb-20 pt-12 md:px-8 md:pb-28 md:pt-20">
+        <div className="flex max-w-3xl flex-col gap-7">
           <span className="section-label c9-rise">Réparation smartphone à domicile</span>
 
           <h1 className="c9-display c9-rise" style={{ animationDelay: '60ms' }}>
@@ -48,46 +36,13 @@ export default function Hero() {
             style={{ color: 'var(--c9-text-2)', animationDelay: '220ms' }}>
             <span className="c9-link">J&apos;ai un autre problème</span> →
           </Link>
-        </div>
 
-        {/* Signature + exemple concret */}
-        <div className="c9-rise flex flex-col gap-4" style={{ animationDelay: '260ms' }}>
-          <div className="c9-surface rounded-[24px] p-6 sm:p-7">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full" style={{ background: 'var(--c9-accent-soft)', color: 'var(--c9-accent-text)' }}>
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M3 11.5L12 4l9 7.5" /><path d="M5.5 10v9.5h13V10" /><path d="M10 19.5v-5h4v5" />
-                </svg>
-              </span>
-              <div>
-                <p className="text-[1.125rem] font-semibold tracking-[-0.02em]">On vient à vous.</p>
-                <p className="text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>Depuis Nogent-le-Rotrou, jusqu&apos;à 30 km</p>
-              </div>
-            </div>
-
-            {ex && (
-              <div className="mt-6 flex flex-col gap-3" aria-label="Exemple de prix">
-                <p className="font-mono text-[0.6875rem] uppercase tracking-[0.18em]" style={{ color: 'var(--c9-text-3)' }}>Exemple</p>
-                <div className="flex items-baseline justify-between gap-4">
-                  <span style={{ color: 'var(--c9-text-2)' }}>Écran {ex.model} · {ex.quality}</span>
-                  <span className="tabular-nums">{euros(ex.repair)}</span>
-                </div>
-                <div className="flex items-baseline justify-between gap-4">
-                  <span style={{ color: 'var(--c9-text-2)' }}>Déplacement · {ex.zone.toLowerCase()}</span>
-                  <span className="tabular-nums">{euros(ex.travel)}</span>
-                </div>
-                <div className="c9-divider" />
-                <div className="flex items-baseline justify-between gap-4">
-                  <span className="font-semibold">Total</span>
-                  <span className="text-[1.5rem] font-semibold tabular-nums tracking-[-0.02em]">{euros(ex.repair + ex.travel)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-          <p className="px-1 text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>
-            Aucun acompte · Paiement après l&apos;intervention (CB, espèces, virement)
+          <p className="c9-rise text-[0.9375rem] leading-relaxed" style={{ color: 'var(--c9-text-3)', animationDelay: '260ms' }}>
+            <b className="font-semibold" style={{ color: 'var(--c9-text)' }}>On vient à vous.</b>
+            {` Depuis Nogent-le-Rotrou, jusqu’à ${DISTANCE_MAX_KM} km · Aucun acompte · Paiement après l’intervention.`}
           </p>
         </div>
+
       </div>
     </section>
   )
