@@ -232,10 +232,9 @@ export function Trust() {
     { icon: IconBolt, t: 'Pièce disponible, intervention rapide', d: `Pièce en stock : intervention selon l’agenda. Sur commande : délai estimé de ${DELAI_COMMANDE_JOURS} jours.` },
   ]
   return (
-    <section id="confiance" className="relative overflow-hidden lg:flex" style={{ background: 'var(--c9-bg)' }}>
-      <div className="relative min-w-0 flex-1 px-5 md:px-8 lg:pr-10"
-        style={{ ...py, paddingLeft: undefined }}>
-        <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr] lg:items-center lg:gap-10 lg:pl-[max(0rem,calc((100vw-72rem)/2))]">
+    <section id="confiance" style={{ ...py, background: 'var(--c9-bg)' }}>
+      <div className={wrap}>
+        <div className="grid gap-10 lg:grid-cols-[1fr_1.4fr] lg:items-center lg:gap-14">
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-3">
               <span className="section-label">Horaires</span>
@@ -268,15 +267,6 @@ export function Trust() {
         </div>
       </div>
 
-      {/* Photo : technicien COM'9 de nuit — colonne droite (ordinateur), bandeau sous le texte (téléphone) */}
-      <div className="relative aspect-[16/10] sm:aspect-[21/9] lg:order-last lg:aspect-auto lg:w-[27%] lg:shrink-0">
-        <Image src={PHOTOS.technicienNuit} alt="Un technicien COM’9 arrive le soir chez un client" fill quality={PHOTO_QUALITY}
-          sizes="(min-width: 1024px) 27vw, 100vw" className="object-cover object-[50%_40%] lg:object-[68%_40%]" />
-        <div aria-hidden="true" className="absolute inset-0 hidden lg:block"
-          style={{ background: 'linear-gradient(90deg, var(--c9-bg) 0%, rgba(10,12,14,0) 28%)' }} />
-        <div aria-hidden="true" className="absolute inset-0 lg:hidden"
-          style={{ background: 'linear-gradient(180deg, var(--c9-bg) 0%, rgba(10,12,14,0) 25%)' }} />
-      </div>
     </section>
   )
 }
