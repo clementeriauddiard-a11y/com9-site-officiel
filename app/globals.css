@@ -123,6 +123,16 @@ body {
   font-feature-settings: 'ss01' 1;
 }
 
+/* ─── Curseur « premium » ─────────────────────────────────────────────────
+   Textes : flèche normale, jamais de barre clignotante ni de curseur « I ».
+   Champs de saisie : curseur texte habituel. Liens et boutons : la main.
+   Le texte reste sélectionnable (copier un numéro, une adresse). */
+body { cursor: default; caret-color: transparent; }
+input, textarea, select, [contenteditable='true'] { caret-color: auto; cursor: text; }
+input[type='checkbox'], input[type='radio'], select { cursor: pointer; }
+a, button, summary, label[for], [role='button'], [role='radio'], [role='tab'], [role='option'] { cursor: pointer; }
+button:disabled, [aria-disabled='true'] { cursor: default; }
+
 /* ─── Ancres sous la barre fixe ───────────────────────────────────────────── */
 section[id] { scroll-margin-top: 80px; }
 
