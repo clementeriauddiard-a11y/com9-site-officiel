@@ -4,7 +4,7 @@
 
 /* ─────────────────────────────────────────────────────────────────────────────
    COM'9 — Direction artistique « réparation à domicile »
-   Charbon profond · blanc cassé · graphite · accent cuivre.
+   Noir profond · blanc cassé · accent orange cuivré (maquette premium, oct. 2026).
    Premium, minimal, rassurant. Le cuivre se réserve aux actions et aux
    détails importants — jamais en aplat criard.
 
@@ -18,30 +18,30 @@
   --font-mono:        var(--font-geist-mono);
 
   /* Surfaces */
-  --c9-bg:            #0f0f11;   /* charbon profond */
-  --c9-bg-deep:       #0a0a0b;   /* pied de page */
-  --c9-surface:       #17171a;   /* carte opaque */
-  --c9-surface-2:     #1f1f23;   /* carte élevée */
+  --c9-bg:            #0a0c0e;   /* noir profond */
+  --c9-bg-deep:       #07080a;   /* pied de page */
+  --c9-surface:       #121517;   /* carte opaque */
+  --c9-surface-2:     #191d20;   /* carte élevée */
   --c9-elev-1:        rgba(255, 255, 255, 0.035);
   --c9-elev-2:        rgba(255, 255, 255, 0.065);
 
   /* Traits — graphite */
-  --c9-hairline:      rgba(255, 255, 255, 0.10);
+  --c9-hairline:      rgba(255, 255, 255, 0.09);
   --c9-hairline-soft: rgba(255, 255, 255, 0.06);
   --c9-hairline-lit:  rgba(255, 255, 255, 0.20);
 
   /* Texte — blanc cassé */
-  --c9-text:          #f5f2ec;
-  --c9-text-2:        #c6c1b8;
-  --c9-text-3:        #928d85;
+  --c9-text:          #f7f5f2;
+  --c9-text-2:        #cbc6bf;
+  --c9-text-3:        #948f88;
 
-  /* Accent cuivre */
-  --c9-accent:        #c9895c;   /* actions, détails importants */
-  --c9-accent-hi:     #d99b6e;   /* survol */
-  --c9-accent-text:   #d9a27a;   /* texte cuivré lisible sur fond sombre */
-  --c9-accent-ink:    #1a120c;   /* texte posé sur le cuivre */
-  --c9-accent-soft:   rgba(201, 137, 92, 0.12);
-  --c9-accent-line:   rgba(201, 137, 92, 0.38);
+  /* Accent orange cuivré */
+  --c9-accent:        #e59864;   /* actions, détails importants */
+  --c9-accent-hi:     #eeaa7a;   /* survol */
+  --c9-accent-text:   #eba265;   /* texte orange lisible sur fond sombre */
+  --c9-accent-ink:    #1b120b;   /* texte posé sur l'orange */
+  --c9-accent-soft:   rgba(229, 152, 100, 0.12);
+  --c9-accent-line:   rgba(229, 152, 100, 0.45);
 
   /* États */
   --c9-warn:          #e2b469;
@@ -56,7 +56,7 @@
 
   /* Fond de calque (feuilles, menus) */
   --c9-scrim:         rgba(5, 5, 6, 0.62);
-  --c9-header:        rgba(15, 15, 17, 0.82);
+  --c9-header:        rgba(10, 12, 14, 0.86);
 
   /* Rythme */
   --section-py:       clamp(5rem, 9vw, 8.5rem);
@@ -68,8 +68,8 @@
 
 /* ─── Section claire ──────────────────────────────────────────────────────── */
 .c9-light {
-  --c9-bg:            #f4f1ec;
-  --c9-bg-deep:       #ebe7e0;
+  --c9-bg:            #f8f5f2;
+  --c9-bg-deep:       #efebe5;
   --c9-surface:       #ffffff;
   --c9-surface-2:     #fbfaf7;
   --c9-elev-1:        rgba(21, 21, 23, 0.03);
@@ -80,9 +80,9 @@
   --c9-text:          #151517;
   --c9-text-2:        #47443f;
   --c9-text-3:        #6c6862;
-  --c9-accent-text:   #8f532a;
-  --c9-accent-soft:   rgba(201, 137, 92, 0.12);
-  --c9-accent-line:   rgba(160, 99, 58, 0.40);
+  --c9-accent-text:   #a8552a;
+  --c9-accent-soft:   rgba(229, 152, 100, 0.14);
+  --c9-accent-line:   rgba(200, 120, 70, 0.40);
   --c9-warn:          #8a5d10;
   --c9-warn-soft:     rgba(176, 124, 30, 0.10);
   --c9-warn-line:     rgba(176, 124, 30, 0.40);
@@ -93,7 +93,7 @@
   --c9-danger-soft:   rgba(168, 57, 44, 0.07);
   --c9-danger-line:   rgba(168, 57, 44, 0.35);
   --c9-scrim:         rgba(21, 21, 23, 0.35);
-  --c9-header:        rgba(244, 241, 236, 0.86);
+  --c9-header:        rgba(248, 245, 242, 0.88);
   color-scheme: light;
   background-color: var(--c9-bg);
   color: var(--c9-text);
@@ -129,7 +129,7 @@ section[id] { scroll-margin-top: 80px; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.35); border-radius: 6px; }
-::selection { background: rgba(201, 137, 92, 0.32); }
+::selection { background: rgba(229, 152, 100, 0.32); }
 
 :focus-visible {
   outline: 2px solid var(--c9-accent);
@@ -166,7 +166,7 @@ section[id] { scroll-margin-top: 80px; }
 .c9-btn-primary {
   background: var(--c9-accent);
   color: var(--c9-accent-ink);
-  box-shadow: 0 10px 30px -14px rgba(201, 137, 92, 0.55);
+  box-shadow: 0 10px 30px -14px rgba(229, 152, 100, 0.55);
 }
 @media (hover: hover) { .c9-btn-primary:hover { background: var(--c9-accent-hi); } }
 
@@ -268,6 +268,11 @@ section[id] { scroll-margin-top: 80px; }
 }
 
 .c9-copper { color: var(--c9-accent-text); }
+/* Mot mis en avant dans un grand titre (orange vif, comme la maquette) */
+.c9-hl { color: #eba265; }
+.c9-light .c9-hl { color: #db8650; }
+/* Écriture manuscrite décorative */
+.c9-script { font-family: var(--font-script), 'Segoe Script', cursive; font-weight: 500; letter-spacing: 0; }
 
 /* ─── Retour / bouton discret ────────────────────────────────────────────── */
 .c9-back {

@@ -56,16 +56,18 @@ export default function ContactActions({ message, compact = false }: {
 
       {/* ── Ordinateur ── */}
       <div className="c9-desk-only flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span className="select-all text-[1.75rem] font-semibold tabular-nums tracking-[-0.02em]" style={{ color: 'var(--c9-text)' }}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span style={{ color: 'var(--c9-text)' }}><PhoneIcon /></span>
+          <span className="select-all text-[1.375rem] font-semibold tabular-nums tracking-[-0.02em]" style={{ color: 'var(--c9-text)' }}
             data-phone>
             {PHONE.display}
           </span>
-          <button type="button" onClick={copy} className="c9-btn c9-btn-secondary" style={{ minHeight: 44, padding: '0 1rem', fontSize: '0.9375rem' }}>
+          <button type="button" onClick={copy} className="c9-btn c9-btn-secondary" style={{ minHeight: 36, padding: '0 0.85rem', fontSize: '0.8125rem', borderRadius: 999 }}>
             {copied ? 'Numéro copié' : 'Copier le numéro'}
           </button>
         </div>
-        <a href={waWeb} target="_blank" rel="noopener noreferrer" className="c9-btn c9-btn-secondary self-start">
+        <a href={waWeb} target="_blank" rel="noopener noreferrer" className="c9-btn c9-btn-secondary self-start"
+          style={{ minHeight: 40, padding: '0 1rem', fontSize: '0.875rem', borderRadius: 999 }}>
           <WaIcon /> Ouvrir WhatsApp Web
         </a>
       </div>

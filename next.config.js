@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // ─── Photos : AVIF puis WebP selon le navigateur, qualité élevée ────────────
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    qualities: [75, 85],
+  },
+
   // ─── Anciennes pages (Marketplace, diagnostic en ligne) ─────────────────────
   async redirects() {
     return [

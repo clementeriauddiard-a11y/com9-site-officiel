@@ -66,8 +66,8 @@ export default function Navbar({ hideCta = false }: { hideCta?: boolean }) {
             </Link>
           ))}
           {!hideCta && (
-            <Link href="/reservation" className="c9-btn c9-btn-primary ml-3" style={{ minHeight: 44, padding: '0 1.1rem', fontSize: '0.9375rem' }}>
-              Réserver
+            <Link href="/reservation" className="c9-btn c9-btn-primary ml-3" style={{ minHeight: 44, padding: '0 1.25rem', fontSize: '0.875rem' }}>
+              Réserver une intervention
             </Link>
           )}
         </div>
