@@ -43,6 +43,8 @@ import {
   MESSAGE_KINDS,
   MESSAGE_LABEL,
   MESSAGES_FOR_STATUS,
+  MOBILE_HANDOVER_NOTE,
+  MOBILE_READY_NOTE,
   ORDER_DELAY_NOTE,
   QUOTE_SLOT_NOTE,
   SYMPTOM_LABEL,
@@ -796,9 +798,9 @@ export const CLIENT_ACTION_LABEL: Record<ClientAction, string> = {
 const CLIENT_STATUS_TEXT: Record<Appointment['status'], { title: string; text: string }> = {
   demande_recue:   { title: 'Demande reçue', text: 'COM\'9 va confirmer votre créneau ou vous proposer une autre disponibilité.' },
   creneau_propose: { title: 'COM\'9 vous propose un nouveau rendez-vous', text: 'Acceptez-le ou choisissez un autre créneau.' },
-  confirme:        { title: 'Rendez-vous confirmé', text: 'COM\'9 viendra à l\'adresse indiquée lors de votre demande.' },
+  confirme:        { title: 'Rendez-vous confirmé', text: `${MOBILE_HANDOVER_NOTE} ${MOBILE_READY_NOTE}` },
   en_route:        { title: 'COM\'9 est en route', text: 'Votre technicien arrive.' },
-  en_cours:        { title: 'Intervention en cours', text: 'La réparation est en cours.' },
+  en_cours:        { title: 'Intervention en cours', text: `La réparation est en cours dans l’atelier mobile. ${MOBILE_READY_NOTE}` },
   termine:         { title: 'Intervention terminée', text: 'Merci pour votre confiance.' },
   annule:          { title: 'Rendez-vous annulé', text: 'Ce rendez-vous a été annulé.' },
 }

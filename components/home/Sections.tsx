@@ -15,7 +15,7 @@ import { euros } from '@/lib/money'
 import Image, { type StaticImageData } from 'next/image'
 import { PHOTOS, PHOTO_QUALITY } from '@/lib/photos'
 import {
-  IconArrowRight, IconBolt, IconBox, IconCalendar, IconCar, IconCard, IconCheck, IconHome,
+  IconArrowRight, IconBolt, IconBox, IconCalendar, IconCar, IconCard, IconCheck, IconCheckCircle, IconHome,
   IconPhone, IconPin, IconSearch, IconShield, IconX,
 } from '@/components/ui/icons'
 
@@ -37,9 +37,9 @@ function Head({ label, title, sub }: { label: string; title: ReactNode; sub?: Re
 export function HowItWorks() {
   const steps = [
     { icon: IconPhone, t: 'Choisissez votre réparation', d: 'Écran, batterie, vitre arrière… Le prix s’affiche tout de suite.' },
-    { icon: IconPin, t: 'Indiquez votre adresse', d: `Le déplacement est calculé selon la distance depuis Nogent-le-Rotrou, jusqu’à ${DISTANCE_MAX_KM} km.` },
-    { icon: IconCalendar, t: 'Choisissez un créneau', d: `${HORAIRES_TEXTE.detail.replace(' • ', ' · ')}, ${HORAIRES_TEXTE.accroche.toLowerCase()}.` },
-    { icon: IconHome, t: 'COM’9 vient chez vous', d: 'Nous confirmons votre créneau, puis réparons votre smartphone sur place. Vous payez après.' },
+    { icon: IconPin, t: 'Indiquez votre adresse', d: `Le déplacement est calculé selon la distance depuis Nogent-le-Rotrou, jusqu’à ${DISTANCE_MAX_KM} km. Choisissez ensuite votre créneau.` },
+    { icon: IconCar, t: 'Remettez-nous votre smartphone', d: 'À l’heure prévue, confiez votre téléphone au technicien COM’9, devant chez vous. Il le répare dans son atelier mobile.' },
+    { icon: IconCheckCircle, t: 'Récupérez-le réparé', d: 'Le technicien vous prévient dès que c’est terminé. Vous récupérez votre téléphone, puis vous payez.' },
   ]
   return (
     <section id="fonctionnement" className="c9-light" style={py}>
@@ -74,8 +74,39 @@ export function HowItWorks() {
             </li>
           ))}
         </ol>
+
+        <PrivateHome />
       </div>
     </section>
+  )
+}
+
+/** Carte « Votre domicile reste votre espace » : l'intervention se fait dehors, dans l'atelier mobile. */
+function PrivateHome() {
+  const points = ['Aucun déplacement en boutique', 'Aucun technicien à faire entrer chez vous', 'Votre téléphone reste à proximité']
+  return (
+    <div data-private-home className="c9-surface mt-4 grid gap-5 rounded-[18px] p-6 md:p-7 lg:grid-cols-[1.1fr_auto_1.6fr] lg:items-center lg:gap-8">
+      <div className="flex gap-4">
+        <span style={{ color: 'var(--c9-accent-text)' }}><IconHome className="h-9 w-9" strokeWidth={1.5} /></span>
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <p className="text-[1.0625rem] font-semibold">Votre domicile reste votre espace.</p>
+          <p className="text-[0.875rem] leading-relaxed" style={{ color: 'var(--c9-text-2)' }}>
+            Le technicien se gare devant ou à proximité de chez vous. La réparation se fait dans son atelier mobile : aucun accès à votre domicile n’est nécessaire.
+          </p>
+        </div>
+      </div>
+      <span aria-hidden="true" className="hidden h-full w-px lg:block" style={{ background: 'var(--c9-hairline)' }} />
+      <ul className="grid gap-3 sm:grid-cols-3">
+        {points.map((t) => (
+          <li key={t} className="flex items-start gap-2.5 text-[0.9375rem] font-medium leading-snug">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--c9-accent-soft)', color: 'var(--c9-accent-text)' }}>
+              <IconCheck className="h-3.5 w-3.5" strokeWidth={2.6} />
+            </span>
+            {t}
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 
@@ -172,7 +203,7 @@ export function OtherProblem() {
       <div className={`${wrap} relative grid gap-10 lg:grid-cols-[1.15fr_1fr] lg:items-center`}>
         <div className="flex flex-col gap-6">
           <Head label="Autre problème" title={<>Votre panne n&apos;est <span className="c9-hl">pas dans la liste ?</span></>}
-            sub={<>Décrivez votre problème : le <b className="font-semibold" style={{ color: 'var(--c9-text)' }}>pré-diagnostic en ligne est gratuit</b>.<br className="hidden sm:block" /> Si la réparation a un prix connu, il s&apos;affiche. Sinon, COM&apos;9 fait le diagnostic chez vous.</>} />
+            sub={<>Décrivez votre problème : le <b className="font-semibold" style={{ color: 'var(--c9-text)' }}>pré-diagnostic en ligne est gratuit</b>.<br className="hidden sm:block" /> Si la réparation a un prix connu, il s&apos;affiche. Sinon, COM&apos;9 fait le diagnostic dans son atelier mobile.</>} />
           <span className="inline-flex items-center gap-2 self-start rounded-full px-3.5 py-1.5 text-[0.875rem] font-semibold"
             style={{ background: 'var(--c9-accent-soft)', color: 'var(--c9-accent-text)', border: '1px solid var(--c9-accent-line)' }}>
             <IconCheck className="h-4 w-4" strokeWidth={2.4} /> Pré-diagnostic en ligne gratuit
@@ -239,6 +270,9 @@ export function Trust() {
             <div className="flex flex-col gap-3">
               <span className="section-label">Horaires</span>
               <h2 className="c9-title" style={{ fontSize: 'clamp(2rem, 3.3vw, 2.75rem)' }}>Disponible jusqu&apos;à <span className="c9-hl">23h, 7j/7.</span></h2>
+              <p className="text-[1rem] leading-relaxed" style={{ color: 'var(--c9-text-2)' }}>
+                COM&apos;9 intervient jusqu&apos;à 23h dans son atelier mobile, directement à proximité de votre domicile.
+              </p>
             </div>
             <div className="flex flex-col">
               {HORAIRES_TEXTE.lignes.map((l) => (

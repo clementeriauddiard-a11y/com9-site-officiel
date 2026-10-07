@@ -22,6 +22,14 @@ export default function Contact() {
           <p className="text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>
             Interventions : {HORAIRES_TEXTE.detail.toLowerCase()}, {HORAIRES_TEXTE.accroche.toLowerCase()}.
           </p>
+          <div data-faq className="mt-2 flex flex-col gap-1.5 rounded-[16px] p-5" style={{ background: 'var(--c9-surface)', border: '1px solid var(--c9-hairline-soft)' }}>
+            <p className="text-[1rem] font-semibold">Comment se déroule l&apos;intervention ?</p>
+            <p className="text-[0.9375rem] leading-relaxed" style={{ color: 'var(--c9-text-2)' }}>
+              Le technicien COM&apos;9 se gare devant ou à proximité de votre domicile. Vous lui remettez votre smartphone,
+              il le répare dans son atelier mobile, puis vous le rend dès que c&apos;est terminé. Vous payez après
+              l&apos;intervention. Aucun accès à votre domicile n&apos;est nécessaire.
+            </p>
+          </div>
         </div>
         <div className="c9-surface flex flex-col gap-5 rounded-[20px] p-5 sm:p-6 lg:flex-row lg:items-center lg:gap-6">
           <div className="shrink-0"><ContactActions secondary message="Bonjour COM'9, j'ai une question." /></div>

@@ -14,7 +14,7 @@ import { distanceConfigured } from '@/lib/distance'
 export const metadata: Metadata = {
   title: 'Réserver une intervention',
   description:
-    "Choisissez votre réparation, votre smartphone, indiquez votre adresse et un créneau : COM'9 vient chez vous. Prix total affiché avant d'envoyer la demande.",
+    "Choisissez votre réparation, votre smartphone, indiquez votre adresse et un créneau : COM'9 vient jusqu'à vous et répare dans son atelier mobile. Prix affiché avant d'envoyer la demande.",
   alternates: { canonical: '/reservation' },
 }
 

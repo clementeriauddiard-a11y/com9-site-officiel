@@ -128,6 +128,12 @@ export const QUOTE_RECEIVED_MESSAGE =
   'Votre demande de tarif a bien été reçue.'
 export const QUOTE_SLOT_NOTE = 'Prix communiqué avant tout, créneau confirmé après votre accord.'
 
+/** Atelier mobile : comment se passe la remise du téléphone (confirmation, suivi). */
+export const MOBILE_HANDOVER_NOTE =
+  'À l’heure prévue, retrouvez COM’9 devant ou à proximité de votre domicile et remettez simplement votre smartphone au technicien.'
+/** Le technicien prévient lui-même : aucun message automatique n'est envoyé. */
+export const MOBILE_READY_NOTE = 'Le technicien vous prévient lorsque la réparation est terminée.'
+
 // ─── Réponse du client (lien de suivi) ───────────────────────────────────────
 
 /**

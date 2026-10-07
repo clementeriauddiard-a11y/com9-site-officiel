@@ -11,14 +11,15 @@ import { HORAIRES_TEXTE, SITE_URL } from '@/config/com9'
 const script = localFont({ src: './fonts/Caveat-500.woff2', weight: '500', variable: '--font-script', display: 'swap' })
 
 const DESCRIPTION =
-  `Réparation de smartphone à domicile autour de Nogent-le-Rotrou, ${HORAIRES_TEXTE.accroche.toLowerCase()}. ` +
-  'Écran, batterie, vitre arrière : choisissez votre réparation, voyez le prix total et réservez votre créneau. COM\'9 vient chez vous.'
+  `Réparation smartphone à domicile autour de Nogent-le-Rotrou, ${HORAIRES_TEXTE.accroche.toLowerCase()}. ` +
+  'COM\'9 vient jusqu\'à vous et répare votre téléphone dans son atelier mobile, sans vous déplacer : ' +
+  'écran, batterie, vitre arrière. Prix affiché avant de réserver.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
   title: {
-    default: "COM'9 — Votre smartphone réparé chez vous | Nogent-le-Rotrou",
+    default: "COM'9 — Réparation smartphone à domicile | Nogent-le-Rotrou",
     template: "%s | COM'9",
   },
 
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
   creator:  "COM'9",
 
   openGraph: {
-    title:       "COM'9 — Votre smartphone réparé chez vous",
+    title:       "COM'9 — Votre smartphone réparé sans vous déplacer",
     description: DESCRIPTION,
     type:        'website',
     locale:      'fr_FR',
@@ -50,8 +51,8 @@ export const metadata: Metadata = {
 
   twitter: {
     card:        'summary',
-    title:       "COM'9 — Votre smartphone réparé chez vous",
-    description: `Réparation à domicile ${HORAIRES_TEXTE.accroche.toLowerCase()}. On vient à vous.`,
+    title:       "COM'9 — Votre smartphone réparé sans vous déplacer",
+    description: `Réparation smartphone à domicile ${HORAIRES_TEXTE.accroche.toLowerCase()}, dans notre atelier mobile.`,
   },
 
   icons: {

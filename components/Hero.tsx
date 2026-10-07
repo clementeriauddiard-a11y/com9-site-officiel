@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // COM'9 — Hero (maquette premium)
-// « Votre smartphone réparé chez vous. » · jusqu'à 23h · photo produit à droite
+// « Votre smartphone réparé sans vous déplacer. » · atelier mobile · jusqu'à 23h
 // · bandeau de confiance en bas.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { GARANTIE, HORAIRES_TEXTE } from '@/config/com9'
 import { getImageProps } from 'next/image'
 import { PHOTOS, PHOTO_QUALITY } from '@/lib/photos'
-import { IconArrowRight, IconCalendar, IconCard, IconCheckCircle, IconGear, IconTag } from '@/components/ui/icons'
+import { IconArrowRight, IconCalendar, IconCar, IconCard, IconCheckCircle, IconGear, IconTag } from '@/components/ui/icons'
 
 const TRUST = [
   { icon: IconGear, title: 'Pièces de qualité' },
@@ -39,16 +39,23 @@ export default function Hero() {
         <div className="flex max-w-[44rem] flex-col gap-5 pb-8 pt-7 md:pt-16 lg:gap-6 lg:min-h-[34rem] lg:justify-center lg:pb-10 lg:pt-16">
           <span className="section-label c9-rise">Réparation smartphone à domicile</span>
 
-          <h1 className="c9-display c9-rise" style={{ animationDelay: '60ms', fontSize: 'clamp(2.6rem, 5.4vw, 4.4rem)', lineHeight: 1.02 }}>
-            Votre smartphone<br className="hidden sm:block" /> réparé <span className="c9-hl">chez vous.</span>
+          <h1 className="c9-display c9-rise" style={{ animationDelay: '60ms', fontSize: 'clamp(2.6rem, 5.4vw, 3.9rem)', lineHeight: 1.02 }}>
+            Votre smartphone<br className="hidden sm:block" /> réparé<br className="hidden sm:block" /> <span className="c9-hl">sans vous déplacer.</span>
           </h1>
 
           <div className="c9-rise flex flex-col gap-1.5" style={{ animationDelay: '120ms' }}>
-            <p className="text-[1.25rem] font-semibold leading-snug tracking-[-0.02em] sm:text-[1.5rem]">
-              Réparation à domicile <span className="c9-hl">{HORAIRES_TEXTE.accroche.toLowerCase()}.</span>
+            <p className="max-w-[34rem] text-[1.25rem] font-semibold leading-snug tracking-[-0.02em] sm:text-[1.5rem]">
+              Faites réparer votre téléphone devant chez vous, <span className="c9-hl">{HORAIRES_TEXTE.accroche.toLowerCase()}.</span>
             </p>
-            <p className="text-[1rem]" style={{ color: 'var(--c9-text-2)' }}>{HORAIRES_TEXTE.detail}</p>
+            <p className="text-[1rem]" style={{ color: 'var(--c9-text-2)' }}>{HORAIRES_TEXTE.detail.replace(' • ', ' · ')}</p>
           </div>
+
+          {/* Atelier mobile : le technicien n'entre pas au domicile */}
+          <span data-hero-badge className="c9-rise inline-flex items-center gap-2 self-start rounded-full px-3.5 py-1.5 text-[0.875rem] font-medium"
+            style={{ animationDelay: '150ms', background: 'var(--c9-accent-soft)', border: '1px solid var(--c9-accent-line)', color: 'var(--c9-text)', backdropFilter: 'blur(6px)' }}>
+            <span style={{ color: 'var(--c9-accent-text)' }}><IconCar className="h-[18px] w-[18px]" strokeWidth={1.7} /></span>
+            {`Atelier mobile · Aucune entrée chez vous`}
+          </span>
 
           <div className="c9-rise mt-2 flex flex-col gap-3 sm:flex-row sm:items-stretch" style={{ animationDelay: '180ms' }}>
             <Link href="/reservation" className="c9-btn c9-btn-primary justify-start gap-3.5 !px-5 sm:min-w-[15rem]" style={{ minHeight: 64 }}>
@@ -62,6 +69,10 @@ export default function Hero() {
               Réserver une intervention <IconArrowRight className="h-5 w-5" strokeWidth={1.9} />
             </Link>
           </div>
+          <Link href="/reservation?parcours=autre" data-hero-other className="c9-rise -mt-1 self-start rounded-lg py-1 text-[0.9375rem] font-medium"
+            style={{ animationDelay: '220ms', color: 'var(--c9-text-2)' }}>
+            <span className="c9-link">J&apos;ai un autre problème</span> →
+          </Link>
         </div>
       </div>
 

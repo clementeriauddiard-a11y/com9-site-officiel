@@ -25,9 +25,10 @@ import { SERVICES, findBrand, findCatalogModel, modelPriceFrom, serviceOf } from
 import { findCommune } from '@/lib/communes'
 import { euros } from '@/lib/money'
 import { phoneDigits } from '@/lib/agenda/logic'
-import { QUOTE_RECEIVED_MESSAGE, QUOTE_SLOT_NOTE, REQUEST_RECEIVED_MESSAGE, SYMPTOMS, SYMPTOM_LABEL, type Symptom } from '@/lib/agenda/types'
+import { MOBILE_HANDOVER_NOTE, MOBILE_READY_NOTE, QUOTE_RECEIVED_MESSAGE, QUOTE_SLOT_NOTE, REQUEST_RECEIVED_MESSAGE, SYMPTOMS, SYMPTOM_LABEL, type Symptom } from '@/lib/agenda/types'
 import { Btn, Choice, ErrorBox, Field, Line, Notice, inputCls, inputStyle } from '@/components/ui/kit'
 import ContactActions from '@/components/ui/ContactActions'
+import { IconCar } from '@/components/ui/icons'
 import AddressSearch, { type AddressHit } from './AddressSearch'
 import SlotPicker, { fmtHour, fmtLongDay, type DayAvailability } from './SlotPicker'
 import DevicePicker, { deviceLabel, type Device } from './DevicePicker'
@@ -440,7 +441,7 @@ export default function BookingFlow({ distanceEnabled = false }: { distanceEnabl
               ) : (
                 <Notice tone="accent" title="Diagnostic à domicile">
                   Pour « {symptom ? SYMPTOM_LABEL[symptom].toLowerCase() : 'ce problème'} », le prix dépend de la panne : COM&apos;9 la
-                  diagnostique chez vous et vous annonce le prix avant de réparer.
+                  diagnostique dans son atelier mobile et vous annonce le prix avant de réparer.
                 </Notice>
               )}
               <div className="flex flex-col gap-3 rounded-2xl p-4" style={{ border: '1px solid var(--c9-hairline)' }}>
@@ -478,7 +479,7 @@ export default function BookingFlow({ distanceEnabled = false }: { distanceEnabl
           {address && <TravelResult travel={travel} />}
           {address && (travel.state === 'ok' || travel.state === 'estimate' || travel.state === 'unknown') && (
             <>
-              <Field label="Accès" htmlFor="b-access" optional hint="Bâtiment, étage, code, interphone…">
+              <Field label="Pour vous retrouver" htmlFor="b-access" optional hint="Portail, résidence, parking, lieu de rendez-vous…">
                 <input id="b-access" className={inputCls} style={inputStyle} value={access} maxLength={150}
                   onChange={(e) => setAccess(e.target.value)} />
               </Field>
@@ -497,6 +498,11 @@ export default function BookingFlow({ distanceEnabled = false }: { distanceEnabl
           <SlotPicker days={days} loading={daysLoading} error={daysError} value={slot}
             onChange={(iso) => { setSlot(iso); setErrors(null) }} />
           {errors && active === 'creneau' && <ErrorBox message={errors.message} />}
+          {/* Où se passe l'intervention : dehors, dans l'atelier mobile */}
+          <p data-mobile-note className="flex gap-2.5 text-[0.9375rem] leading-relaxed" style={{ color: 'var(--c9-text-2)' }}>
+            <span className="mt-0.5 shrink-0" style={{ color: 'var(--c9-accent-text)' }}><IconCar className="h-5 w-5" strokeWidth={1.7} /></span>
+            <span>Le technicien COM&apos;9 vous rejoint à l&apos;adresse indiquée. La réparation est réalisée dans son atelier mobile, devant ou à proximité de votre domicile.</span>
+          </p>
           {/* Une seule explication, en encadré */}
           <div data-slot-note>
             <Notice tone="accent" title={isQuote ? 'Créneau souhaité' : 'C’est une demande'}>
@@ -682,6 +688,15 @@ function Done({ recap }: { recap: Recap }) {
           )}
         </div>
       )}
+
+      {/* Le jour de l'intervention : remise du téléphone dehors, réparation dans l'atelier mobile */}
+      <div data-handover className="c9-surface flex gap-4 rounded-[24px] p-6 sm:p-7">
+        <span className="shrink-0" style={{ color: 'var(--c9-accent-text)' }}><IconCar className="h-8 w-8" strokeWidth={1.5} /></span>
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <p className="text-[1.0625rem] font-semibold">Une fois le rendez-vous confirmé</p>
+          <p className="leading-relaxed" style={{ color: 'var(--c9-text-2)' }}>{`${MOBILE_HANDOVER_NOTE} ${MOBILE_READY_NOTE}`}</p>
+        </div>
+      </div>
 
       {has && (
         <div className="c9-surface flex flex-col gap-3 rounded-[24px] p-6 sm:p-7">

@@ -34,9 +34,10 @@ export default function Footer() {
         style={{ paddingBottom: 'calc(3.5rem + env(safe-area-inset-bottom, 0px))' }}>
         <div className="flex flex-col gap-3">
           <Wordmark className="text-[1.5rem]" />
-          <p className="text-[1.0625rem] font-medium">Votre smartphone réparé chez vous. On vient à vous.</p>
+          <p className="text-[1.0625rem] font-medium">Réparation smartphone à domicile depuis <span className="whitespace-nowrap">Nogent-le-Rotrou</span>.</p>
           <p className="text-[0.9375rem]" style={{ color: 'var(--c9-text-3)' }}>
-            Réparation à domicile depuis Nogent-le-Rotrou · {HORAIRES_TEXTE.detail}, {HORAIRES_TEXTE.accroche.toLowerCase()}.
+            COM&apos;9 vient jusqu&apos;à vous et répare votre téléphone dans son atelier mobile, jusqu&apos;à 23h.
+            <br />{HORAIRES_TEXTE.detail.replace(' • ', ' · ')}.
           </p>
           <a href={LINKS.phone} className="self-start text-[1.0625rem] font-semibold tabular-nums">{PHONE.display}</a>
         </div>
