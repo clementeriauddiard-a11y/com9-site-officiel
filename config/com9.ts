@@ -138,3 +138,6 @@ export const GARANTIE = {
   portee: 'Pièces et main-d’œuvre',
   detail: 'Pièces et main-d’œuvre, sur les réparations réalisées par COM’9.',
 } as const
+
+// ─── Adresse officielle du site (Google, aperçus de partage, plan du site) ───
+export const SITE_URL = 'https://com9.utuworld.fr'

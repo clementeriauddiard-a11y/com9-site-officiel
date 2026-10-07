@@ -1,3 +1,4 @@
+import { SITE_URL } from '@/config/com9'
 import { MetadataRoute } from 'next'
 
 /**
@@ -5,7 +6,7 @@ import { MetadataRoute } from 'next'
  * Seules les pages publiques sont indexées.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = 'https://com9.fr'
+  const base = SITE_URL
 
   return [
     {

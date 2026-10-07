@@ -1,3 +1,4 @@
+import { SITE_URL } from '@/config/com9'
 import { MetadataRoute } from 'next'
 
 /**
@@ -18,6 +19,6 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
     ],
-    sitemap: 'https://com9.fr/sitemap.xml',
+    sitemap: `${SITE_URL}/sitemap.xml`,
   }
 }

@@ -5,7 +5,7 @@ import { GeistMono } from 'geist/font/mono'
 import localFont from 'next/font/local'
 import './globals.css'
 import Providers from '@/components/Providers'
-import { HORAIRES_TEXTE } from '@/config/com9'
+import { HORAIRES_TEXTE, SITE_URL } from '@/config/com9'
 
 // Écriture manuscrite (accents décoratifs) — Caveat, licence SIL OFL, fichier local.
 const script = localFont({ src: './fonts/Caveat-500.woff2', weight: '500', variable: '--font-script', display: 'swap' })
@@ -15,7 +15,7 @@ const DESCRIPTION =
   'Écran, batterie, vitre arrière : choisissez votre réparation, voyez le prix total et réservez votre créneau. COM\'9 vient chez vous.'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://com9.fr'),
+  metadataBase: new URL(SITE_URL),
 
   title: {
     default: "COM'9 — Votre smartphone réparé chez vous | Nogent-le-Rotrou",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     type:        'website',
     locale:      'fr_FR',
-    url:         'https://com9.fr',
+    url:         SITE_URL,
     siteName:    "COM'9",
   },
 
