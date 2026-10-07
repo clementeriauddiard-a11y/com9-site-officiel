@@ -125,9 +125,9 @@ export const REQUEST_RECEIVED_MESSAGE =
 
 /** Demande de tarif (« Sur devis ») : message après envoi et rappel sur le créneau. */
 export const QUOTE_RECEIVED_MESSAGE =
-  'Votre demande de tarif a bien été reçue. COM\'9 vous communique le prix de la réparation.'
+  'Votre demande de tarif a bien été reçue.'
 export const QUOTE_SLOT_NOTE =
-  'Ce créneau est souhaité : il n\'est confirmé qu\'après communication et acceptation du prix.'
+  'COM’9 vous communique d’abord le prix de la réparation. Après votre accord, nous confirmons le créneau souhaité ou vous en proposons un autre.'
 
 // ─── Réponse du client (lien de suivi) ───────────────────────────────────────
 

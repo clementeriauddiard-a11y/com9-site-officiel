@@ -330,12 +330,17 @@ export default function BookingFlow({ distanceEnabled = false }: { distanceEnabl
   // ─── Récapitulatif (colonne / barre) ───
   const recapLines = (
     <div className="flex flex-col gap-3">
-      <Line label={kind === 'autre' ? 'Diagnostic à domicile' : option ? `${REPAIRS.find((r) => r.id === repair)?.label} · ${option.label}` : isQuote ? REPAIRS.find((r) => r.id === repair)?.label ?? 'Réparation' : 'Réparation'}
+      <Line label={kind === 'autre' ? 'Diagnostic à domicile' : option ? `${REPAIRS.find((r) => r.id === repair)?.label} · ${option.label}` : 'Réparation'}
         value={kind === 'autre' ? 'Prix sur place' : isQuote ? 'Sur devis' : repairCents !== null ? euros(repairCents) : '—'} muted={repairCents === null && !isQuote} />
       <Line label="Déplacement" muted={travelCents === null}
         value={travelCents !== null ? euros(travelCents) : travel.state === 'unknown' ? 'À confirmer' : '—'} />
-      <div className="c9-divider" />
-      <Line label="Total" strong value={totalCents !== null ? euros(totalCents) : isQuote ? 'Sur devis' : kind === 'autre' && travelCents !== null ? 'Après diagnostic' : '—'} />
+      {/* Sur devis : aucun total tant que COM'9 n'a pas communiqué le prix */}
+      {!isQuote && (
+        <>
+          <div className="c9-divider" />
+          <Line label="Total" strong value={totalCents !== null ? euros(totalCents) : kind === 'autre' && travelCents !== null ? 'Après diagnostic' : '—'} />
+        </>
+      )}
     </div>
   )
 
@@ -496,7 +501,7 @@ export default function BookingFlow({ distanceEnabled = false }: { distanceEnabl
           <div data-slot-note>
             <Notice tone="accent" title={isQuote ? 'Créneau souhaité' : 'C’est une demande'}>
               {isQuote
-                ? `${QUOTE_SLOT_NOTE} Si la pièce doit être commandée (délai estimé de ${DELAI_COMMANDE_JOURS} jours), COM’9 vous propose un nouveau créneau. Aucun acompte.`
+                ? `${QUOTE_SLOT_NOTE} Si la pièce doit être commandée (délai estimé de ${DELAI_COMMANDE_JOURS} jours), nous vous proposons un nouveau créneau. Aucun acompte.`
                 : `COM’9 confirme le créneau ou vous en propose un autre. Si la pièce doit être commandée (délai estimé de ${DELAI_COMMANDE_JOURS} jours), COM’9 vous propose un nouveau rendez-vous. Aucun acompte.`}
             </Notice>
           </div>
@@ -658,8 +663,12 @@ function Done({ recap }: { recap: Recap }) {
               {recap.zoneVerified ? '' : ' · confirmé par COM’9 avec votre adresse'}
             </p>
           )}
-          <div className="c9-divider" />
-          <Line label="Total" strong value={recap.totalCents !== null ? euros(recap.totalCents) : recap.quote ? 'Sur devis' : recap.repairPriceCents === null ? 'Après diagnostic' : 'À confirmer'} />
+          {!recap.quote && (
+            <>
+              <div className="c9-divider" />
+              <Line label="Total" strong value={recap.totalCents !== null ? euros(recap.totalCents) : recap.repairPriceCents === null ? 'Après diagnostic' : 'À confirmer'} />
+            </>
+          )}
           {recap.quote && (
             <p className="text-[0.875rem] leading-relaxed" style={{ color: 'var(--c9-text-3)' }}>
               COM&apos;9 vous communique votre tarif avant toute intervention.

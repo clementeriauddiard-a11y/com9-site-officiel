@@ -211,8 +211,12 @@ export default function TrackingView({ token, initial }: { token: string; initia
         {view.zoneToConfirm && (
           <p className="-mt-2 text-right text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>confirmé par COM&apos;9 avec votre adresse</p>
         )}
-        <div className="c9-divider" />
-        <Line label="Total" strong value={view.totalCents !== null ? euros(view.totalCents) : view.quote ? 'Sur devis' : view.repairPriceCents === null ? 'Après diagnostic' : 'À confirmer'} />
+        {!view.quote && (
+          <>
+            <div className="c9-divider" />
+            <Line label="Total" strong value={view.totalCents !== null ? euros(view.totalCents) : view.repairPriceCents === null ? 'Après diagnostic' : 'À confirmer'} />
+          </>
+        )}
         {view.quote && (
           <p className="text-[0.875rem] leading-relaxed" style={{ color: 'var(--c9-text-3)' }}>
             COM&apos;9 vous communique le prix de la réparation avant toute intervention.

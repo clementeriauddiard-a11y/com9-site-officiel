@@ -868,7 +868,7 @@ export function toClientView(a: Appointment): ClientView {
   const zone = findZone(a.zone)
   const quote = isGridRepair(a.repair) && a.repairPriceCents === null
   const st = quote && a.status === 'demande_recue'
-    ? { title: 'Demande de tarif reçue', text: `COM'9 vous communique le prix de la réparation. ${QUOTE_SLOT_NOTE}` }
+    ? { title: 'Demande de tarif reçue', text: QUOTE_SLOT_NOTE }
     : CLIENT_STATUS_TEXT[a.status]
   const confirmed = ['confirme', 'en_route', 'en_cours', 'termine'].includes(a.status)
   return {
