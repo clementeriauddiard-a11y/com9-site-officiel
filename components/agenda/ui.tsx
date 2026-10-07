@@ -24,7 +24,7 @@ export const inputStyle = inputStyleSm
 export const STATUS_TONE: Record<ApptStatus, string> = {
   demande_recue:   '#e2b469', // à traiter
   creneau_propose: '#b9a6e6', // en attente du client
-  confirme:        '#e59864', // planifié
+  confirme:        '#d0956d', // planifié
   en_route:        '#8fb5e3',
   en_cours:        '#93d0a0',
   termine:         '#928d85',

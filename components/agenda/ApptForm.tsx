@@ -341,7 +341,7 @@ export default function ApptForm({ mode, initial, settings, defaultDate, onSubmi
           <label className="flex items-center gap-3 self-end pb-3 font-space text-[0.875rem]"
             style={{ color: 'var(--c9-text-2)' }}>
             <input type="checkbox" checked={zoneVerified} onChange={(e) => setZoneVerified(e.target.checked)}
-              className="h-5 w-5 accent-[#e59864]" />
+              className="h-5 w-5 accent-[#d0956d]" />
             Zone vérifiée par COM&apos;9
           </label>
         </div>

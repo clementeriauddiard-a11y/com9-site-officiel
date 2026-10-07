@@ -5,14 +5,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import Link from 'next/link'
-import { HORAIRES_TEXTE } from '@/config/com9'
+import { GARANTIE, HORAIRES_TEXTE } from '@/config/com9'
 import { getImageProps } from 'next/image'
 import { PHOTOS, PHOTO_QUALITY } from '@/lib/photos'
 import { IconArrowRight, IconCalendar, IconCard, IconCheckCircle, IconGear, IconTag } from '@/components/ui/icons'
 
 const TRUST = [
   { icon: IconGear, title: 'Pièces de qualité' },
-  { icon: IconCheckCircle, title: 'Garantie 3 mois' },
+  { icon: IconCheckCircle, title: GARANTIE.titre, sub: GARANTIE.portee },
   { icon: IconCard, title: 'Paiement après intervention', sub: 'CB, espèces, virement' },
   { icon: IconTag, title: 'Prix affiché = prix payé' },
 ]
@@ -27,7 +27,7 @@ function HeroPicture() {
       <source media="(min-width: 640px)" srcSet={desktop} />
       <source srcSet={mobile} />
       {/* eslint-disable-next-line jsx-a11y/alt-text, @next/next/no-img-element */}
-      <img {...img} className="absolute inset-0 h-full w-full select-none object-cover object-[72%_45%]" draggable={false} />
+      <img {...img} className="absolute inset-0 h-full w-full select-none object-cover object-[50%_32%] sm:object-[72%_45%]" draggable={false} />
     </picture>
   )
 }
@@ -36,7 +36,7 @@ export default function Hero() {
   return (
     <section id="accueil" className="relative overflow-hidden" style={{ paddingTop: 'calc(64px + env(safe-area-inset-top, 0px))' }}>
       <div className="relative z-10 mx-auto max-w-6xl px-5 md:px-8">
-        <div className="flex max-w-[44rem] flex-col gap-6 pb-10 pt-10 md:pt-16 lg:min-h-[34rem] lg:justify-center lg:pb-10 lg:pt-16">
+        <div className="flex max-w-[44rem] flex-col gap-5 pb-8 pt-7 md:pt-16 lg:gap-6 lg:min-h-[34rem] lg:justify-center lg:pb-10 lg:pt-16">
           <span className="section-label c9-rise">Réparation smartphone à domicile</span>
 
           <h1 className="c9-display c9-rise" style={{ animationDelay: '60ms', fontSize: 'clamp(2.6rem, 5.4vw, 4.4rem)', lineHeight: 1.02 }}>
@@ -68,18 +68,18 @@ export default function Hero() {
       {/* Photo produit (une seule image chargée selon l'écran)
           · ordinateur : version large, en fond de tout le haut de page ; la zone sombre accueille le texte
           · téléphone : version verticale entière, son ciel sombre passe sous les boutons */}
-      <div className="relative z-0 -mt-[60vw] aspect-[941/1672] sm:-mt-[14vw] sm:aspect-[1672/941] lg:absolute lg:inset-0 lg:mt-0 lg:aspect-auto">
+      <div className="relative z-0 -mt-[64vw] aspect-[941/1440] sm:-mt-[14vw] sm:aspect-[1672/941] lg:absolute lg:inset-0 lg:mt-0 lg:aspect-auto">
         <HeroPicture />
         {/* voiles très légers : lisibilité du texte et fondu vers le reste de la page */}
         <div aria-hidden="true" className="absolute inset-0 hidden lg:block"
           style={{ background: 'linear-gradient(90deg, rgba(10,12,14,0.55) 0%, rgba(10,12,14,0.15) 38%, rgba(10,12,14,0) 55%), linear-gradient(0deg, rgba(10,12,14,0.6) 0%, rgba(10,12,14,0) 18%)' }} />
         <div aria-hidden="true" className="absolute inset-0 lg:hidden"
-          style={{ background: 'linear-gradient(180deg, var(--c9-bg) 0%, rgba(10,12,14,0) 22%, rgba(10,12,14,0) 78%, var(--c9-bg) 100%)' }} />
+          style={{ background: 'linear-gradient(180deg, var(--c9-bg) 0%, rgba(10,12,14,0) 22%, rgba(10,12,14,0) 62%, rgba(10,12,14,0.85) 86%, var(--c9-bg) 100%)' }} />
       </div>
 
       {/* Bandeau de confiance */}
-      <div className="relative z-10 mx-auto -mt-[22vw] max-w-6xl px-5 pb-10 sm:-mt-[6vw] md:px-8 lg:mt-0 lg:pb-12 lg:pt-2">
-        <ul className="grid grid-cols-2 gap-x-6 gap-y-5 lg:flex lg:flex-wrap lg:gap-x-12">
+      <div className="relative z-10 mx-auto -mt-[30vw] max-w-6xl px-5 pb-8 sm:-mt-[6vw] md:px-8 lg:mt-0 lg:pb-12 lg:pt-2">
+        <ul className="grid grid-cols-2 gap-x-6 gap-y-4 lg:flex lg:flex-wrap lg:gap-x-12">
           {TRUST.map(({ icon: Icon, title, sub }) => (
             <li key={title} className="flex items-start gap-2.5">
               <span style={{ color: 'var(--c9-accent-text)' }}><Icon className="mt-[1px] h-[22px] w-[22px]" /></span>

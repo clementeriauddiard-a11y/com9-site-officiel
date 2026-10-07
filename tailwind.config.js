@@ -16,8 +16,8 @@ module.exports = {
         'space-black':   '#0f0f11',
         'space-deep':    '#0a0a0b',
         'slate-lift':    '#17171a',
-        'neon-blue':     '#e59864',
-        'electric-blue': '#e59864',
+        'neon-blue':     '#d0956d',
+        'electric-blue': '#d0956d',
         'cold-white':    '#f5f2ec',
       },
       fontFamily: {

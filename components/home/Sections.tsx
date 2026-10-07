@@ -7,7 +7,7 @@
 
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { DELAI_COMMANDE_JOURS, DIAGNOSTIC, DISTANCE_MAX_KM, HORAIRES_TEXTE, PAIEMENT_LABEL, PAIEMENT_MODES, ZONES } from '@/config/com9'
+import { DELAI_COMMANDE_JOURS, DIAGNOSTIC, GARANTIE, DISTANCE_MAX_KM, HORAIRES_TEXTE, PAIEMENT_LABEL, PAIEMENT_MODES, ZONES } from '@/config/com9'
 import { PRICE_NOTE, REPAIRS, priceFrom, type GridRepairId } from '@/data/tarifs'
 import { SYMPTOMS, SYMPTOM_LABEL } from '@/lib/agenda/types'
 import { euros } from '@/lib/money'
@@ -102,9 +102,10 @@ export function Tarifs() {
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {REPAIRS.map((r) => (
             <Link key={r.id} href={`/reservation?reparation=${r.id}`}
-              className="c9-surface group flex min-h-[8.5rem] items-stretch overflow-hidden rounded-[18px] transition-colors duration-300 hover:border-[color:var(--c9-hairline-lit)]">
+              aria-label={`${r.label} : à partir de ${euros(priceFrom(r.id))}. Voir le prix de mon modèle`}
+              className="c9-surface group flex min-h-[8.5rem] cursor-pointer items-stretch overflow-hidden rounded-[18px] transition-[border-color,transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-[color:var(--c9-accent-line)] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--c9-accent)]">
               <div className="relative w-[38%] shrink-0 overflow-hidden">
-                <Image src={TARIF_PHOTO[r.id].src} alt={TARIF_PHOTO[r.id].alt} fill quality={PHOTO_QUALITY}
+                <Image src={TARIF_PHOTO[r.id].src} alt="" fill quality={PHOTO_QUALITY}
                   sizes="(min-width: 1152px) 166px, (min-width: 768px) 13vw, 38vw" className="object-cover object-center" />
               </div>
               <div className="flex flex-1 items-center justify-between gap-3 p-5">
@@ -113,7 +114,7 @@ export function Tarifs() {
                   <p className="text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>À partir de</p>
                   <p className="text-[1.75rem] font-semibold tabular-nums tracking-[-0.03em]">{euros(priceFrom(r.id))}</p>
                 </div>
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-transform duration-300 group-hover:translate-x-0.5"
+                <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-[transform,background-color,color] duration-300 group-hover:translate-x-0.5 group-hover:bg-[color:var(--c9-accent)] group-hover:text-[color:var(--c9-accent-ink)]"
                   style={{ background: 'var(--c9-elev-2)', color: 'var(--c9-accent-text)' }}>
                   <IconArrowRight className="h-5 w-5" strokeWidth={1.9} />
                 </span>
@@ -171,7 +172,11 @@ export function OtherProblem() {
       <div className={`${wrap} relative grid gap-10 lg:grid-cols-[1.15fr_1fr] lg:items-center`}>
         <div className="flex flex-col gap-6">
           <Head label="Autre problème" title={<>Votre panne n&apos;est <span className="c9-hl">pas dans la liste ?</span></>}
-            sub={<>Décrivez votre problème : le pré-diagnostic en ligne est gratuit.<br className="hidden sm:block" /> Si la réparation a un prix connu, il s&apos;affiche. Sinon, COM&apos;9 fait le diagnostic chez vous.</>} />
+            sub={<>Décrivez votre problème : le <b className="font-semibold" style={{ color: 'var(--c9-text)' }}>pré-diagnostic en ligne est gratuit</b>.<br className="hidden sm:block" /> Si la réparation a un prix connu, il s&apos;affiche. Sinon, COM&apos;9 fait le diagnostic chez vous.</>} />
+          <span className="inline-flex items-center gap-2 self-start rounded-full px-3.5 py-1.5 text-[0.875rem] font-semibold"
+            style={{ background: 'var(--c9-accent-soft)', color: 'var(--c9-accent-text)', border: '1px solid var(--c9-accent-line)' }}>
+            <IconCheck className="h-4 w-4" strokeWidth={2.4} /> Pré-diagnostic en ligne gratuit
+          </span>
           <div className="flex flex-wrap gap-2">
             {SYMPTOMS.map((s) => (
               <Link key={s} href={`/reservation?parcours=autre&symptome=${s}`}
@@ -205,9 +210,12 @@ export function OtherProblem() {
               <b style={{ color: 'var(--c9-text)' }}>Vous refusez après le diagnostic :</b><br />vous payez le déplacement + {euros(DIAGNOSTIC.refusCents)} de diagnostic.
             </p>
           </div>
-          <Link href="/reservation?parcours=autre" className="c9-btn c9-btn-primary mt-1 w-full gap-2">
-            Décrire mon problème <IconArrowRight className="h-5 w-5" strokeWidth={1.9} />
-          </Link>
+          <div className="mt-1 flex flex-col gap-2">
+            <Link href="/reservation?parcours=autre" className="c9-btn c9-btn-primary w-full gap-2">
+              Décrire mon problème <IconArrowRight className="h-5 w-5" strokeWidth={1.9} />
+            </Link>
+            <p className="text-center text-[0.8125rem] font-medium" style={{ color: 'var(--c9-accent-text)' }}>Gratuit : le prix s’affiche s’il est connu.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -218,7 +226,7 @@ export function OtherProblem() {
 
 export function Trust() {
   const items = [
-    { icon: IconShield, t: 'Garantie 3 mois pièces et main-d’œuvre', d: 'Sur les réparations réalisées par COM’9.' },
+    { icon: IconShield, t: GARANTIE.titre, d: GARANTIE.detail },
     { icon: IconCard, t: 'Paiement après intervention', d: PAIEMENT_MODES.map((m) => PAIEMENT_LABEL[m]).join(', ') + '. Aucun paiement en ligne.' },
     { icon: IconBox, t: 'Aucun acompte', d: 'Même quand une pièce doit être commandée.' },
     { icon: IconBolt, t: 'Pièce disponible, intervention rapide', d: `Pièce en stock : intervention selon l’agenda. Sur commande : délai estimé de ${DELAI_COMMANDE_JOURS} jours.` },

@@ -22,11 +22,14 @@ function PhoneIcon() {
   )
 }
 
-export default function ContactActions({ message, compact = false }: {
+export default function ContactActions({ message, compact = false, secondary = false }: {
   /** Message WhatsApp pré-rempli (facultatif) */
   message?: string
   /** Version courte (pied de parcours, page de suivi) */
   compact?: boolean
+  /** Téléphone : numéro en tête + « Appeler » et « WhatsApp » côte à côte, en boutons secondaires
+   *  (quand un autre bouton principal suit, ex. « Réserver une intervention ») */
+  secondary?: boolean
 }) {
   const [copied, setCopied] = useState(false)
   const wa = message ? `${LINKS.whatsapp}?text=${encodeURIComponent(message)}` : LINKS.whatsapp
@@ -42,6 +45,21 @@ export default function ContactActions({ message, compact = false }: {
   return (
     <div className="flex flex-col gap-3" data-contact>
       {/* ── Téléphone ── */}
+      {secondary ? (
+        <div className="c9-touch-only flex-col gap-3">
+          <p className="flex items-center gap-2.5 text-[1.375rem] font-semibold tabular-nums tracking-[-0.02em]" style={{ color: 'var(--c9-text)' }}>
+            <PhoneIcon /> {PHONE.display}
+          </p>
+          <div className="grid grid-cols-2 gap-2.5">
+            <a href={LINKS.phone} className="c9-btn c9-btn-secondary !px-3" data-call style={{ minHeight: 52 }}>
+              <PhoneIcon /> Appeler
+            </a>
+            <a href={wa} target="_blank" rel="noopener noreferrer" className="c9-btn c9-btn-secondary !px-3" style={{ minHeight: 52 }}>
+              <WaIcon /> WhatsApp
+            </a>
+          </div>
+        </div>
+      ) : (
       <div className="c9-touch-only flex-col gap-2.5">
         <a href={LINKS.phone} className="c9-btn c9-btn-primary w-full" data-call>
           <PhoneIcon /> Appeler COM&apos;9
@@ -53,6 +71,7 @@ export default function ContactActions({ message, compact = false }: {
           <p className="text-center text-[0.875rem] tabular-nums" style={{ color: 'var(--c9-text-3)' }}>{PHONE.display}</p>
         )}
       </div>
+      )}
 
       {/* ── Ordinateur ── */}
       <div className="c9-desk-only flex flex-col gap-3">

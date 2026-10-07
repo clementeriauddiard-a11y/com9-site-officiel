@@ -24,7 +24,7 @@ export default function Contact() {
           </p>
         </div>
         <div className="c9-surface flex flex-col gap-5 rounded-[20px] p-5 sm:p-6 lg:flex-row lg:items-center lg:gap-6">
-          <div className="shrink-0"><ContactActions message="Bonjour COM'9, j'ai une question." /></div>
+          <div className="shrink-0"><ContactActions secondary message="Bonjour COM'9, j'ai une question." /></div>
           <Link href="/reservation" className="c9-btn c9-btn-primary w-full gap-2 whitespace-nowrap lg:w-auto lg:!px-6" style={{ minHeight: 60 }}>
             Réserver une intervention <IconArrowRight className="h-5 w-5" strokeWidth={1.9} />
           </Link>

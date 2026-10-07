@@ -131,3 +131,10 @@ export const PAIEMENT_LABEL: Record<PaiementMode, string> = {
 //  directement le tarif. Vide = diagnostic à domicile pour tous les symptômes.
 
 export const SYMPTOME_PRESTATION: Partial<Record<string, 'ecran' | 'batterie' | 'vitre'>> = {}
+
+// ─── Garantie (même formulation partout sur le site) ─────────────────────────
+export const GARANTIE = {
+  titre: 'Garantie 3 mois',
+  portee: 'Pièces et main-d’œuvre',
+  detail: 'Pièces et main-d’œuvre, sur les réparations réalisées par COM’9.',
+} as const

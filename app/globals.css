@@ -35,13 +35,13 @@
   --c9-text-2:        #cbc6bf;
   --c9-text-3:        #948f88;
 
-  /* Accent orange cuivré */
-  --c9-accent:        #e59864;   /* actions, détails importants */
-  --c9-accent-hi:     #eeaa7a;   /* survol */
-  --c9-accent-text:   #eba265;   /* texte orange lisible sur fond sombre */
+  /* Accent cuivre premium (moins orange, accordé aux photos) */
+  --c9-accent:        #d0956d;   /* actions, détails importants */
+  --c9-accent-hi:     #dba582;   /* survol */
+  --c9-accent-text:   #dcab88;   /* texte cuivré lisible sur fond sombre */
   --c9-accent-ink:    #1b120b;   /* texte posé sur l'orange */
-  --c9-accent-soft:   rgba(229, 152, 100, 0.12);
-  --c9-accent-line:   rgba(229, 152, 100, 0.45);
+  --c9-accent-soft:   rgba(208, 149, 109, 0.12);
+  --c9-accent-line:   rgba(208, 149, 109, 0.45);
 
   /* États */
   --c9-warn:          #e2b469;
@@ -80,9 +80,9 @@
   --c9-text:          #151517;
   --c9-text-2:        #47443f;
   --c9-text-3:        #6c6862;
-  --c9-accent-text:   #a8552a;
-  --c9-accent-soft:   rgba(229, 152, 100, 0.14);
-  --c9-accent-line:   rgba(200, 120, 70, 0.40);
+  --c9-accent-text:   #9a5a35;
+  --c9-accent-soft:   rgba(208, 149, 109, 0.14);
+  --c9-accent-line:   rgba(176, 116, 78, 0.40);
   --c9-warn:          #8a5d10;
   --c9-warn-soft:     rgba(176, 124, 30, 0.10);
   --c9-warn-line:     rgba(176, 124, 30, 0.40);
@@ -129,7 +129,7 @@ section[id] { scroll-margin-top: 80px; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.35); border-radius: 6px; }
-::selection { background: rgba(229, 152, 100, 0.32); }
+::selection { background: rgba(208, 149, 109, 0.32); }
 
 :focus-visible {
   outline: 2px solid var(--c9-accent);
@@ -166,7 +166,7 @@ section[id] { scroll-margin-top: 80px; }
 .c9-btn-primary {
   background: var(--c9-accent);
   color: var(--c9-accent-ink);
-  box-shadow: 0 10px 30px -14px rgba(229, 152, 100, 0.55);
+  box-shadow: 0 10px 30px -14px rgba(208, 149, 109, 0.5);
 }
 @media (hover: hover) { .c9-btn-primary:hover { background: var(--c9-accent-hi); } }
 
@@ -269,8 +269,8 @@ section[id] { scroll-margin-top: 80px; }
 
 .c9-copper { color: var(--c9-accent-text); }
 /* Mot mis en avant dans un grand titre (orange vif, comme la maquette) */
-.c9-hl { color: #eba265; }
-.c9-light .c9-hl { color: #db8650; }
+.c9-hl { color: #d9a47e; }
+.c9-light .c9-hl { color: #b5764c; }
 /* Écriture manuscrite décorative */
 .c9-script { font-family: var(--font-script), 'Segoe Script', cursive; font-weight: 500; letter-spacing: 0; }
 
