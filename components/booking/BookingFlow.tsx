@@ -492,11 +492,14 @@ export default function BookingFlow({ distanceEnabled = false }: { distanceEnabl
           <SlotPicker days={days} loading={daysLoading} error={daysError} value={slot}
             onChange={(iso) => { setSlot(iso); setErrors(null) }} />
           {errors && active === 'creneau' && <ErrorBox message={errors.message} />}
-          {isQuote && <Notice tone="accent" title="Créneau souhaité">{QUOTE_SLOT_NOTE}</Notice>}
-          <p className="text-[0.875rem] leading-relaxed" style={{ color: 'var(--c9-text-3)' }}>
-            C&apos;est une demande : COM&apos;9 confirme le créneau ou vous en propose un autre. Si la pièce doit être commandée
-            {` (délai estimé de ${DELAI_COMMANDE_JOURS} jours)`}, COM&apos;9 vous propose un nouveau rendez-vous. Aucun acompte.
-          </p>
+          {/* Une seule explication, en encadré */}
+          <div data-slot-note>
+            <Notice tone="accent" title={isQuote ? 'Créneau souhaité' : 'C’est une demande'}>
+              {isQuote
+                ? `${QUOTE_SLOT_NOTE} Si la pièce doit être commandée (délai estimé de ${DELAI_COMMANDE_JOURS} jours), COM’9 vous propose un nouveau créneau. Aucun acompte.`
+                : `COM’9 confirme le créneau ou vous en propose un autre. Si la pièce doit être commandée (délai estimé de ${DELAI_COMMANDE_JOURS} jours), COM’9 vous propose un nouveau rendez-vous. Aucun acompte.`}
+            </Notice>
+          </div>
           {slot && <Btn variant="primary" size="lg" onClick={() => advance('creneau')}>Continuer</Btn>}
         </Step>
 
