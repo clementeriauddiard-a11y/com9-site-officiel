@@ -5,7 +5,7 @@
 
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import Navbar from '@/components/Navbar'
+import PageHeader from '@/components/PageHeader'
 import Footer from '@/components/Footer'
 import BookingFlow from '@/components/booking/BookingFlow'
 import { HORAIRES_TEXTE } from '@/config/com9'
@@ -21,18 +21,12 @@ export const metadata: Metadata = {
 export default function ReservationPage() {
   return (
     <>
+    <PageHeader hideCta label={`Réparation à domicile · ${HORAIRES_TEXTE.accroche.toLowerCase()}`}
+      title={<>Réserver une <span className="c9-hl">intervention</span></>}
+      sub={<>Votre réparation, votre adresse, votre créneau : le prix total s&apos;affiche avant d&apos;envoyer la demande.
+        COM&apos;9 confirme ensuite le rendez-vous.</>} />
     <main className="c9-light relative min-h-screen">
-      <Navbar hideCta />
-      <div className="mx-auto w-full max-w-6xl px-5 pb-32 md:px-8 lg:pb-24"
-        style={{ paddingTop: 'calc(64px + env(safe-area-inset-top, 0px) + 2.5rem)' }}>
-        <header className="mb-10 flex max-w-2xl flex-col gap-3">
-          <span className="section-label">Réparation à domicile · {HORAIRES_TEXTE.accroche.toLowerCase()}</span>
-          <h1 className="c9-title">Réserver une intervention</h1>
-          <p className="c9-subtitle">
-            Votre réparation, votre adresse, votre créneau : le prix total s&apos;affiche avant d&apos;envoyer la demande.
-            COM&apos;9 confirme ensuite le rendez-vous.
-          </p>
-        </header>
+      <div className="mx-auto w-full max-w-6xl px-5 pb-32 pt-8 md:px-8 md:pt-10 lg:pb-24">
 
         <Suspense fallback={null}>
           {/* Calcul par la route seulement si la clé Google Maps est configurée sur Vercel */}

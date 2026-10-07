@@ -165,11 +165,7 @@ export function Tarifs() {
 
 export function OtherProblem() {
   return (
-    <section id="autre-probleme" className="c9-light relative overflow-hidden" style={py}>
-      {/* Photo : bord droit, derrière l'encadré (ordinateur) */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 hidden w-[17%] xl:block">
-        <Image src={PHOTOS.autreIphone} alt="" fill quality={PHOTO_QUALITY} sizes="17vw" className="object-cover object-left" />
-      </div>
+    <section id="autre-probleme" className="c9-light" style={py}>
 
       <div className={`${wrap} relative grid gap-10 lg:grid-cols-[1.15fr_1fr] lg:items-center`}>
         <div className="flex flex-col gap-6">
@@ -183,21 +179,21 @@ export function OtherProblem() {
             {SYMPTOMS.map((s) => (
               <Link key={s} href={`/reservation?parcours=autre&symptome=${s}`}
                 className="inline-flex items-center rounded-full px-4 text-[0.875rem] font-medium transition-colors duration-200 hover:border-[color:var(--c9-accent-line)]"
-                style={{ minHeight: 40, background: 'var(--c9-surface)', border: '1px solid var(--c9-hairline-soft)', boxShadow: '0 1px 2px rgba(21,21,23,0.04)' }}>
+                style={{ minHeight: 40, background: 'var(--c9-surface)', border: '1px solid var(--c9-hairline-soft)', boxShadow: '0 1px 2px rgba(74,52,28,0.06)' }}>
                 {SYMPTOM_LABEL[s]}
               </Link>
             ))}
           </div>
         </div>
 
-        <div className="flex flex-col gap-5 rounded-[20px] p-6 sm:p-7 xl:mr-[10%]"
-          style={{ background: '#f6ede4', border: '1px solid rgba(200,120,70,0.14)', boxShadow: '0 18px 44px -30px rgba(21,21,23,0.3)' }}>
+        <div className="flex flex-col gap-5 rounded-[20px] p-6 sm:p-7"
+          style={{ background: 'var(--c9-surface)', border: '1px solid var(--c9-accent-line)', boxShadow: '0 18px 44px -30px rgba(74,52,28,0.35)' }}>
           <div className="flex items-center gap-3">
             <span style={{ color: 'var(--c9-accent-text)' }}><IconSearch className="h-7 w-7" strokeWidth={1.7} /></span>
             <p className="text-[1.0625rem] font-semibold">Diagnostic à domicile : la règle est simple.</p>
           </div>
           <div className="flex gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: '#d6efd9', color: '#2f7a44' }}>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--c9-ok-soft)', color: 'var(--c9-ok)' }}>
               <IconCheck className="h-4 w-4" strokeWidth={2.4} />
             </span>
             <p className="text-[0.9375rem] leading-relaxed" style={{ color: 'var(--c9-text-2)' }}>
@@ -205,7 +201,7 @@ export function OtherProblem() {
             </p>
           </div>
           <div className="flex gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: '#f8d9c4', color: '#a8552a' }}>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--c9-accent-soft)', color: 'var(--c9-accent-text)' }}>
               <IconX className="h-4 w-4" strokeWidth={2.4} />
             </span>
             <p className="text-[0.9375rem] leading-relaxed" style={{ color: 'var(--c9-text-2)' }}>

@@ -5,7 +5,7 @@
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
+import PageHeader from '@/components/PageHeader'
 import Footer from '@/components/Footer'
 import TrackingView from '@/components/booking/TrackingView'
 import { getClientView, type ClientView } from '@/lib/agenda/service'
@@ -31,14 +31,9 @@ export default async function SuiviPage({ params }: { params: Promise<{ token: s
 
   return (
     <>
+    <PageHeader narrow label="Suivi" title={<>Votre <span className="c9-hl">rendez-vous</span></>} />
     <main className="c9-light relative min-h-screen">
-      <Navbar />
-      <div className="relative z-10 mx-auto w-full max-w-2xl px-5 pb-24 sm:px-8"
-        style={{ paddingTop: 'calc(64px + env(safe-area-inset-top, 0px) + 2.5rem)' }}>
-        <header className="mb-8 flex flex-col gap-3">
-          <span className="section-label">Votre rendez-vous</span>
-          <h1 className="c9-title">Suivi</h1>
-        </header>
+      <div className="relative z-10 mx-auto w-full max-w-2xl px-5 pb-24 pt-8 sm:px-8 md:pt-10">
 
         {view ? (
           <TrackingView token={token} initial={view} />

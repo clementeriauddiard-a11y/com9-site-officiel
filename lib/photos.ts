@@ -12,7 +12,6 @@ import heroMobile from '@/assets/photos/hero-iphone-mobile.png'
 import tarifEcran from '@/assets/photos/tarif-ecran.png'
 import tarifBatterie from '@/assets/photos/tarif-batterie.png'
 import tarifVitre from '@/assets/photos/tarif-vitre.png'
-import autreIphone from '@/assets/photos/autre-iphone.png'
 
 export const PHOTOS = {
   heroDesktop,
@@ -20,7 +19,6 @@ export const PHOTOS = {
   tarifEcran,
   tarifBatterie,
   tarifVitre,
-  autreIphone,
 }
 
 /** Qualité d'encodage des photos (voir images.qualities dans next.config.js). */
