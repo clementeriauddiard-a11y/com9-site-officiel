@@ -43,12 +43,12 @@ export default function Hero() {
           </p>
         </div>
 
-        {/* Mascotte COM'9 (version orange) */}
+        {/* Mascotte COM'9 (orange, écriture crème) */}
         <div className="c9-rise flex justify-center" style={{ animationDelay: '260ms' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/mascotte-com9-640.webp"
-            srcSet="/mascotte-com9-320.webp 320w, /mascotte-com9-640.webp 640w"
+            src="/mascotte-com9-creme-640.webp"
+            srcSet="/mascotte-com9-creme-320.webp 320w, /mascotte-com9-creme-640.webp 640w"
             sizes="(min-width: 1024px) 380px, 240px"
             width={640}
             height={640}
