@@ -80,10 +80,11 @@ export function HowItWorks() {
 
 // ─── Tarifs ──────────────────────────────────────────────────────────────────
 
-const TARIF_PHOTO: Record<GridRepairId, { src: StaticImageData; alt: string }> = {
-  ecran: { src: PHOTOS.tarifEcran, alt: 'Écran de smartphone fissuré' },
-  batterie: { src: PHOTOS.tarifBatterie, alt: 'Batterie de smartphone' },
-  vitre: { src: PHOTOS.tarifVitre, alt: 'Vitre arrière de smartphone' },
+/** pos : point de cadrage dans la carte (impact de l'écran, batterie, bloc caméras) */
+const TARIF_PHOTO: Record<GridRepairId, { src: StaticImageData; alt: string; pos: string }> = {
+  ecran: { src: PHOTOS.tarifEcran, alt: 'Écran de smartphone fissuré', pos: '62% 40%' },
+  batterie: { src: PHOTOS.tarifBatterie, alt: 'Batterie de smartphone', pos: '50% 45%' },
+  vitre: { src: PHOTOS.tarifVitre, alt: 'Vitre arrière de smartphone', pos: '30% 22%' },
 }
 
 export function Tarifs() {
@@ -106,7 +107,8 @@ export function Tarifs() {
               className="c9-surface group flex min-h-[8.5rem] cursor-pointer items-stretch overflow-hidden rounded-[18px] transition-[border-color,transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-[color:var(--c9-accent-line)] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--c9-accent)]">
               <div className="relative w-[38%] shrink-0 overflow-hidden">
                 <Image src={TARIF_PHOTO[r.id].src} alt="" fill quality={PHOTO_QUALITY}
-                  sizes="(min-width: 1152px) 166px, (min-width: 768px) 13vw, 38vw" className="object-cover object-center" />
+                  sizes="(min-width: 1152px) 166px, (min-width: 768px) 13vw, 38vw" className="object-cover"
+                  style={{ objectPosition: TARIF_PHOTO[r.id].pos }} />
               </div>
               <div className="flex flex-1 items-center justify-between gap-3 p-5">
                 <div className="flex flex-col gap-1">
