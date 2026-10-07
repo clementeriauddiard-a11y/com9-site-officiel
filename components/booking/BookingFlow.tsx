@@ -25,7 +25,7 @@ import { SERVICES, findBrand, findCatalogModel, modelPriceFrom, serviceOf } from
 import { findCommune } from '@/lib/communes'
 import { euros } from '@/lib/money'
 import { phoneDigits } from '@/lib/agenda/logic'
-import { REQUEST_RECEIVED_MESSAGE, SYMPTOMS, SYMPTOM_LABEL, type Symptom } from '@/lib/agenda/types'
+import { QUOTE_RECEIVED_MESSAGE, QUOTE_SLOT_NOTE, REQUEST_RECEIVED_MESSAGE, SYMPTOMS, SYMPTOM_LABEL, type Symptom } from '@/lib/agenda/types'
 import { Btn, Choice, ErrorBox, Field, Line, Notice, inputCls, inputStyle } from '@/components/ui/kit'
 import ContactActions from '@/components/ui/ContactActions'
 import AddressSearch, { type AddressHit } from './AddressSearch'
@@ -487,11 +487,12 @@ export default function BookingFlow({ distanceEnabled = false }: { distanceEnabl
         </Step>
 
         {/* 5 — Créneau */}
-        <Step n={5} id="creneau" title="Votre créneau" state={stateOf('creneau')} onEdit={() => go('creneau')} onBack={prev('creneau')}
+        <Step n={5} id="creneau" title={isQuote ? 'Votre créneau souhaité' : 'Votre créneau'} state={stateOf('creneau')} onEdit={() => go('creneau')} onBack={prev('creneau')}
           summary={slot ? `${fmtLongDay(slotDay(slot))} à ${fmtHour(slot)}` : ''}>
           <SlotPicker days={days} loading={daysLoading} error={daysError} value={slot}
             onChange={(iso) => { setSlot(iso); setErrors(null) }} />
           {errors && active === 'creneau' && <ErrorBox message={errors.message} />}
+          {isQuote && <Notice tone="accent" title="Créneau souhaité">{QUOTE_SLOT_NOTE}</Notice>}
           <p className="text-[0.875rem] leading-relaxed" style={{ color: 'var(--c9-text-3)' }}>
             C&apos;est une demande : COM&apos;9 confirme le créneau ou vous en propose un autre. Si la pièce doit être commandée
             {` (délai estimé de ${DELAI_COMMANDE_JOURS} jours)`}, COM&apos;9 vous propose un nouveau rendez-vous. Aucun acompte.
@@ -534,7 +535,7 @@ export default function BookingFlow({ distanceEnabled = false }: { distanceEnabl
             {busy ? 'Envoi…' : isQuote ? 'Recevoir mon tarif' : 'Envoyer ma demande'}
           </Btn>
           <p className="text-center text-[0.875rem]" style={{ color: 'var(--c9-text-3)' }}>
-            Ce n&apos;est pas encore un rendez-vous confirmé. Aucun paiement ni acompte en ligne : vous payez après l&apos;intervention.
+            {`${isQuote ? QUOTE_SLOT_NOTE : 'Ce n’est pas encore un rendez-vous confirmé.'} Aucun paiement ni acompte en ligne : vous payez après l’intervention.`}
           </p>
         </Step>
       </form>
@@ -546,7 +547,7 @@ export default function BookingFlow({ distanceEnabled = false }: { distanceEnabl
         <div className="flex flex-col gap-1 text-[0.9375rem]" style={{ color: 'var(--c9-text-2)' }}>
           {modelLabel && <p>{modelLabel}</p>}
           {kind === 'autre' && symptom && <p>{SYMPTOM_LABEL[symptom]}</p>}
-          {slot && <p>{fmtLongDay(slotDay(slot))} à {fmtHour(slot)}</p>}
+          {slot && <p>{isQuote ? 'Créneau souhaité : ' : ''}{fmtLongDay(slotDay(slot))} à {fmtHour(slot)}</p>}
         </div>
         {recapLines}
         <p className="text-[0.8125rem] leading-relaxed" style={{ color: 'var(--c9-text-3)' }}>
@@ -633,9 +634,9 @@ function Done({ recap }: { recap: Recap }) {
     <div className="mx-auto flex max-w-2xl flex-col gap-6" role="status" aria-live="polite" data-done>
       <div className="c9-surface-accent flex flex-col gap-3 rounded-[24px] p-6 sm:p-8">
         <span className="section-label">Demande envoyée</span>
-        <p className="text-[1.375rem] font-semibold leading-snug tracking-[-0.02em]">{REQUEST_RECEIVED_MESSAGE}</p>
+        <p className="text-[1.375rem] font-semibold leading-snug tracking-[-0.02em]">{recap?.quote ? QUOTE_RECEIVED_MESSAGE : REQUEST_RECEIVED_MESSAGE}</p>
         <p style={{ color: 'var(--c9-text-2)' }}>
-          Ce n&apos;est pas encore un rendez-vous confirmé. Aucun paiement ni acompte : vous payez après l&apos;intervention.
+          {`${recap?.quote ? QUOTE_SLOT_NOTE : 'Ce n’est pas encore un rendez-vous confirmé.'} Aucun paiement ni acompte : vous payez après l’intervention.`}
         </p>
       </div>
 
@@ -644,7 +645,7 @@ function Done({ recap }: { recap: Recap }) {
           <p className="text-[1.0625rem] font-semibold">{recap.model} · {recap.repairLabel}</p>
           {recap.quality && <p className="-mt-3" style={{ color: 'var(--c9-text-2)' }}>{recap.quality}</p>}
           {recap.symptomLabel && <p className="-mt-3" style={{ color: 'var(--c9-text-2)' }}>{recap.symptomLabel}</p>}
-          <p style={{ color: 'var(--c9-text-2)' }}>Créneau demandé : <b style={{ color: 'var(--c9-text)' }}>{recap.slot}</b></p>
+          <p style={{ color: 'var(--c9-text-2)' }}>{recap.quote ? 'Créneau souhaité' : 'Créneau demandé'} : <b style={{ color: 'var(--c9-text)' }}>{recap.slot}</b></p>
           <div className="c9-divider" />
           <Line label="Réparation" value={recap.repairPriceCents !== null ? euros(recap.repairPriceCents) : recap.quote ? 'Sur devis' : 'Prix sur place'} />
           <Line label="Déplacement" value={recap.travelFeeCents !== null ? euros(recap.travelFeeCents) : 'À confirmer'} />

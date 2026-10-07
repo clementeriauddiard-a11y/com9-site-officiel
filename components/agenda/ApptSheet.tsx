@@ -414,6 +414,11 @@ export default function ApptSheet({ id, settings, onClose, onChanged }: Props) {
           )}
           <div className="c9-divider my-1" />
           <Row label="Réparation">{appt.repairPriceCents !== null ? euros(appt.repairPriceCents) : isGridRepair(appt.repair) ? 'Sur devis — à compléter' : 'Après diagnostic'}</Row>
+          {isGridRepair(appt.repair) && appt.repairPriceCents === null && (
+            <p className="-mt-1 font-space text-[0.75rem] leading-snug" style={{ color: 'var(--c9-warn)' }}>
+              Demande de tarif : communiquer le prix au client. Créneau souhaité, à confirmer seulement après acceptation du prix.
+            </p>
+          )}
           <Row label="Déplacement">
             {appt.travelFeeCents !== null ? euros(appt.travelFeeCents) : zone?.id === 'hors' ? 'Hors zone (> 30 km)' : 'Non défini'}
           </Row>

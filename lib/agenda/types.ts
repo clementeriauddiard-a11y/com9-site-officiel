@@ -123,6 +123,12 @@ export const PREFERRED_PERIOD_LABEL: Record<PreferredPeriod, string> = {
 export const REQUEST_RECEIVED_MESSAGE =
   'Votre demande a bien été reçue. COM\'9 vous confirmera le créneau ou vous proposera une autre disponibilité.'
 
+/** Demande de tarif (« Sur devis ») : message après envoi et rappel sur le créneau. */
+export const QUOTE_RECEIVED_MESSAGE =
+  'Votre demande de tarif a bien été reçue. COM\'9 vous communique le prix de la réparation.'
+export const QUOTE_SLOT_NOTE =
+  'Ce créneau est souhaité : il n\'est confirmé qu\'après communication et acceptation du prix.'
+
 // ─── Réponse du client (lien de suivi) ───────────────────────────────────────
 
 /**

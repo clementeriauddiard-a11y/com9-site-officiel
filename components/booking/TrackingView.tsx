@@ -121,7 +121,7 @@ export default function TrackingView({ token, initial }: { token: string; initia
         </span>
         {view.slot && <p className="text-[1.375rem] font-semibold leading-snug tracking-[-0.02em]">{view.slot}</p>}
         {view.requestedSlot && (
-          <p className="text-[1.125rem] font-medium leading-snug">Créneau demandé : <b>{view.requestedSlot}</b></p>
+          <p className="text-[1.125rem] font-medium leading-snug">{view.quote ? 'Créneau souhaité' : 'Créneau demandé'} : <b>{view.requestedSlot}</b></p>
         )}
         {view.proposal && (
           <div className="flex flex-col gap-1">

@@ -104,7 +104,7 @@ export function Tarifs() {
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {REPAIRS.map((r) => (
             <Link key={r.id} href={`/reservation?reparation=${r.id}`}
-              aria-label={`${r.label} : à partir de ${euros(priceFrom(r.id))}. Voir le prix de mon modèle`}
+              aria-label={`${r.label} : à partir de ${euros(priceFrom(r.id))} selon modèle. Voir le prix de mon modèle`}
               className="c9-surface group flex min-h-[8.5rem] cursor-pointer items-stretch overflow-hidden rounded-[18px] transition-[border-color,transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-[color:var(--c9-accent-line)] active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--c9-accent)]">
               <div className="relative w-[38%] shrink-0 overflow-hidden">
                 <Image src={TARIF_PHOTO[r.id].src} alt="" fill quality={PHOTO_QUALITY}
@@ -116,6 +116,7 @@ export function Tarifs() {
                   <p className="text-[1.125rem] font-semibold tracking-[-0.02em]">{r.label}</p>
                   <p className="text-[0.8125rem]" style={{ color: 'var(--c9-text-3)' }}>À partir de</p>
                   <p className="text-[1.75rem] font-semibold tabular-nums tracking-[-0.03em]">{euros(priceFrom(r.id))}</p>
+                  <p className="text-[0.75rem]" style={{ color: 'var(--c9-text-3)' }}>selon modèle</p>
                 </div>
                 <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-[transform,background-color,color] duration-300 group-hover:translate-x-0.5 group-hover:bg-[color:var(--c9-accent)] group-hover:text-[color:var(--c9-accent-ink)]"
                   style={{ background: 'var(--c9-elev-2)', color: 'var(--c9-accent-text)' }}>

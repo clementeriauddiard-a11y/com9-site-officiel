@@ -44,6 +44,7 @@ import {
   MESSAGE_LABEL,
   MESSAGES_FOR_STATUS,
   ORDER_DELAY_NOTE,
+  QUOTE_SLOT_NOTE,
   SYMPTOM_LABEL,
   partNeedsOrder,
   type AgendaSettings,
@@ -865,7 +866,10 @@ async function findByToken(token: string): Promise<Appointment | null> {
 /** Ce que voit le client. Liste blanche explicite : rien d'autre ne sort. */
 export function toClientView(a: Appointment): ClientView {
   const zone = findZone(a.zone)
-  const st = CLIENT_STATUS_TEXT[a.status]
+  const quote = isGridRepair(a.repair) && a.repairPriceCents === null
+  const st = quote && a.status === 'demande_recue'
+    ? { title: 'Demande de tarif reçue', text: `COM'9 vous communique le prix de la réparation. ${QUOTE_SLOT_NOTE}` }
+    : CLIENT_STATUS_TEXT[a.status]
   const confirmed = ['confirme', 'en_route', 'en_cours', 'termine'].includes(a.status)
   return {
     status: a.status,
@@ -882,7 +886,7 @@ export function toClientView(a: Appointment): ClientView {
     outOfArea: a.zone === 'hors',
     zoneToConfirm: Boolean(zone) && !a.zoneVerified,
     diagnosticRule: a.repair === 'diagnostic' ? DIAGNOSTIC_RULE : null,
-    quote: isGridRepair(a.repair) && a.repairPriceCents === null,
+    quote,
     slot: a.startAt && confirmed ? capFirst(fmtSlot(a.startAt)) : null,
     requestedSlot: a.startAt && a.status === 'demande_recue' ? capFirst(fmtSlot(a.startAt)) : null,
     clientSlot: a.clientSlot && a.status === 'confirme' ? capFirst(fmtSlot(a.clientSlot)) : null,
