@@ -13,8 +13,8 @@ export default function Hero() {
       <div aria-hidden="true" className="pointer-events-none absolute inset-0"
         style={{ background: 'radial-gradient(60% 50% at 85% 10%, rgba(201,137,92,0.14) 0%, transparent 70%), radial-gradient(50% 40% at 0% 100%, rgba(255,255,255,0.04) 0%, transparent 70%)' }} />
 
-      <div className="relative mx-auto max-w-6xl px-5 pb-20 pt-12 md:px-8 md:pb-28 md:pt-20">
-        <div className="flex max-w-3xl flex-col gap-7">
+      <div className="relative mx-auto grid max-w-6xl gap-12 px-5 pb-20 pt-12 md:px-8 md:pb-28 md:pt-20 lg:grid-cols-[1.25fr_1fr] lg:items-center lg:gap-16">
+        <div className="flex flex-col gap-7">
           <span className="section-label c9-rise">Réparation smartphone à domicile</span>
 
           <h1 className="c9-display c9-rise" style={{ animationDelay: '60ms' }}>
@@ -43,6 +43,22 @@ export default function Hero() {
           </p>
         </div>
 
+        {/* Mascotte COM'9 (version orange) */}
+        <div className="c9-rise flex justify-center" style={{ animationDelay: '260ms' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/mascotte-com9-640.webp"
+            srcSet="/mascotte-com9-320.webp 320w, /mascotte-com9-640.webp 640w"
+            sizes="(min-width: 1024px) 380px, 240px"
+            width={640}
+            height={640}
+            alt="La mascotte COM’9 répare un smartphone"
+            fetchPriority="high"
+            decoding="async"
+            draggable={false}
+            className="h-auto w-[240px] select-none sm:w-[280px] lg:w-[380px]"
+          />
+        </div>
       </div>
     </section>
   )
